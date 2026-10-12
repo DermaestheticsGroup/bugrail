@@ -90,7 +90,9 @@ const App = {
   goTo(page, { fromHistory = false, replace = false } = {}){
     if (!fromHistory){
       // The bug detail page keeps its #bug= link in the address bar (reload / share reopens it).
-      const url = location.href.split('#')[0] + (page === 'bugdetail' ? `#bug=${encodeURIComponent(BugReportModule.ui.detailId)}` : '');
+      // Report filters live in the query string (shareable) — only while on the Report page.
+      const base = page === 'report' ? location.href.split('#')[0] : ReportModule.urlWith(location.href.split('#')[0], null);
+      const url = base + (page === 'bugdetail' ? `#bug=${encodeURIComponent(BugReportModule.ui.detailId)}` : '');
       if (replace || !history.state) history.replaceState({ page }, '', url);
       else if (history.state.page !== page) history.pushState({ page }, '', url);
     }
@@ -160,6 +162,52 @@ const App = {
     this._refreshing = true;
     this.goTo(this.state.currentPage, { fromHistory: true });
     this._refreshing = false;
+  },
+
+  /* Live push (server GET /api/events, SSE): another user saved a key -> pull just
+     that key and redraw the current page, no reload needed. */
+  startLive(){
+    if (this._live || Storage.offlineBoot || typeof EventSource !== 'function') return;
+    this._live = new EventSource(`${API_BASE}/events`);
+    let dropped = false;
+    this._live.onerror = () => { dropped = true; }; // the browser reconnects by itself
+    this._live.onopen = () => { // back after a drop: catch up on whatever was missed
+      if (!dropped) return;
+      dropped = false;
+      this._lastRefresh = 0;
+      this.refreshFromServer();
+    };
+    this._live.onmessage = e => {
+      const { key, rev } = JSON.parse(e.data);
+      if (rev !== Storage.revs[key]) this.pullLive(key);
+    };
+  },
+  async pullLive(key){
+    await Storage.settle(); // my own save goes first; a clash is handled by its 409 merge
+    if (!await Storage.refreshKey(key)) return; // nothing newer (e.g. it was my own save)
+    this.loadAll(); // data is current right away; only the redraw may wait
+    this.renderSidebarCounts();
+    // Activity log / counters change on every action anywhere, but show on no page but the log.
+    const shown = key !== 'qa_counters' && (key !== 'qa_activity_log' || this.state.currentPage === 'activitylog');
+    if (shown) this.redrawWhenIdle();
+  },
+  /* Never redraw under someone who is typing (a form, the step editor, inline edit)
+     or dragging a card: wait until they're done. The open bug popup's chat is the
+     exception — new comments should land while you write yours. */
+  isUserBusy(){
+    if (document.querySelector('.dragging')) return true;
+    if ([...document.querySelectorAll('.modal-overlay.active')].some(m => m.id !== 'bugDetailModalOverlay')) return true;
+    const el = document.activeElement;
+    // Focus stays on a clicked checkbox/select, so only real text entry counts.
+    const typing = el && (el.isContentEditable || el.tagName === 'TEXTAREA'
+      || (el.tagName === 'INPUT' && !/^(checkbox|radio|button|submit|file|range|color)$/.test(el.type)));
+    return !!typing && el.id !== 'bugChatInput';
+  },
+  redrawWhenIdle(){
+    clearTimeout(this._redrawTimer);
+    if (this.isUserBusy()){ this._redrawTimer = setTimeout(() => this.redrawWhenIdle(), 1000); return; }
+    this.reloadFromStorage();
+    BugReportModule.refreshOpenDetail();
   },
 
   /* Hides sidebar entries the current role can't use. Role Permission stays
@@ -237,6 +285,7 @@ const App = {
   /* ---- Init ---- */
   init(){
     Storage.onMerged = () => this.reloadFromStorage(); // another tab/user saved first, rows merged
+    this.startLive();
     this.loadAll();
     this.applyTheme();
     this.renderSidebarCounts();
@@ -369,7 +418,9 @@ const App = {
       }
     });
 
-    this.goTo(this.firstAllowedPage(), { replace: true });
+    // A shared Report link (?rptModule=…&rptRound=…) opens straight on the Report page.
+    const start = ReportModule.hasUrlFilter() && this.canAccessPage('report') ? 'report' : this.firstAllowedPage();
+    this.goTo(start, { replace: true });
     window.addEventListener('hashchange', () => this.openDeepLink());
     window.addEventListener('popstate', e => {
       const page = e.state && e.state.page;
@@ -400,7 +451,8 @@ const App = {
       m.ui.activeFileId = null; m.ui.search = ''; m.ui.page = 1; m.ui.selected.clear();
     });
     Summary.filters.fileId = '';
-    ReportModule.filters.fileId = '';
+    ReportModule.filters = { fileId: '', module: '' }; // modules/rounds belong to the old workspace
+    ReportModule.open = null;
     const gs = document.getElementById('globalSearch');
     if (gs) gs.value = '';
     this.renderSidebarCounts();

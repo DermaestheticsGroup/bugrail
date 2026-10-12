@@ -133,6 +133,20 @@ const Storage = {
       return true;
     }catch(e){ return false; }
   },
+  // Same, for one key (cheap poll — live bug chat). True only when the server had a newer rev.
+  async refreshKey(key){
+    if (this.offlineBoot || this.hasUnsynced()) return false;
+    try{
+      const res = await fetch(`${API_BASE}/kv/${key}`, { signal: AbortSignal.timeout(10000) });
+      if (!res.ok) return false;
+      const { value, rev } = await res.json();
+      if (rev === (this.revs[key] || 0) || this.hasUnsynced()) return false;
+      this.cache[key] = value;
+      this.revs[key] = rev;
+      this.base[key] = JSON.stringify(value);
+      return true;
+    }catch(e){ return false; }
+  },
 
   get(key, fallback){
     const value = this.cache[key];

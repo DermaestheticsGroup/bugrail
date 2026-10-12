@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QA Test Management &amp; Bug Tracking</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐞</text></svg>">
-<link rel="stylesheet" href="css/style.css?v=28">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="css/style.css?v=35">
 <!-- CDN libraries: only used at runtime in the user's own browser (charts, Excel & PDF export).
      Core app + data storage still work fully offline once these have loaded once. -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -353,13 +354,7 @@
       <!-- ============ SUMMARY ============ -->
       <!-- ============ REPORT (Go-Live readiness) ============ -->
       <section class="page" id="page-report">
-        <div class="toolbar">
-          <select class="filter-select" id="rptFilterFile"></select>
-          <select class="filter-select" id="rptFilterModule"></select>
-          <div class="spacer"></div>
-          <button class="btn primary sm" id="rptExportPdfBtn">⬇ Export PDF</button>
-        </div>
-        <div id="rptBody"></div>
+        <div id="rptBody"></div><!-- filter bar + report rendered by report.js -->
       </section>
 
       <section class="page" id="page-summary">
@@ -1022,17 +1017,17 @@
 <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><span class="text-faint">Memuat aplikasi...</span></div>
 
 <!-- ============ SCRIPTS (order matters: utils/app first, feature modules after) ============ -->
-<script src="js/utils.js?v=40"></script>
-<script src="js/app.js?v=36"></script>
+<script src="js/utils.js?v=41"></script>
+<script src="js/app.js?v=40"></script>
 <script src="js/activitylog.js?v=7"></script>
 <script src="js/workspace.js?v=5"></script>
 <script src="js/auth.js?v=25"></script>
 <script src="js/dashboard.js?v=18"></script>
-<script src="js/testcase.js?v=48"></script>
+<script src="js/testcase.js?v=50"></script>
 <script src="js/testforge.js?v=3"></script>
-<script src="js/bugreport.js?v=58"></script>
+<script src="js/bugreport.js?v=61"></script>
 <script src="js/summary.js?v=19"></script>
-<script src="js/report.js?v=6"></script>
+<script src="js/report.js?v=12"></script>
 <script src="js/notifications.js?v=3"></script>
 <script src="js/import.js?v=17"></script>
 <script src="js/export.js?v=16"></script>
