@@ -11,6 +11,7 @@ vm.createContext(ctx);
 vm.runInContext(src.match(/const TC_IMPORT = \{[\s\S]*?\n\};/)[0] + '\nthis.T = TC_IMPORT;', ctx);
 const { T } = ctx;
 const TYPES = ['Negative', 'Positive'];
+const STATUSES = ['Open', 'Passed', 'Failed', 'Blocked', 'Retest'];
 const row = (o, n) => Object.defineProperty(o, '__rowNum__', { value: n }); // SheetJS: 0-based, non-enumerable
 
 // Near-miss headers map to the right fields; export-only columns are skipped silently.
@@ -23,18 +24,22 @@ assert.strictEqual(T.field('Test Case ID'), '_skip');
 assert.strictEqual(T.field('Prioritas'), null);
 
 const out = T.parseSheet('Login', [
-  row({ 'Skenario': 'Login valid', 'Langkah': '1. Buka', 'Expected': 'Masuk', 'Tipe': 'negative', 'Prioritas': 'High', 'Status': 'Passed' }, 1),
-  row({ 'Skenario': '', 'Langkah': 'x', 'Expected': '', 'Tipe': '', 'Prioritas': '', 'Status': '' }, 2),
-  row({ 'Skenario': 'B', 'Langkah': '', 'Expected': '', 'Tipe': 'Smoke', 'Prioritas': '', 'Status': '' }, 5)
-], 'Login', TYPES);
+  row({ 'Skenario': 'Login valid', 'Langkah': '1. Buka', 'Expected': 'Masuk', 'Tipe': 'negative', 'Prioritas': 'High', 'Status': 'failed', 'Actual Result': 'Error 500' }, 1),
+  row({ 'Skenario': '', 'Langkah': 'x', 'Expected': '', 'Tipe': '', 'Prioritas': '', 'Status': '', 'Actual Result': '' }, 2),
+  row({ 'Skenario': 'B', 'Langkah': '', 'Expected': '', 'Tipe': 'Smoke', 'Prioritas': '', 'Status': 'Done', 'Actual Result': '' }, 5)
+], 'Login', TYPES, STATUSES);
 assert.strictEqual(out.rows.length, 1);
 assert.strictEqual(out.rows[0].module, 'Login', 'module falls back to sheet name');
 assert.strictEqual(out.rows[0].steps, '1. Buka');
 assert.strictEqual(out.rows[0].typeTest, 'Negative', 'type test case-insensitive');
+assert.strictEqual(out.rows[0].status, 'Failed', 'status imported, case-insensitive');
+assert.strictEqual(out.rows[0].actualResult, 'Error 500', 'actual result imported');
+assert.strictEqual(T.parseSheet('S', [row({ Scenario: 'A', Status: 'Not Run' }, 1)], 'M', TYPES, STATUSES).rows[0].status, 'Open', 'old "Not Run" -> Open');
 assert.deepStrictEqual([...out.unknown], ['Prioritas']);
 assert.deepStrictEqual([...out.errors], [
   'Login baris 3: Scenario kosong',
-  'Login baris 6: Type Test harus Negative/Positive'
+  'Login baris 6: Type Test harus Negative/Positive',
+  'Login baris 6: Status harus Open/Passed/Failed/Blocked/Retest'
 ]);
 
 // Same problem on many rows: one line, rows capped at 5.

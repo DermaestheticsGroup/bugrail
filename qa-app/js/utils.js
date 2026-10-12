@@ -65,12 +65,30 @@ const Storage = {
   },
   leaving: false, // set by an intentional reload (logout) — skip the "unsaved changes" prompt
 
+  /* Optimistic lock (see PUT /api/kv in server/app.js): rev = server version of
+     each key as last read/written; base = JSON of that same server copy, the
+     common ancestor for a 3-way merge when the server refuses a stale write. */
+  revs: {},
+  base: {},
+  chain: {},    // per-key promise chain: one PUT per key at a time (each carries the rev the previous one got)
+  onMerged: null, // set by App: called after a key was merged with newer server data
+
+  // Takes the server's data (+ _revs) as the new synced state.
+  adopt(data){
+    this.revs = data._revs || {};
+    delete data._revs;
+    this.cache = data;
+    this.base = {};
+    Object.keys(data).forEach(k => { this.base[k] = JSON.stringify(data[k]); });
+  },
+
   async hydrate(){
+    let data;
     try{
       // Generous: the server's first MongoDB Atlas connect (DNS + TLS) can take several seconds.
       const res = await fetch(`${API_BASE}/kv`, { signal: AbortSignal.timeout(20000) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      this.cache = await res.json();
+      data = await res.json();
       this.serverOnline = true;
     }catch(e){
       console.error('Storage.hydrate: API unreachable, falling back to localStorage', e);
@@ -86,12 +104,16 @@ const Storage = {
       Toast.show('Server database tidak terhubung — memakai data lokal (offline). Perubahan TIDAK dikirim ke server; muat ulang saat server kembali.', 'error');
       return;
     }
+    this.adopt(data);
     const pending = this.unsynced();
     if (!pending.length) return;
     pending.forEach(key => {
       try{
         const raw = localStorage.getItem(key);
-        if (raw) this.cache[key] = JSON.parse(raw);
+        // Unknown ancestor (saved in an earlier session): keep everything the server
+        // has and lay this browser's added/edited rows on top. Never re-send the old
+        // copy whole — that is exactly how other people's changes got wiped.
+        if (raw) this.cache[key] = KvMerge.merge(undefined, JSON.parse(raw), this.cache[key]) ?? this.cache[key];
       }catch(err){ console.error('Storage.hydrate: bad unsynced value', key, err); }
     });
     const sent = (await Promise.all(pending.map(key => this.push(key)))).filter(Boolean).length;
@@ -107,7 +129,7 @@ const Storage = {
       if (!res.ok) return false;
       const data = await res.json();
       if (this.hasUnsynced()) return false; // a save started while we were waiting
-      this.cache = data;
+      this.adopt(data);
       return true;
     }catch(e){ return false; }
   },
@@ -125,39 +147,120 @@ const Storage = {
     return this.push(key);
   },
 
-  /* PUT the cached value; resolves true once the server confirmed it (2xx). */
+  /* PUT the cached value; resolves true once the server confirmed it (2xx).
+     Queued per key, so each PUT is based on the rev the previous one returned. */
   push(key){
     const mySeq = this.seq[key] = (this.seq[key] || 0) + 1;
     this.inflight++;
-    return fetch(`${API_BASE}/kv/${key}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-role': Auth.role() || '',
-        'x-workspace': Auth.currentWorkspaceId() || '',
-        'x-can-share': Auth.can('testcase_fileShare') ? '1' : '0'
-      },
-      body: JSON.stringify({ value: this.cache[key] })
-    }).then(async res => {
+    const run = () => this.sendWithMerge(key, mySeq);
+    const p = (this.chain[key] || Promise.resolve()).then(run, run);
+    this.chain[key] = p;
+    return p.finally(() => { this.inflight--; });
+  },
+
+  async sendWithMerge(key, mySeq){
+    for (let attempt = 0; attempt < 3; attempt++){
+      let res, sent;
+      try{
+        sent = JSON.stringify(this.cache[key]);
+        res = await fetch(`${API_BASE}/kv/${key}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-role': Auth.role() || '',
+            'x-workspace': Auth.currentWorkspaceId() || '',
+            'x-can-share': Auth.can('testcase_fileShare') ? '1' : '0'
+          },
+          body: `{"value":${sent},"rev":${this.revs[key] || 0}}`
+        });
+      }catch(e){
+        if (this.serverOnline) Toast.show('Server tidak terhubung — perubahan disimpan di browser dan dikirim ulang saat aplikasi dibuka lagi.', 'error');
+        this.serverOnline = false;
+        console.error('Storage.push: server sync failed, kept as unsynced', key, e);
+        return false;
+      }
       this.serverOnline = true;
+      const body = await res.json().catch(() => ({}));
       if (res.ok){
+        this.revs[key] = body.rev;
+        this.base[key] = sent;
         if (this.seq[key] === mySeq) this.markUnsynced(key, false);
         return true;
       }
+      if (res.status === 409 && body.stale && attempt < 2 && await this.mergeFromServer(key)) continue;
       if (res.status >= 400 && res.status < 500){
-        // Rejected (e.g. no permission) — retrying won't help, so don't keep re-sending it.
+        // Rejected (no permission / stale and unmergeable) — retrying as-is won't help.
         if (this.seq[key] === mySeq) this.markUnsynced(key, false);
-        const body = await res.json().catch(() => ({}));
         Toast.show(`Gagal menyimpan: ${body.error || `ditolak server (HTTP ${res.status})`}`, 'error');
         return false;
       }
-      throw new Error(`HTTP ${res.status}`);
-    }).catch(e => {
-      if (this.serverOnline) Toast.show('Server tidak terhubung — perubahan disimpan di browser dan dikirim ulang saat aplikasi dibuka lagi.', 'error');
-      this.serverOnline = false;
-      console.error('Storage.push: server sync failed, kept as unsynced', key, e);
+      console.error('Storage.push: server error, kept as unsynced', key, res.status);
+      Toast.show('Server error — perubahan disimpan di browser dan dikirim ulang saat aplikasi dibuka lagi.', 'error');
       return false;
-    }).finally(() => { this.inflight--; });
+    }
+    return false;
+  },
+
+  // Someone saved this key first: fold their version into ours, then the caller re-sends.
+  async mergeFromServer(key){
+    try{
+      const res = await fetch(`${API_BASE}/kv/${key}`);
+      if (!res.ok) return false;
+      const { value, rev } = await res.json();
+      const base = this.base[key] === undefined ? undefined : JSON.parse(this.base[key]);
+      const merged = KvMerge.merge(base, this.cache[key], value);
+      if (merged === null) return false;
+      this.cache[key] = merged;
+      this.revs[key] = rev;
+      this.base[key] = JSON.stringify(value);
+      try{ localStorage.setItem(key, JSON.stringify(merged)); }catch(e){}
+      if (this.onMerged) this.onMerged(key);
+      return true;
+    }catch(e){ return false; }
+  }
+};
+
+/* 3-way merge for a whole-value KV write. base = common ancestor (undefined when
+   unknown), mine = this tab's value, theirs = the newer server value.
+   - Arrays of {id}: per row. A row only I changed takes mine, otherwise theirs;
+     my new rows are appended; a row deleted on one side stays deleted unless the
+     other side edited it. Same row edited on both sides: mine.
+   - Plain objects (settings): per top-level key, same rule.
+   Returns null when the values can't be merged (other shapes). */
+const KvMerge = {
+  merge(base, mine, theirs){
+    if (theirs === undefined || theirs === null) return mine;
+    if (Array.isArray(mine) && Array.isArray(theirs)) return this.rows(Array.isArray(base) ? base : [], mine, theirs);
+    const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
+    if (isObj(mine) && isObj(theirs)){
+      const b = isObj(base) ? base : {};
+      const out = { ...theirs };
+      Object.keys(mine).forEach(k => {
+        if (JSON.stringify(mine[k]) !== JSON.stringify(b[k]) || !(k in theirs)) out[k] = mine[k];
+      });
+      return out;
+    }
+    return null;
+  },
+  rows(base, mine, theirs){
+    if (![...mine, ...theirs].every(r => r && r.id != null)) return null;
+    const B = new Map(base.map(r => [r.id, JSON.stringify(r)]));
+    const M = new Map(mine.map(r => [r.id, r]));
+    const T = new Set(theirs.map(r => r.id));
+    const out = [];
+    theirs.forEach(t => {
+      const m = M.get(t.id);
+      if (!m){
+        // Not in mine: I deleted it (dropped unless they edited it since), or it's their new row.
+        if (B.has(t.id) && B.get(t.id) === JSON.stringify(t)) return;
+        out.push(t);
+        return;
+      }
+      out.push(B.get(t.id) !== JSON.stringify(m) ? m : t);
+    });
+    // My new rows. A row they deleted stays deleted unless I edited it.
+    mine.forEach(m => { if (!T.has(m.id) && (!B.has(m.id) || B.get(m.id) !== JSON.stringify(m))) out.push(m); });
+    return out;
   }
 };
 
@@ -249,8 +352,10 @@ const TC_IMPORT = {
     expectedResult: ['expectedresult', 'expectedresults', 'expected', 'hasilyangdiharapkan', 'hasildiharapkan', 'ekspektasi'],
     typeTest: ['typetest', 'testtype', 'type', 'tipe', 'tipetest', 'jenistest'],
     evidence: ['evidence', 'bukti'],
-    // Export-only columns: known, so not reported as unknown, but never imported.
-    _skip: ['testcaseid', 'id', 'no', 'actualresult', 'status', 'executiondate']
+    status: ['status', 'statustest', 'statuseksekusi'],
+    actualResult: ['actualresult', 'actual', 'hasilaktual'],
+    // Known columns that are never imported (ids are renumbered, date set on Run).
+    _skip: ['testcaseid', 'id', 'no', 'executiondate']
   },
   field(header){
     const n = String(header).toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -258,7 +363,7 @@ const TC_IMPORT = {
   },
   /* rawRows: XLSX sheet_to_json(..., { defval: '' }) output. Returns
      { rows: [test case fields], errors: ['Sheet "x" baris n: ...'], unknown: [header] }. */
-  parseSheet(sheetName, rawRows, sheetModule, typeTests){
+  parseSheet(sheetName, rawRows, sheetModule, typeTests, statuses = []){
     const headers = rawRows.length ? Object.keys(rawRows[0]) : [];
     const map = {}, unknown = [], errors = [], rows = [];
     headers.forEach(h => {
@@ -288,6 +393,11 @@ const TC_IMPORT = {
       if (tc.typeTest){
         const t = typeTests.find(x => x.toLowerCase() === tc.typeTest.toLowerCase());
         if (t) tc.typeTest = t; else problems.push(`Type Test harus ${typeTests.join('/')}`);
+      }
+      if (tc.status){
+        const v = tc.status.toLowerCase() === 'not run' ? 'open' : tc.status.toLowerCase(); // old exports
+        const st = statuses.find(x => x.toLowerCase() === v);
+        if (st) tc.status = st; else problems.push(`Status harus ${statuses.join('/')}`);
       }
       // __rowNum__ is SheetJS's 0-based sheet row (survives skipped blank rows).
       problems.forEach(p => (byProblem[p] = byProblem[p] || []).push((raw.__rowNum__ ?? i + 1) + 1));

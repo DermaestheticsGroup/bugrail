@@ -15,8 +15,9 @@ app.get('/api/kv', async (req, res) => {
   try {
     const conn = await db.getDb();
     const rows = await conn.collection('kv_store').find().toArray();
-    const out = {};
-    rows.forEach(r => { out[r._id] = r.value; });
+    // _revs: each key's version, sent back on PUT so a stale write is refused (see PUT below).
+    const out = { _revs: {} };
+    rows.forEach(r => { out[r._id] = r.value; out._revs[r._id] = r.rev || 0; });
     res.json(out);
   } catch (err) {
     console.error('GET /api/kv failed', err);
@@ -28,7 +29,7 @@ app.get('/api/kv/:key', async (req, res) => {
   try {
     const conn = await db.getDb();
     const row = await conn.collection('kv_store').findOne({ _id: req.params.key });
-    res.json({ value: row ? row.value : null });
+    res.json({ value: row ? row.value : null, rev: (row && row.rev) || 0 });
   } catch (err) {
     console.error('GET /api/kv/:key failed', err);
     res.status(500).json({ error: 'Database unreachable' });
@@ -173,15 +174,24 @@ app.put('/api/kv/:key', async (req, res, next) => {
 }, async (req, res) => {
   const { key } = req.params;
   if (!ALLOWED_KEYS.has(key)) return res.status(400).json({ error: `Unknown key: ${key}` });
+  // Optimistic lock: every value is PUT whole, so a write based on an old copy
+  // would silently wipe what other users/tabs saved since. The client sends the
+  // rev it last read; only that exact rev may be replaced (atomically, rev + 1).
+  const rev = req.body.rev;
+  if (!Number.isInteger(rev) || rev < 0){
+    return res.status(409).json({ error: 'Aplikasi versi lama — muat ulang halaman (Ctrl+F5).', stale: true });
+  }
   try {
     const conn = await db.getDb();
-    await conn.collection('kv_store').updateOne(
-      { _id: key },
-      { $set: { value: req.body.value } },
-      { upsert: true }
+    const doc = await conn.collection('kv_store').findOneAndUpdate(
+      { _id: key, rev: rev === 0 ? { $in: [0, null] } : rev }, // null matches docs saved before revs existed
+      { $set: { value: req.body.value }, $inc: { rev: 1 } },
+      { upsert: true, returnDocument: 'after' }
     );
-    res.json({ ok: true });
+    res.json({ ok: true, rev: doc.rev });
   } catch (err) {
+    // Upsert collided with the existing doc => its rev moved on: someone saved first.
+    if (err && err.code === 11000) return res.status(409).json({ error: 'Data sudah diubah di tab/user lain.', stale: true });
     console.error('PUT /api/kv/:key failed', err);
     res.status(500).json({ error: 'Database unreachable' });
   }
