@@ -665,18 +665,21 @@ const BugReportModule = {
     f.reset();
     this.clearFormErrors();
     document.getElementById('bugSimilarInfo').hidden = true;
-    f.assignee.innerHTML = Auth.userOptions(bug ? bug.assignee : '');
     if (bug) this.ui.activeFileId = bug.fileId;
     else if (prefillTestCaseId){
       const tc = App.state.testcases.find(t => t.id === prefillTestCaseId);
       if (tc) this.ui.activeFileId = tc.fileId;
     }
+    // Assignee list = members of the bug's workspace (its file's), else the active one.
+    const file = (App.state.files || []).find(x => x.id === this.ui.activeFileId);
+    const ws = (file && file.workspaceId) || (Auth.seesAllWorkspaces() ? '' : Auth.currentWorkspaceId());
+    f.assignee.innerHTML = Auth.userOptions(bug ? bug.assignee : '', ws);
 
     document.getElementById('bugModalTitle').textContent = bug ? `Edit Bug — ${bugCode(bug)}` : 'Buat Bug Report';
     document.getElementById('bugFieldId').value = bug ? bugCode(bug) : '(auto generate, nomor per workspace)';
     document.getElementById('bugFieldDate').value = formatDateTime(bug ? bug.reportDate : nowISO());
 
-    this.fillSelect(f.priority, BUG_FORM.PRIORITIES, bug ? bug.priority : 'Medium');
+    this.fillSelect(f.priority, BUG_FORM.PRIORITIES, bug ? bug.priority : '', '— Pilih Priority —');
     this.fillSelect(f.environment, BUG_FORM.ENVIRONMENTS, bug ? bug.environment : '', '— Pilih Environment —');
     // Bugs saved before Platform existed: infer it from Browser / Device (not written back until saved).
     const platform = bug ? (bug.platform || (bug.device && !bug.browser ? 'Mobile App' : bug.browser ? 'Web' : '')) : '';
@@ -715,10 +718,13 @@ const BugReportModule = {
     this.updatePlatformFields();
     this.render();
     this.ui.formSnapshot = this.formSnapshot();
-    document.getElementById('bugModalOverlay').classList.add('active');
-    if (!bug && prefillTestCaseId) this.aiAnalyze(prefillTestCaseId);
+    const overlay = document.getElementById('bugModalOverlay');
+    overlay.classList.add('active');
+    overlay.querySelector('.modal').scrollTop = 0; // start at Bug Title, not where the last form was left
+    // AI draft paused (no API key yet) — uncomment to turn back on.
+    // if (!bug && prefillTestCaseId) this.aiAnalyze(prefillTestCaseId);
   },
-  // Failed test case -> AI drafts title / severity / priority / analysis from its actual
+  // Failed test case -> AI drafts title / severity / analysis from its actual
   // result. Only fills what the tester hasn't typed; they review it before saving.
   async aiAnalyze(tcId){
     const tc = App.state.testcases.find(t => t.id === tcId);
@@ -742,7 +748,6 @@ const BugReportModule = {
       if (this.ui.editingId || this.ui.formTcId !== tcId || !document.getElementById('bugModalOverlay').classList.contains('active')) return;
       if (data.title && !f.title.value.trim()) f.title.value = data.title;
       if (data.severity) f.severity.value = data.severity;
-      if (data.priority) f.priority.value = data.priority;
       if (data.analysis && !f.description.value.trim()){
         f.description.value = data.analysis;
         f.description.closest('.field').hidden = false;
@@ -835,6 +840,10 @@ const BugReportModule = {
     this.ui.formTcId = tc ? tc.id : null;
 
     if (tc && !restore) this.TC_FIELDS.forEach(name => { if (!this.ui.tcEdited.has(name)) f[name].value = this.tcValue(tc, name); });
+    // Evidence links from the test run carry over — only URLs, since Attachments rejects non-URL lines.
+    if (tc && !restore && !f.attachments.value.trim()){
+      f.attachments.value = (String(tc.evidence || '').match(/https?:\/\/[^\s<>"']+/g) || []).join('\n');
+    }
     Object.entries(this.TC_COPIES).forEach(([flag, name]) => {
       const box = f[flag], wrap = box.closest('.tc-copy-check'), el = f[name];
       const src = this.tcValue(tc, name);
@@ -1158,7 +1167,10 @@ const BugReportModule = {
     const formOptions = name => [...document.querySelectorAll(`#bugForm [name="${name}"] option`)].map(o => o.value).filter(Boolean);
     const lists = {
       severity: formOptions('severity'), priority: formOptions('priority'), environment: formOptions('environment'),
-      status: this.STATUS, assignee: (App.state.settings.users || []).map(u => u.email).filter(Boolean)
+      status: this.STATUS,
+      assignee: (App.state.settings.users || [])
+        .filter(u => !Auth.currentWorkspaceId() || WorkspaceCalc.userWorkspaceIds(u).includes(Auth.currentWorkspaceId()))
+        .map(u => u.email).filter(Boolean)
     };
     let cols = this.IMPORT_COLUMNS;
     const sample = {

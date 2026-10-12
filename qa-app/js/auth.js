@@ -191,8 +191,12 @@ const Auth = {
 
   /* <option>s for an "Assign ke" select — every registered account. Keeps a
      no-longer-registered assignee selectable so editing doesn't silently drop it. */
-  userOptions(selected = ''){
-    const users = (App.state.settings.users || []).map(u => u.email).filter(Boolean);
+  /* workspaceId given: only members of that workspace (the current assignee is
+     kept even if they've left it, so editing doesn't silently unassign). */
+  userOptions(selected = '', workspaceId = ''){
+    const users = (App.state.settings.users || [])
+      .filter(u => !workspaceId || WorkspaceCalc.userWorkspaceIds(u).includes(workspaceId))
+      .map(u => u.email).filter(Boolean);
     if (selected && !users.some(e => this.normalizeEmail(e) === this.normalizeEmail(selected))) users.push(selected);
     return `<option value="">— Belum di-assign —</option>` + users.sort()
       .map(e => `<option value="${escapeHtml(e)}" ${this.normalizeEmail(e) === this.normalizeEmail(selected) ? 'selected' : ''}>${escapeHtml(e)}</option>`).join('');
