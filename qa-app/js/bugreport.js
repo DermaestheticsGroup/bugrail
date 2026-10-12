@@ -408,10 +408,10 @@ const BugReportModule = {
   openDetail(id, asPage = false){
     const bug = this.all().find(b => b.id === id);
     if (!bug) return;
+    if (this.ui.detailId !== id) this.ui.chatTab = 'comment'; // a live redraw of the same bug keeps the tab
     this.ui.detailId = id;
-    this.ui.chatTab = 'comment';
     document.querySelectorAll('#bugChatTabs .bug-chat-tab').forEach(el => {
-      el.classList.toggle('active', el.dataset.chatTab === 'comment');
+      el.classList.toggle('active', el.dataset.chatTab === this.ui.chatTab);
     });
     // In the popup the ID opens the full page; on the page it's there to copy.
     document.getElementById('bugDetailTitle').innerHTML = `Detail Bug — ${this.bugKeyLink(bug)}`;
@@ -541,6 +541,11 @@ const BugReportModule = {
       `;
     }).join('');
     list.scrollTop = newestFirst ? 0 : list.scrollHeight;
+  },
+
+  // Live push (App.startLive) redrew the page behind the popup — redraw the open popup too.
+  refreshOpenDetail(){
+    if (document.getElementById('bugDetailModalOverlay').classList.contains('active')) this.openDetail(this.ui.detailId);
   },
 
   addComment(id){

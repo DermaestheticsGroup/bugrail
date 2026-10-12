@@ -110,5 +110,17 @@ function makeEnv(server){
   await Promise.all([q.S.set('qa_testcases', [{ id: 'a' }]), q.S.set('qa_testcases', [{ id: 'a' }, { id: 'b' }])]);
   assert.ok(!q.S.hasUnsynced());
 
+  // 8) refreshKey (live chat poll): pulls another tab's write, then no-ops while nothing changed.
+  const live = { up: true, putStatus: 200, data: { qa_bugs: [] } };
+  const L1 = makeEnv(live), L2 = makeEnv(live);
+  await L1.S.hydrate(); await L2.S.hydrate();
+  assert.strictEqual(await L2.S.refreshKey('qa_bugs'), false, 'nothing new yet');
+  await L1.S.set('qa_bugs', [{ id: 'chat' }]);
+  assert.strictEqual(await L2.S.refreshKey('qa_bugs'), true, 'newer rev pulled');
+  assert.strictEqual(L2.S.get('qa_bugs')[0].id, 'chat');
+  assert.strictEqual(await L2.S.refreshKey('qa_bugs'), false, 'same rev: nothing to redraw');
+  await L2.S.set('qa_bugs', [{ id: 'chat' }, { id: 'b' }]);
+  assert.deepStrictEqual(L2.puts, ['qa_bugs'], 'rev from refreshKey accepted first try (no 409)');
+
   console.log('storage.check.js: all checks passed');
 })().catch(e => { console.error(e); process.exit(1); });

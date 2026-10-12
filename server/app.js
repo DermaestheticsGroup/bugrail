@@ -166,6 +166,23 @@ async function validateBugsWrite(req, res, next){
   }
 }
 
+// Live push (Server-Sent Events): every open browser keeps GET /api/events open and is told
+// which key changed after each saved PUT, then re-reads just that key. Only key + rev go out.
+// ponytail: in-memory listener set — fine for one Node process; needs Redis pub/sub if scaled out.
+const listeners = new Set();
+function broadcast(msg){
+  const line = `data: ${JSON.stringify(msg)}\n\n`;
+  listeners.forEach(res => res.write(line));
+}
+app.get('/api/events', (req, res) => {
+  res.set({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no' }); // no-buffer: nginx
+  res.flushHeaders();
+  res.write(': connected\n\n');
+  listeners.add(res);
+  const ping = setInterval(() => res.write(': ping\n\n'), 25000); // keeps proxies from closing an idle stream
+  req.on('close', () => { clearInterval(ping); listeners.delete(res); });
+});
+
 app.put('/api/kv/:key', async (req, res, next) => {
   if (req.params.key === 'qa_files') return validateFilesWrite(req, res, next);
   if (req.params.key === 'qa_bugs') return validateBugsWrite(req, res, next);
@@ -189,6 +206,7 @@ app.put('/api/kv/:key', async (req, res, next) => {
       { upsert: true, returnDocument: 'after' }
     );
     res.json({ ok: true, rev: doc.rev });
+    broadcast({ key, rev: doc.rev });
   } catch (err) {
     // Upsert collided with the existing doc => its rev moved on: someone saved first.
     if (err && err.code === 11000) return res.status(409).json({ error: 'Data sudah diubah di tab/user lain.', stale: true });

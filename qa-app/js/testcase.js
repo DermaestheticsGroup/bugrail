@@ -611,7 +611,7 @@ const TestCaseModule = {
     if (from !== f.status.value) ActivityLog.record('testcase_update', `Test Case ${id} status diubah dari ${from} ke ${f.status.value} (Run)`);
     this.closeExecute();
     this.render();
-    Toast.show(`Hasil eksekusi ${this.ui.executingId} disimpan.`, 'success');
+    Toast.show('Hasil eksekusi test case berhasil disimpan.', 'success');
     // Newly failed: open a bug draft (AI-analysed) straight away.
     // Paused for now — uncomment to turn back on. "🐞 Create Bug" still opens the bug form (AI draft paused too).
     // if (from !== 'Failed' && f.status.value === 'Failed' && Auth.can('bugreport_create')) this.createBugFromTestCase(this.ui.executingId);
