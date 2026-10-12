@@ -3,11 +3,15 @@
    Client-side only: no real security, just an access gate to
    stop accidental destructive actions (e.g. delete file/folder).
    Accounts persist in localStorage (settings.users). Session
-   role/email live in localStorage — shared by every tab, kept until Logout.
+   role/email live in sessionStorage (per tab). The latest login is also kept in
+   localStorage with a session id: a new tab starts from it, and on every load a
+   tab stays logged in only while that id is still current (Logout anywhere ends it).
    ========================================================== */
 
 const Auth = {
   ROLE_KEY: 'qa_role',
+  SESSION_SEED_KEY: 'qa_session_seed',
+  SID_KEY: 'qa_sid',
   EMAIL_KEY: 'qa_email',
   WORKSPACE_KEY: 'qa_workspace',
   DEFAULT_USERS: [
@@ -67,11 +71,11 @@ const Auth = {
 
   /* ---- Session ---- */
   role(){
-    const r = localStorage.getItem(this.ROLE_KEY);
+    const r = sessionStorage.getItem(this.ROLE_KEY);
     return r === 'user' ? 'user_umum' : r; // legacy role value from before the permission matrix
   },
   isAdmin(){ return this.role() === 'admin'; },
-  currentEmail(){ return localStorage.getItem(this.EMAIL_KEY); },
+  currentEmail(){ return sessionStorage.getItem(this.EMAIL_KEY); },
   // Active workspace id, or null for none / admin's "Semua workspace" (see workspace.js).
   currentWorkspaceId(){
     const v = sessionStorage.getItem(this.WORKSPACE_KEY);
@@ -252,8 +256,11 @@ const Auth = {
       return;
     }
     errEl.textContent = '';
-    localStorage.setItem(this.ROLE_KEY, user.role);
-    localStorage.setItem(this.EMAIL_KEY, this.normalizeEmail(email));
+    sessionStorage.setItem(this.ROLE_KEY, user.role);
+    sessionStorage.setItem(this.EMAIL_KEY, this.normalizeEmail(email));
+    const sid = IdGen.uid('S');
+    sessionStorage.setItem(this.SID_KEY, sid);
+    try{ localStorage.setItem(this.SESSION_SEED_KEY, JSON.stringify({ role: user.role, email: this.normalizeEmail(email), sid })); }catch(e){}
     sessionStorage.removeItem(this.WORKSPACE_KEY);
     this._freshLogin = true;
     if (WorkspacePicker.resolveOnStart()) this.startApp();
@@ -265,8 +272,10 @@ const Auth = {
     // Let the log (and any other save) reach the server first. Anything still
     // unsynced stays in localStorage and is re-sent on next boot, so no prompt.
     await Storage.settle();
-    localStorage.removeItem(this.ROLE_KEY);
-    localStorage.removeItem(this.EMAIL_KEY);
+    sessionStorage.removeItem(this.ROLE_KEY);
+    sessionStorage.removeItem(this.EMAIL_KEY);
+    sessionStorage.removeItem(this.SID_KEY);
+    try{ localStorage.removeItem(this.SESSION_SEED_KEY); }catch(e){}
     sessionStorage.removeItem(this.WORKSPACE_KEY);
     Storage.leaving = true;
     location.reload();
@@ -303,6 +312,18 @@ const Auth = {
 
   init(){
     this.ensureSeedUsers();
+    let seed = null;
+    try{ seed = JSON.parse(localStorage.getItem(this.SESSION_SEED_KEY)); }catch(e){}
+    // This tab's login was ended (Logout / new login in another tab): drop it.
+    if (this.role() && (!seed || seed.sid !== sessionStorage.getItem(this.SID_KEY))){
+      [this.ROLE_KEY, this.EMAIL_KEY, this.SID_KEY, this.WORKSPACE_KEY].forEach(k => sessionStorage.removeItem(k));
+    }
+    // New tab (or the old one ended): start from the browser's current login, if any.
+    if (!this.role() && seed && seed.role && seed.email && seed.sid){
+      sessionStorage.setItem(this.ROLE_KEY, seed.role);
+      sessionStorage.setItem(this.EMAIL_KEY, seed.email);
+      sessionStorage.setItem(this.SID_KEY, seed.sid);
+    }
     this.bindLoginScreen();
     if (this.role() && WorkspacePicker.resolveOnStart()) this.startApp();
     // else: stays in pre-auth state, login screen visible, App.init() deferred until login().
@@ -332,13 +353,6 @@ const Auth = {
     return pass === total;
   }
 };
-
-// Logged out (or in as someone else) in another tab: this tab follows.
-if (typeof window !== 'undefined') window.addEventListener('storage', e => {
-  if (e.key !== Auth.EMAIL_KEY) return;
-  Storage.leaving = true;
-  location.reload();
-});
 
 document.addEventListener('DOMContentLoaded', async () => {
   await Storage.hydrate();

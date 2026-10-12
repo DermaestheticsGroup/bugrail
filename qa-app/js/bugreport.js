@@ -37,7 +37,10 @@ const BugReportModule = {
     code = String(code || '').trim();
     if (!code) return null;
     const ws = fileWorkspace(this.ui.activeFileId);
-    const tc = App.state.testcases.find(t => (tcCode(t) === code || t.id === code) && fileWorkspace(t.fileId) === ws)
+    const hit = t => tcCode(t) === code || t.id === code;
+    // Same file first (codes can repeat across files/workspaces), then same workspace, then anywhere.
+    const tc = App.state.testcases.find(t => hit(t) && t.fileId === this.ui.activeFileId)
+      || App.state.testcases.find(t => hit(t) && fileWorkspace(t.fileId) === ws)
       || App.state.testcases.find(t => tcCode(t) === code || t.id === code);
     return tc ? tc.id : null;
   },
@@ -1068,6 +1071,7 @@ const BugReportModule = {
         // Read every sheet (same as Test Case import). A row with an empty Module
         // takes the sheet's name, unless it's a generic "Sheet1"/"Template".
         let count = 0, sheetsUsed = 0;
+        const unknownTc = new Set();
         wb.SheetNames.forEach(sheetName => {
           const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { defval: '' });
           const sheetModule = /^(sheet\s*\d*|template)$/i.test(sheetName.trim()) ? '' : sheetName.trim();
@@ -1076,19 +1080,31 @@ const BugReportModule = {
             // Template headers mark required columns with "*": "Bug Title *" -> "Bug Title".
             const r = {};
             Object.keys(raw).forEach(k => { r[k.replace(/\s*\*\s*$/, '').trim()] = typeof raw[k] === 'string' ? raw[k].trim() : raw[k]; });
-            const title = r['Bug Title'] || r.title;
-            const actualResult = r['Actual Result'] || r.actualResult;
-            if (!title || !actualResult) return;
-            const testCaseId = this.tcIdFromCode(r['Test Case ID'] || r.testCaseId);
+            const tcRef = String(r['Test Case ID'] || r.testCaseId || '').trim();
+            const testCaseId = this.tcIdFromCode(tcRef);
+            if (tcRef && !testCaseId) unknownTc.add(tcRef);
             const tc = testCaseId ? App.state.testcases.find(t => t.id === testCaseId) : null; // same auto-fill as the form
+            const title = r['Bug Title'] || r.title;
+            // Blank Actual Result: take the one written when the test case was run.
+            const actualResult = r['Actual Result'] || r.actualResult || (tc && tc.actualResult) || '';
+            if (!title || !actualResult) return;
+            // Text identical to the test case (pre-filled template) counts as "from the test case".
+            const same = (v, src) => tc && String(v || '').trim() === String(src || '').trim();
+            let ownSteps = r['Test Steps'] || r.steps, ownExpected = r['Expected Result'] || r.expectedResult;
+            if (same(ownSteps, stepsHtmlToText(tc ? tc.steps || '' : ''))) ownSteps = '';
+            if (same(ownExpected, tc && tc.expectedResult)) ownExpected = '';
             const statuses = this.STATUS;
             const status = statuses.includes(r.Status || r.status) ? (r.Status || r.status) : (statuses[0] || 'Open');
             const bug = {
               id: IdGen.uid('BUG'), code: this.nextCode(this.ui.activeFileId), testCaseId,
               module: String(r.Module || r.module || (tc && tc.module) || sheetModule).trim(),
               scenario: r.Scenario || r.scenario || (tc && tc.scenario) || '',
-              expectedResult: r['Expected Result'] || r.expectedResult || (tc && tc.expectedResult) || '',
-              steps: (r['Test Steps'] || r.steps) ? textToStepsHtml(r['Test Steps'] || r.steps) : ((tc && tc.steps) || ''),
+              preconditions: r['Pre-condition'] || r.preconditions || (tc && tc.preconditions) || '',
+              testData: r['Test Data'] || r.testData || (tc && tc.testData) || '',
+              expectedResult: ownExpected || (tc && tc.expectedResult) || '',
+              steps: ownSteps ? textToStepsHtml(ownSteps) : ((tc && tc.steps) || ''),
+              // Copied from the test case = the form's "Dari test case" ticks.
+              useTcSteps: !!(tc && !ownSteps && tc.steps), useTcExpected: !!(tc && !ownExpected && tc.expectedResult),
               tester: r.Tester || r.tester || Auth.currentEmail() || '', title, description: r.Description || r.description || '',
               actualResult, severity: r.Severity || r.severity || 'Medium',
               priority: r.Priority || r.priority || 'Medium', status,
@@ -1109,6 +1125,7 @@ const BugReportModule = {
         ActivityLog.record('bugreport_create', `${count} bug report di-import dari ${sheetsUsed} sheet`);
         this.render();
         Toast.show(`${count} bug report dari ${sheetsUsed} sheet berhasil di-import.`, count ? 'success' : 'info');
+        if (unknownTc.size) Toast.show(`Test Case ID tidak ditemukan (bug tetap di-import tanpa link): ${[...unknownTc].slice(0, 5).join(', ')}${unknownTc.size > 5 ? ` +${unknownTc.size - 5}` : ''}`, 'error');
       }catch(err){
         console.error(err);
         Toast.show('Gagal membaca file. Pastikan format sesuai template.', 'error');
@@ -1121,6 +1138,7 @@ const BugReportModule = {
      columns end with " *" (importFile() strips it). Dropdown choices are read
      from the form so they stay in sync. */
   IMPORT_COLUMNS: [
+    { label:'Test Case ID', key:'testCaseId', width:14 },
     { label:'Module', key:'module', width:16 },
     { label:'Scenario', key:'scenario', width:28 }, { label:'Test Steps', key:'steps', width:30 },
     { label:'Expected Result', key:'expectedResult', width:26 }, { label:'Tester', key:'tester', width:24 },
@@ -1134,13 +1152,15 @@ const BugReportModule = {
     { label:'Attachment', key:'attachments', width:30 }
   ],
 
+  TEMPLATE_FROM_TC_KEYS: ['testCaseId', 'module', 'scenario', 'actualResult', 'title', 'severity', 'priority', 'assignee'],
+
   async downloadImportTemplate(){
     const formOptions = name => [...document.querySelectorAll(`#bugForm [name="${name}"] option`)].map(o => o.value).filter(Boolean);
     const lists = {
       severity: formOptions('severity'), priority: formOptions('priority'), environment: formOptions('environment'),
       status: this.STATUS, assignee: (App.state.settings.users || []).map(u => u.email).filter(Boolean)
     };
-    const cols = this.IMPORT_COLUMNS;
+    let cols = this.IMPORT_COLUMNS;
     const sample = {
       module:'Login', scenario:'Login dengan kredensial valid', steps:'1. Buka halaman login\n2. Isi email & password\n3. Klik Login',
       expectedResult:'User masuk ke Dashboard', tester:'',
@@ -1150,41 +1170,62 @@ const BugReportModule = {
       device:'Samsung A54', buildVersion:'v1.2.3', attachments:''
     };
 
+    /* Inside a file: one row per Failed test case that has no bug yet, everything
+       filled from the test case — the tester only types the Bug Title (yellow).
+       Rows left without a title are skipped on import. */
+    const failed = this.ui.activeFileId
+      ? App.state.testcases.filter(t => t.fileId === this.ui.activeFileId && t.status === 'Failed' && !App.state.bugs.some(b => b.testCaseId === t.id))
+      : [];
+    // Failed-test-case template: steps / expected / tester / status come from the
+    // test case and the importer on import, so only what a tester checks or types stays.
+    if (failed.length) cols = cols.filter(c => this.TEMPLATE_FROM_TC_KEYS.includes(c.key));
+    const rows = failed.length ? failed.map(t => ({
+      testCaseId: tcCode(t), module: t.module || '', scenario: t.scenario || '', steps: stepsHtmlToText(t.steps || ''),
+      expectedResult: t.expectedResult || '', tester: Auth.currentEmail() || '', actualResult: t.actualResult || '', title: '',
+      severity: 'Medium', priority: 'Medium', status: lists.status[0] || 'Open'
+    })) : [sample];
+
+    // One sheet per module (first-seen order, like the Test Case export); the sample stays one "Template" sheet.
+    const byModule = new Map();
+    rows.forEach(r => { const m = failed.length ? (r.module || 'Tanpa Module') : 'Template'; byModule.set(m, [...(byModule.get(m) || []), r]); });
     const wb = new ExcelJS.Workbook();
-    const ws = wb.addWorksheet('Template');
-    ws.columns = cols.map(c => ({ header: c.label, key: c.key, width: c.width }));
-
-    const headerRow = ws.getRow(1);
-    headerRow.eachCell(cell => {
-      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2F5496' } };
-      cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-    });
-
-    ws.addRow(cols.map(c => sample[c.key] ?? ''));
-
+    const usedNames = new Set();
     const thin = { style: 'thin', color: { argb: 'FFB0B7C3' } };
-    ws.eachRow(row => {
-      row.eachCell(cell => {
-        cell.border = { top: thin, left: thin, bottom: thin, right: thin };
-        if (cell.row !== 1) cell.alignment = { vertical: 'top', wrapText: true };
+    const titleCol = cols.findIndex(c => c.key === 'title') + 1;
+    byModule.forEach((sheetRows, moduleName) => {
+      const ws = wb.addWorksheet(TestCaseModule.safeSheetName(moduleName, usedNames));
+      ws.columns = cols.map(c => ({ header: c.label, key: c.key, width: c.width }));
+      ws.getRow(1).eachCell(cell => {
+        cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2F5496' } };
+        cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
       });
+      sheetRows.forEach(r => ws.addRow(cols.map(c => r[c.key] ?? '')));
+      ws.eachRow(row => {
+        row.eachCell(cell => {
+          cell.border = { top: thin, left: thin, bottom: thin, right: thin };
+          if (cell.row !== 1) cell.alignment = { vertical: 'top', wrapText: true };
+        });
+      });
+      if (failed.length){
+        for (let r = 2; r <= sheetRows.length + 1; r++) ws.getCell(r, titleCol).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF2CC' } };
+      }
+      // Inline dropdowns (Excel caps an inline list at 255 chars — skip one that's longer, e.g. many users).
+      cols.forEach((c, i) => {
+        const values = c.listFrom && lists[c.listFrom];
+        const formula = values && values.length ? `"${values.join(',')}"` : '';
+        if (!formula || formula.length > 257) return;
+        const letter = ws.getColumn(i + 1).letter;
+        for (let r = 2; r <= Math.max(500, sheetRows.length + 1); r++) ws.getCell(`${letter}${r}`).dataValidation = { type: 'list', allowBlank: true, formulae: [formula] };
+      });
+      ws.views = [{ state: 'frozen', ySplit: 1 }];
     });
-
-    // Inline dropdowns (Excel caps an inline list at 255 chars — skip one that's longer, e.g. many users).
-    cols.forEach((c, i) => {
-      const values = c.listFrom && lists[c.listFrom];
-      const formula = values && values.length ? `"${values.join(',')}"` : '';
-      if (!formula || formula.length > 257) return;
-      const letter = ws.getColumn(i + 1).letter;
-      for (let r = 2; r <= 500; r++) ws.getCell(`${letter}${r}`).dataValidation = { type: 'list', allowBlank: true, formulae: [formula] };
-    });
-
-    ws.views = [{ state: 'frozen', ySplit: 1 }];
 
     const buf = await wb.xlsx.writeBuffer();
     downloadBlob(buf, 'Template_Import_BugReport.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    Toast.show('Template import Bug Report diunduh.', 'success');
+    Toast.show(failed.length
+      ? `Template berisi ${failed.length} test case Failed — cukup isi Bug Title (kolom kuning).`
+      : 'Template import Bug Report diunduh.', 'success');
   },
 
   bindStaticEvents(){

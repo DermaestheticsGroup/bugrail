@@ -150,13 +150,15 @@ const App = {
   async refreshFromServer(page){
     if (Date.now() - (this._lastRefresh || 0) < 15000) return;
     this._lastRefresh = Date.now();
-    if (!(await Storage.refresh())) return;
-    // Don't swap data under an open form, or if the user already moved on.
-    if (this.state.currentPage !== page || document.querySelector('.modal-overlay.active')) return;
+    if (await Storage.refresh()) this.reloadFromStorage();
+  },
+  /* Storage's cache was replaced/merged with server data: App.state must follow at
+     once — saving an old App.state with the new rev would wipe the newer rows. */
+  reloadFromStorage(){
     this.loadAll();
     this.renderSidebarCounts();
     this._refreshing = true;
-    this.goTo(page, { fromHistory: true });
+    this.goTo(this.state.currentPage, { fromHistory: true });
     this._refreshing = false;
   },
 
@@ -234,6 +236,7 @@ const App = {
 
   /* ---- Init ---- */
   init(){
+    Storage.onMerged = () => this.reloadFromStorage(); // another tab/user saved first, rows merged
     this.loadAll();
     this.applyTheme();
     this.renderSidebarCounts();

@@ -49,18 +49,18 @@ assert.strictEqual(W.autoEnter([W.ALL], {}), W.ALL, 'admin with no workspaces go
 
 // Auth: admin is filtered by the active workspace unless on "Semua workspace"
 const mem = () => ({ d: {}, getItem(k){ return this.d[k] ?? null; }, setItem(k, v){ this.d[k] = v; } });
-const actx = { sessionStorage: mem(), localStorage: mem(), // session (role/email) in localStorage, workspace per tab
+const actx = { sessionStorage: mem(), localStorage: mem(),
   document: { addEventListener(){} }, WorkspaceCalc: W };
 vm.createContext(actx);
 vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/auth.js'), 'utf8') + '\nthis.Auth = Auth;', actx);
-const A = actx.Auth, ss = actx.sessionStorage, ls = actx.localStorage;
+const A = actx.Auth, ss = actx.sessionStorage;
 const files = [{ id: 'F1', workspaceId: 'A' }, { id: 'F2', workspaceId: 'B' }, { id: 'F3' }];
-ls.setItem(A.ROLE_KEY, 'admin'); ss.setItem(A.WORKSPACE_KEY, W.ALL);
+ss.setItem(A.ROLE_KEY, 'admin'); ss.setItem(A.WORKSPACE_KEY, W.ALL);
 assert.strictEqual(A.currentWorkspaceId(), null);
 assert.strictEqual(A.visibleFiles(files).length, 3, 'admin on all sees every file');
 ss.setItem(A.WORKSPACE_KEY, 'A');
 assert.strictEqual(json(A.visibleFiles(files).map(f => f.id)), '["F1","F3"]', 'admin on A: A + shared only');
-ls.setItem(A.ROLE_KEY, 'qa_internal'); ss.setItem(A.WORKSPACE_KEY, W.ALL);
+ss.setItem(A.ROLE_KEY, 'qa_internal'); ss.setItem(A.WORKSPACE_KEY, W.ALL);
 assert.strictEqual(json(A.visibleFiles(files).map(f => f.id)), '["F3"]', 'non-admin can never use ALL');
 
 // Shared bug link: which workspace to open (null = no access)

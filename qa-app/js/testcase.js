@@ -155,13 +155,14 @@ const TestCaseModule = {
     document.getElementById('tcActiveFileName').textContent = activeFile
       ? `📁 ${activeFile.name}`
       : `🔎 Hasil pencarian "${this.ui.search}" (semua file)`;
-    document.getElementById('tcActiveFileHint').textContent = activeFile
-      ? `(${this.fileCount(this.ui.activeFileId)} test case)`
-      : `${this.filtered().length} hasil ditemukan`;
-
     this.renderFilterOptions();
     const rows = this.filtered();
     const total = rows.length;
+    // Follows search / filter like Excel's status bar: "(25 dari 439 data ditemukan)" while narrowed.
+    const fileTotal = activeFile ? this.fileCount(this.ui.activeFileId) : 0;
+    document.getElementById('tcActiveFileHint').textContent = activeFile
+      ? (total === fileTotal ? `(${fileTotal} test case)` : `(${total} dari ${fileTotal} data ditemukan)`)
+      : `${total} hasil ditemukan`;
     const totalPages = Math.max(1, Math.ceil(total / this.ui.pageSize));
     if (this.ui.page > totalPages) this.ui.page = totalPages;
     const start = (this.ui.page - 1) * this.ui.pageSize;
@@ -686,7 +687,7 @@ const TestCaseModule = {
         // empty Module takes the sheet's name (unless it's a generic "Sheet1"/"Template").
         sheets = wb.SheetNames.map(name => {
           const sheetModule = /^(sheet\s*\d*|template)$/i.test(name.trim()) ? '' : name.trim();
-          return TC_IMPORT.parseSheet(name, XLSX.utils.sheet_to_json(wb.Sheets[name], { defval: '' }), sheetModule, this.TYPE_TEST);
+          return TC_IMPORT.parseSheet(name, XLSX.utils.sheet_to_json(wb.Sheets[name], { defval: '' }), sheetModule, this.TYPE_TEST, this.STATUS);
         });
       }catch(err){
         console.error(err);
@@ -708,7 +709,7 @@ const TestCaseModule = {
           id: IdGen.uid('TC'), code: this.nextCode(r.module, this.ui.activeFileId), module: r.module, roleUser: r.roleUser || '',
           scenario: r.scenario, testCase: r.testCase || '', preconditions: r.preconditions || '',
           steps: textToStepsHtml(r.steps || ''), testData: r.testData || '', expectedResult: r.expectedResult || '',
-          actualResult: '', evidence: r.evidence || '', status: 'Open', typeTest: r.typeTest || 'Positive',
+          actualResult: r.actualResult || '', evidence: r.evidence || '', status: r.status || 'Open', typeTest: r.typeTest || 'Positive',
           executionDate: '', customFields: {}, fileId: this.ui.activeFileId, createdBy: Auth.currentEmail() || '', createdAt: nowISO()
         });
       });
