@@ -613,7 +613,7 @@ const TestCaseModule = {
     this.render();
     Toast.show(`Hasil eksekusi ${this.ui.executingId} disimpan.`, 'success');
     // Newly failed: open a bug draft (AI-analysed) straight away.
-    // Paused for now — uncomment to turn back on. "🐞 Create Bug" still opens the AI draft.
+    // Paused for now — uncomment to turn back on. "🐞 Create Bug" still opens the bug form (AI draft paused too).
     // if (from !== 'Failed' && f.status.value === 'Failed' && Auth.can('bugreport_create')) this.createBugFromTestCase(this.ui.executingId);
   },
 
