@@ -79,11 +79,10 @@ export async function pullAll(db: Db, t: Transport, clock?: Clock): Promise<numb
     if ('reset' in page) {
       const reset = db.transactionAsync(async (tx: Tx) => {
         // Unpushed local writes survive; the next push re-sends them and the server rejects what is no longer writable.
+        // Parked rejections and their local rows stay until the user dismisses them.
         for (const tbl of SYNCED_TABLES) {
-          await tx.run(`DELETE FROM ${tbl} WHERE id NOT IN (SELECT row_id FROM outbox WHERE tbl = ?)`, tbl);
+          await tx.run(`DELETE FROM ${tbl} WHERE id NOT IN (SELECT row_id FROM outbox WHERE tbl = ?) AND id NOT IN (SELECT row_id FROM rejected WHERE tbl = ?)`, tbl, tbl);
         }
-        // Parked rejections whose local row is gone have nothing left to show or dismiss.
-        await tx.run('DELETE FROM rejected WHERE NOT EXISTS (SELECT 1 FROM outbox o WHERE o.tbl = rejected.tbl AND o.row_id = rejected.row_id)');
         for (const [k, v] of [['since', 0], ['access_version', page.av], ['schema_version', page.sv]]) {
           await tx.run('INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value', k, String(v));
         }

@@ -4,7 +4,7 @@ import { applyMigrations } from '../db/migrate';
 import { SCHEMA_VERSION } from '../db/schema/index';
 import { pull, push } from '../lib/sync/server';
 import { USERS, seedUsers } from '../lib/sync/users';
-import { listRejected, localWrite, pullAll, pushOutbox, type Transport } from '../lib/sync/client';
+import { dismissRejected, listRejected, localWrite, pullAll, pushOutbox, type Transport } from '../lib/sync/client';
 import type { Db, Row } from '../lib/db-types';
 
 let server: Db;
@@ -66,13 +66,16 @@ describe('client meta and rejected bookkeeping', () => {
     expect((await listRejected(a)).map((p) => [p.row_id, p.tbl])).toEqual([['Z', 'bug_events']]);
   });
 
-  test('a reset drops rejected entries whose local row it removed', async () => {
+  test('a reset keeps parked rejections and their local rows until dismissed', async () => {
     const v = await device();
     await localWrite(v, 'bugs', bugRow({ id: 'N1', hlc: h(5), status_hlc: h(5) }));
     await pushOutbox(v, direct('vendor'));
     expect((await listRejected(v)).length).toBe(1);
     await pullAll(v, direct('vendor'));
-    expect(await v.get("SELECT id FROM bugs WHERE id = 'N1'")).toBeFalsy();
+    expect(await v.get("SELECT id FROM bugs WHERE id = 'N1'")).toBeTruthy();
+    expect((await listRejected(v)).map((p) => p.row_id)).toEqual(['N1']);
+    await dismissRejected(v, 'N1');
     expect(await listRejected(v)).toEqual([]);
+    expect(await v.get("SELECT id FROM bugs WHERE id = 'N1'")).toBeFalsy();
   });
 });
