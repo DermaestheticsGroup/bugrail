@@ -1,7 +1,5 @@
+import Entry from '@/components/entry';
+
 export default function Home() {
-  return (
-    <main>
-      <h1>BugRail</h1>
-    </main>
-  );
+  return <Entry />;
 }

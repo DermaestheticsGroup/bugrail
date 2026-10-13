@@ -14,5 +14,5 @@ export async function POST(req: Request) {
   s.userId = r.userId;
   s.sessionVersion = r.sessionVersion;
   await s.save();
-  return isForm ? Response.redirect(new URL('/', req.url), 303) : Response.json({ ok: true });
+  return isForm ? Response.redirect(new URL('/', req.url), 303) : Response.json({ ok: true, userId: r.userId });
 }
