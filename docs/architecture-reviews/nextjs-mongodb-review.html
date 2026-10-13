@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Architecture review for bugrail: Next.js + MongoDB</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+    </script>
+    <style>
+      .seam { stroke-dasharray: 4 4; }
+      .leak { stroke: #dc2626; }
+      .deep { background: linear-gradient(135deg, #0f172a, #1e293b); }
+    </style>
+  </head>
+  <body class="bg-stone-50 text-slate-900 font-sans">
+    <main class="max-w-5xl mx-auto px-6 py-12 space-y-12">
+      <header class="space-y-3">
+        <p class="text-xs uppercase tracking-wider text-slate-500">bugrail · 2026-10-13 · plan 1 of 2</p>
+        <h1 class="font-serif text-4xl">Next.js migration, MongoDB kept</h1>
+        <div class="flex flex-wrap gap-5 text-xs text-slate-600">
+          <span class="flex items-center gap-2"><span class="inline-block w-4 h-4 border border-slate-500 bg-white"></span>module</span>
+          <span class="flex items-center gap-2"><svg width="28" height="6"><line x1="0" y1="3" x2="28" y2="3" stroke="#64748b" stroke-width="2" class="seam"/></svg>seam</span>
+          <span class="flex items-center gap-2"><svg width="28" height="6"><line x1="0" y1="3" x2="28" y2="3" stroke-width="2" class="leak"/></svg>leakage</span>
+          <span class="flex items-center gap-2"><span class="inline-block w-4 h-4 deep border-2 border-slate-900"></span>deep module</span>
+        </div>
+        <p class="font-mono text-sm text-slate-500">plan: docs/superpowers/plans/2026-10-13-nextjs-mongodb.md</p>
+      </header>
+
+      <section id="candidates" class="space-y-10">
+
+        <!-- 1 -->
+        <article id="c1" class="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+          <h2 class="font-serif text-2xl">Replace the kv blob store with per-document repo modules</h2>
+          <div class="flex gap-2 text-xs"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Strong</span><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700">ports &amp; adapters</span></div>
+          <ul class="font-mono text-sm text-slate-600"><li>server/app.js (PUT /api/kv/:key, rev lock)</li><li>qa-app/js/utils.js (Storage, KvMerge, qa_unsynced_v2)</li><li>→ web/lib/repo/*.ts, web/lib/db.ts</li></ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4"><p class="text-xs uppercase tracking-wider text-slate-500 mb-2">Before</p>
+              <pre class="mermaid">
+flowchart TB
+  UI[17 modules] --> S[Storage cache]
+  S --> M[KvMerge 3-way]
+  S -->|whole array PUT + rev| API[PUT /api/kv/:key]
+  API --> KV[(kv_store: 6 blobs)]
+  API -.409 stale.-> M
+  classDef leak stroke:#dc2626,stroke-width:2px;
+  class M,API leak
+              </pre></div>
+            <div class="rounded-lg border border-slate-200 p-4"><p class="text-xs uppercase tracking-wider text-slate-500 mb-2">After</p>
+              <pre class="mermaid">
+flowchart TB
+  UI[React pages] --> A[Server Actions]
+  A --> R[lib/repo]
+  R -->|updateOne per doc| C[(testcases · bugs · files · users · …)]
+  classDef deep fill:#0f172a,color:#fff,stroke:#0f172a,stroke-width:3px;
+  class R deep
+              </pre></div>
+          </div>
+          <p><b>Problem:</b> one edit rewrites a whole collection blob, so a rev lock and a client 3-way merge exist only to survive it.</p>
+          <p><b>Solution:</b> normalize into 9 collections behind a repo module; each write touches one document.</p>
+          <ul class="list-disc pl-5 text-sm"><li>Delete KvMerge, rev, unsynced queue</li><li>Interface shrinks to per-entity calls</li><li>Locality: write bugs live in repo</li></ul>
+          <div class="rounded bg-amber-50 border border-amber-200 px-3 py-2 text-sm">ADR: kv_store kept read-only as rollback until 2 weeks post-cutover.</div>
+        </article>
+
+        <!-- 2 -->
+        <article id="c2" class="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+          <h2 class="font-serif text-2xl">Move authorization behind a server session seam</h2>
+          <div class="flex gap-2 text-xs"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Strong</span><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700">in-process</span></div>
+          <ul class="font-mono text-sm text-slate-600"><li>qa-app/js/auth.js (DEFAULT_USERS plaintext, Auth.can)</li><li>server/app.js (readClientAuth, validateFilesWrite, validateBugsWrite, validateSettingsWrite)</li><li>→ web/lib/auth.ts, web/lib/permissions.ts, web/middleware.ts</li></ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4 h-80 flex flex-col justify-center gap-2"><p class="text-xs uppercase tracking-wider text-slate-500">Before: call passes through</p>
+              <div class="h-12 border-l-4 border-slate-300 bg-slate-50 px-3 flex items-center text-xs uppercase tracking-wider">client Auth.can()</div>
+              <div class="h-12 border-l-4 border-red-500 bg-red-50 px-3 flex items-center text-xs uppercase tracking-wider">x-role / x-workspace headers (spoofable)</div>
+              <div class="h-12 border-l-4 border-slate-300 bg-slate-50 px-3 flex items-center text-xs uppercase tracking-wider">diff old blob vs new blob</div>
+              <div class="h-12 border-l-4 border-slate-300 bg-slate-50 px-3 flex items-center text-xs uppercase tracking-wider">3 validate*Write fns</div>
+            </div>
+            <div class="rounded-lg border border-slate-200 p-4 h-80 flex flex-col justify-center gap-2"><p class="text-xs uppercase tracking-wider text-slate-500">After</p>
+              <div class="h-12 border-l-4 border-slate-300 bg-slate-50 px-3 flex items-center text-xs uppercase tracking-wider">httpOnly session cookie</div>
+              <div class="h-40 deep text-white border-l-4 border-emerald-400 px-3 flex flex-col justify-center text-xs uppercase tracking-wider gap-1"><span>requirePermission · requireWorkspace</span><span class="text-slate-400 normal-case tracking-normal">bcrypt · role matrix · file ownership · share rule</span></div>
+            </div>
+          </div>
+          <p><b>Problem:</b> role and workspace come from client headers, and passwords are plaintext in settings.</p>
+          <p><b>Solution:</b> session identity on the server; every Server Action calls one permission module.</p>
+          <ul class="list-disc pl-5 text-sm"><li>Leverage: one interface, every action</li><li>Header spoofing closed</li><li>Diff-based rules become per-doc checks</li></ul>
+        </article>
+
+        <!-- 3 -->
+        <article id="c3" class="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+          <h2 class="font-serif text-2xl">Extract pure domain logic out of the UI globals</h2>
+          <div class="flex gap-2 text-xs"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Strong</span><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700">in-process</span></div>
+          <ul class="font-mono text-sm text-slate-600"><li>qa-app/js/utils.js (BUG_FORM, TC_IMPORT, statusTransitionRule, IdGen)</li><li>qa-app/js/report.js (ReportCalc) · notifications.js (NotifCalc) · workspace.js (WorkspaceCalc)</li><li>→ web/lib/domain/*.ts</li></ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4 h-80"><p class="text-xs uppercase tracking-wider text-slate-500 mb-3">Before: mass</p>
+              <div class="flex items-end gap-6 h-60">
+                <div class="flex flex-col items-center gap-1"><div class="w-16 bg-red-200 border border-red-400" style="height:200px"></div><span class="text-xs uppercase tracking-wider">interface</span></div>
+                <div class="flex flex-col items-center gap-1"><div class="w-16 bg-slate-200 border border-slate-400" style="height:220px"></div><span class="text-xs uppercase tracking-wider">impl</span></div>
+              </div><p class="text-xs text-slate-500">globals read App.state + DOM</p></div>
+            <div class="rounded-lg border border-slate-200 p-4 h-80"><p class="text-xs uppercase tracking-wider text-slate-500 mb-3">After: mass</p>
+              <div class="flex items-end gap-6 h-60">
+                <div class="flex flex-col items-center gap-1"><div class="w-16 bg-emerald-200 border border-emerald-500" style="height:40px"></div><span class="text-xs uppercase tracking-wider">interface</span></div>
+                <div class="flex flex-col items-center gap-1"><div class="w-16 deep border-2 border-slate-900" style="height:220px"></div><span class="text-xs uppercase tracking-wider">impl</span></div>
+              </div><p class="text-xs text-slate-500">pure fns: data in, data out</p></div>
+          </div>
+          <p><b>Problem:</b> domain rules are fused to <code>App.state</code> globals, so tests need the whole page.</p>
+          <p><b>Solution:</b> port them as pure TS functions first; UI and Server Actions both call them.</p>
+          <ul class="list-disc pl-5 text-sm"><li>9 check.js ports straight to Vitest</li><li>Deep: small interface, rich rules</li><li>Same rules client and server</li></ul>
+        </article>
+
+        <!-- 4 -->
+        <article id="c4" class="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+          <h2 class="font-serif text-2xl">Feed realtime from change streams</h2>
+          <div class="flex gap-2 text-xs"><span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800">Worth exploring</span><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700">local-substitutable</span></div>
+          <ul class="font-mono text-sm text-slate-600"><li>server/app.js (GET /api/events, broadcast, listeners)</li><li>→ web/app/api/events/route.ts</li></ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4"><p class="text-xs uppercase tracking-wider text-slate-500 mb-2">Before</p>
+              <pre class="mermaid">
+sequenceDiagram
+  participant T1 as Tab A
+  participant S as Express
+  participant T2 as Tab B
+  T1->>S: PUT qa_bugs (whole)
+  S-->>T2: SSE {key, rev}
+  T2->>S: GET /api/kv/qa_bugs (whole)
+              </pre></div>
+            <div class="rounded-lg border border-slate-200 p-4"><p class="text-xs uppercase tracking-wider text-slate-500 mb-2">After</p>
+              <pre class="mermaid">
+sequenceDiagram
+  participant T1 as Tab A
+  participant N as Next.js
+  participant DB as Mongo rs0
+  participant T2 as Tab B
+  T1->>N: updateBug(id)
+  N->>DB: updateOne
+  DB-->>N: change stream
+  N-->>T2: SSE {coll, id}
+              </pre></div>
+          </div>
+          <p><b>Problem:</b> in-memory listeners tie realtime to one process and each refresh re-reads a whole blob.</p>
+          <p><b>Solution:</b> change streams on a single-node replica set; the in-process broadcast is the second adapter.</p>
+          <ul class="list-disc pl-5 text-sm"><li>Two adapters justify the seam</li><li>Refresh one doc, not one blob</li></ul>
+          <div class="rounded bg-amber-50 border border-amber-200 px-3 py-2 text-sm">ADR: convert VM mongod to replica set rs0, or stay on in-process broadcast.</div>
+        </article>
+
+        <!-- 5 -->
+        <article id="c5" class="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+          <h2 class="font-serif text-2xl">Collapse 17 global modules into routed pages</h2>
+          <div class="flex gap-2 text-xs"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Strong</span><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700">in-process</span></div>
+          <ul class="font-mono text-sm text-slate-600"><li>qa-app/index.html (~1000 lines) · qa-app/js/*.js</li><li>→ web/app/(app)/[workspace]/{dashboard,testcases,bugs,board,summary,report,activity,settings,users,master}</li></ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4 h-80 relative"><p class="text-xs uppercase tracking-wider text-slate-500 mb-2">Before</p>
+              <div class="grid grid-cols-4 gap-1 text-[10px] uppercase tracking-wider">
+                <div class="border p-1">App</div><div class="border p-1">Auth</div><div class="border p-1">TestCase</div><div class="border p-1">BugReport</div>
+                <div class="border p-1">Dashboard</div><div class="border p-1">Summary</div><div class="border p-1">Report</div><div class="border p-1">Notif</div>
+                <div class="border p-1">Import</div><div class="border p-1">Export</div><div class="border p-1">Settings</div><div class="border p-1">Master</div>
+                <div class="border p-1">Users</div><div class="border p-1">Activity</div><div class="border p-1">Workspace</div><div class="border p-1">TestForge</div>
+              </div>
+              <div class="mt-3 border-2 border-red-400 bg-red-50 p-2 text-xs uppercase tracking-wider text-center">shared App.state + one index.html DOM</div>
+              <svg class="absolute inset-x-0 bottom-6 mx-auto" width="200" height="30"><line x1="20" y1="0" x2="100" y2="28" class="leak" stroke-width="1.5"/><line x1="180" y1="0" x2="100" y2="28" class="leak" stroke-width="1.5"/></svg>
+            </div>
+            <div class="rounded-lg border border-slate-200 p-4 h-80"><p class="text-xs uppercase tracking-wider text-slate-500 mb-2">After</p>
+              <div class="deep text-white rounded p-3 h-56 border-2 border-slate-900 space-y-2">
+                <p class="text-xs uppercase tracking-wider">app router: one route per module</p>
+                <div class="grid grid-cols-3 gap-1 text-[10px] uppercase tracking-wider text-slate-400">
+                  <div class="border border-slate-600 p-1">testcases</div><div class="border border-slate-600 p-1">bugs</div><div class="border border-slate-600 p-1">board</div>
+                  <div class="border border-slate-600 p-1">dashboard</div><div class="border border-slate-600 p-1">report</div><div class="border border-slate-600 p-1">users</div>
+                </div>
+                <p class="text-[10px] text-slate-400">each page: Server Component reads repo → client component</p>
+              </div></div>
+          </div>
+          <p><b>Problem:</b> every module reads and mutates one shared state object and one DOM.</p>
+          <p><b>Solution:</b> one App Router route per module; state comes from the repo, not a global.</p>
+          <ul class="list-disc pl-5 text-sm"><li>Locality: bugs per route</li><li>Code-split xlsx, jsPDF per page</li><li>Workspace in URL</li></ul>
+        </article>
+      </section>
+
+      <section id="top-recommendation">
+        <a href="#c1" class="block rounded-xl deep text-white p-8 space-y-2">
+          <p class="text-xs uppercase tracking-wider text-emerald-300">Top recommendation</p>
+          <h2 class="font-serif text-3xl">Replace the kv blob store with per-document repo modules</h2>
+          <p class="text-slate-300">Every other candidate (auth seam, realtime, routed pages) assumes per-document writes; do it first, with the migration script.</p>
+        </a>
+      </section>
+    </main>
+  </body>
+</html>

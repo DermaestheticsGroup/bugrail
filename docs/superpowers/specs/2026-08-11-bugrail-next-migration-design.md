@@ -1,3 +1,5 @@
+> **Superseded** (2026-10-13) by [`2026-10-13-bugrail-local-first-design.md`](2026-10-13-bugrail-local-first-design.md). Never built. Kept for history.
+
 # BugRail Next Migration — Phase 1 (Test Case + Bug Report)
 
 ## Background
