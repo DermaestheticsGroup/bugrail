@@ -7,3 +7,7 @@ export const USERS: Record<string, User> = {
   bob: { id: 'bob', email: 'bob@bugrail.test', role: 'user', workspaceIds: ['ws-a'] },
   vendor: { id: 'vendor', email: 'qa@vendor.test', role: 'user', workspaceIds: ['ws-v'] },
 };
+
+export function userFromHeader(h: string | null): User | undefined {
+  return h !== null && Object.hasOwn(USERS, h) ? USERS[h] : undefined;
+}

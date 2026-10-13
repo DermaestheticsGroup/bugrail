@@ -20,3 +20,5 @@
 {"check":"G0.8","rounds":300,"converged":true,"allCoded":true}
 {"check":"G0.8","rounds":300,"converged":true,"allCoded":true}
 ```
+
+- Fix (review): `USERS[header]` matched inherited keys (`constructor`, `__proto__`, `toString`) so the routes returned 500 instead of 401. Now `userFromHeader` (own-property check, lib/sync/users.ts) is used by both routes; test/users.test.ts covers it. Verified over HTTP: all three headers give 401 on pull and push.
