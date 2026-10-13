@@ -15,6 +15,7 @@
 - A bug created offline shows as pending, the badge says offline; an offline reload reopens the app with its data; offline soft navigation between screens works; on reconnect the code appears within 15 s and nothing stays pending.
 - A second user in the same workspace bootstraps all bugs; a bug created in browser A reaches browser B within 15 s.
 - A vendor sees no Alpha bugs and no Alpha workspace name.
+- User switch on one device: user A's local OPFS files exist before the switch and are gone after user B signs in; B bootstraps into their own database. Run against the head that includes the review fixes (close before wipe, stop engine on mismatch).
 - No uncaught page errors. 236 `bun test` tests pass, `tsc` clean, `next build` passes.
 
 ## Bugs the browser run found
@@ -32,3 +33,6 @@
 - `scripts/g5-e2e.cjs` needs a local Chrome and playwright-core; it is not in CI.
 - Offline soft navigation works for routes whose links are on the page (prefetched) or visited before; an offline hard load of a never-visited URL falls back to a 503.
 - Phase 6 screens, Phase 7 operations and cutover are untouched.
+
+## Pipeline note
+The no-mistakes test step was approved as an exception (it cannot drive Chrome; verdict `inconclusive`). The browser evidence above is from `scripts/g5-e2e.cjs`, run by hand before and after the review fixes (14 checks, all passing).

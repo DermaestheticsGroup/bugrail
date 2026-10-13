@@ -87,6 +87,21 @@ const waitFor = (p, fn, arg, ms = 20000) => p.waitForFunction(fn, arg, { timeout
   const opfsHasAlpha = await v.evaluate(async () => (await (await fetch('/api/config')).text()).includes('Alpha'));
   check('9 the vendor sees none of Alpha: no bugs and no workspace name in config', (await v.locator('[data-testid=bug-list] li').count()) === 0 && !opfsHasAlpha);
 
+  // user switch on the same device: the previous user's local database must really be gone
+  const opfsNames = () => p.evaluate(async () => { const out = []; for await (const [n] of (await navigator.storage.getDirectory()).entries()) out.push(n); return out; });
+  const userA = await p.evaluate(() => JSON.parse(localStorage.getItem('bugrail.currentUser')).id);
+  check('11a before the switch, user A has local database files', (await opfsNames()).some((n) => n.startsWith('bugrail-' + userA)), await opfsNames());
+  await p.getByRole('button', { name: 'Log out' }).click();
+  await p.waitForURL(/\/login/, { timeout: 15000 });
+  await p.waitForTimeout(1500);
+  await login(p, 'qa2@x.test', 'qapass1234');
+  await p.goto(B + '/w/' + ALPHA + '/bugs');
+  await p.waitForSelector('[data-testid=bug-list]', { timeout: 30000 });
+  await waitFor(p, () => document.querySelectorAll('[data-testid=bug-list] li').length >= 3, null, 30000);
+  const after = await opfsNames();
+  check('11b after user B signs in, user A local files are removed from OPFS', !after.some((n) => n.startsWith('bugrail-' + userA)), after);
+  check('11c user B bootstraps the workspace data into their own database', (await bugs(p)).length >= 3);
+
   check('10 no uncaught page errors', errors.length === 0, errors.slice(0, 2));
   await ctx.close(); await ctx2.close(); await ctx3.close();
   const failed = results.filter(([, ok]) => !ok).length;
