@@ -27,6 +27,13 @@ describe('csv', () => {
   });
 });
 
+describe('csv formulas', () => {
+  test('cells and headers that start like a formula are neutralised; plain text is untouched', () => {
+    const cols = [{ key: 'a', label: '=H' }, { key: 'b', label: 'b' }, { key: 'c', label: 'c' }];
+    expect(arrayToCSV([{ a: '=SUM(A1)', b: '+1', c: 'ok' }], cols)).toBe("'=H,b,c\r\n\"'=SUM(A1)\",\"'+1\",\"ok\"");
+  });
+});
+
 describe('import', () => {
   const header = ['Module *', 'Scenario *', 'Test Step', 'Type Test', 'Status'];
   test('reads every sheet; an empty Module takes the sheet name unless it is generic; ids ignored; rows get fresh Open cases without a code', async () => {
@@ -52,7 +59,7 @@ describe('import', () => {
   test('a failure mid-import soft-deletes the rows already written', async () => {
     const parsed = parseImport(book({ Login: [header, ['Login', 'one', '', 'Positive', ''], ['Login', 'two', '', 'Positive', ''], ['Login', 'three', '', 'Positive', '']] }));
     let calls = 0;
-    ctx.writeBlock = () => (++calls === 4 ? 'blocked' : null);
+    ctx.writeBlock = () => (++calls >= 4 ? 'blocked' : null); // stays blocked through the undo
     expect(await importTestcases(ctx, fid, parsed).catch((e) => e.message)).toBe('blocked');
     ctx.writeBlock = undefined;
     expect(await db.all('SELECT * FROM testcases WHERE deleted_at IS NULL')).toHaveLength(0);

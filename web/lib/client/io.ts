@@ -32,8 +32,10 @@ export const BUG_COLUMNS: Col[] = [
 
 // Legacy arrayToCSV: every cell quoted, quotes doubled, CRLF between lines.
 export function arrayToCSV(rows: Record<string, unknown>[], cols: Col[]): string {
-  const line = (cells: string[]) => cells.map((v) => `"${v.replace(/"/g, '""')}"`).join(',');
-  return [cols.map((c) => c.label).join(','), ...rows.map((r) => line(cols.map((c) => text(r[c.key]))))].join('\r\n');
+  // A cell that starts like a formula would run in Excel or Sheets: a leading ' makes it text.
+  const safe = (v: string) => (/^[=+\-@\t\r]/.test(v) ? `'${v}` : v);
+  const line = (cells: string[]) => cells.map((v) => `"${safe(v).replace(/"/g, '""')}"`).join(',');
+  return [cols.map((c) => safe(c.label)).join(','), ...rows.map((r) => line(cols.map((c) => text(r[c.key]))))].join('\r\n');
 }
 
 const extra = (r: Row): Record<string, unknown> => { try { return r.extra ? JSON.parse(String(r.extra)) : {}; } catch { return {}; } };
@@ -130,7 +132,7 @@ export async function importTestcases(ctx: Ctx, fileId: string, parsed: ParsedIm
       created.push(String(row.id));
     }
   } catch (e) {
-    for (const id of created) await softDelete(ctx, 'testcases', id).catch(() => {});
+    for (const id of created) await softDelete({ ...ctx, writeBlock: undefined }, 'testcases', id).catch(() => {}); // the block that stopped the import must not stop its undo
     throw e;
   }
   await logActivity(ctx, ws, 'testcase_create', `${parsed.rows.length} test case di-import dari ${parsed.sheetsUsed} sheet`);
