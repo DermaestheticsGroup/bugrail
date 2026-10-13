@@ -70,4 +70,12 @@ describe('schema', () => {
       expect(await shape(b)).toEqual(sa);
     }
   });
+
+  test('server migration refuses a database that already holds duplicate emails, naming them', async () => {
+    const db = await fresh();
+    await db.exec('CREATE TABLE users (id TEXT PRIMARY KEY, email TEXT)');
+    await db.exec("INSERT INTO users VALUES ('1', 'Dup@x.test'), ('2', 'dup@X.test'), ('3', 'solo@x.test')");
+    await expect(applyMigrations(db, 'server')).rejects.toThrow(/duplicate user emails.*dup@x\.test/);
+    expect(await db.get("SELECT 1 FROM sqlite_master WHERE name = 'sync_meta'")).toBeUndefined(); // rolled back
+  });
 });

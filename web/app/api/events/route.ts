@@ -17,12 +17,20 @@ export async function GET(req: Request) {
       const off = subscribe(user.role === 'admin', user.workspaceIds, () => send('event: sync\ndata: {}\n\n'));
       const close = () => { cleanup(); try { c.close(); } catch { /* closed */ } };
       const ping = setInterval(async () => {
-        if (snap && !(await userFromSession(await getServerDb(), snap))) return close();
-        send(': ping\n\n');
+        try {
+          // Revoked session, or a role / workspace change: close so the client reconnects with its new scope.
+          const now = snap ? await userFromSession(await getServerDb(), snap) : user;
+          const same = now && now.role === user.role && [...now.workspaceIds].sort().join() === [...user.workspaceIds].sort().join();
+          if (!same) return close();
+          send(': ping\n\n');
+        } catch {
+          close(); // a failed check must not leave the stream open or throw out of the timer
+        }
       }, 25_000);
       // One idempotent cleanup shared by abort, cancel and a revoked session.
       cleanup = () => { if (done) return; done = true; off(); clearInterval(ping); };
       req.signal.addEventListener('abort', close);
+      if (req.signal.aborted) return close(); // the listener never fires for an already-aborted request
       send(': open\n\n');
     },
     cancel() { cleanup(); },
