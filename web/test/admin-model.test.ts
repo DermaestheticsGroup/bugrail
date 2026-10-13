@@ -57,6 +57,12 @@ describe('master status', () => {
     await deleteStatus(ctx, 'SPARE');
     expect((await master()).some((s) => s.code === 'SPARE')).toBe(false);
   });
+  test('a deleted status name can be created again and shows up', async () => {
+    await saveStatus(ctx, { name: 'Spare', color: '#333333', order: 9 });
+    await deleteStatus(ctx, 'SPARE');
+    await saveStatus(ctx, { name: 'Spare', color: '#333333', order: 9 });
+    expect((await master()).some((s) => s.code === 'SPARE')).toBe(true);
+  });
   test('deleting from a fresh install seeds the defaults first, so the others survive', async () => {
     await deleteStatus(ctx, 'REJECTED');
     expect((await master()).map((s) => s.code)).toEqual(['OPEN', 'IN_PROGRESS', 'RETEST', 'RESOLVED', 'CLOSED']);

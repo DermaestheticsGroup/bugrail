@@ -40,7 +40,7 @@ export async function saveStatus(ctx: Ctx, f: StatusForm, code?: string): Promis
   const errs = validateStatus(f, master.filter((s) => s.code !== code));
   if (errs.name || errs.color) throw Object.assign(new AdminError(errs.name ?? errs.color), { fields: errs });
   const id = code ?? statusCode(f.name, master.map((s) => s.code));
-  await upsertRow(ctx, 'bug_status_master', id, { name: f.name.trim(), color: f.color.trim(), sort_order: Number(f.order) || 1 });
+  await upsertRow(ctx, 'bug_status_master', id, { name: f.name.trim(), color: f.color.trim(), sort_order: Number(f.order) || 1, deleted_at: null }); // a code freed by an earlier delete comes back to life
   return id;
 }
 

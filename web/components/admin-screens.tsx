@@ -112,7 +112,7 @@ export function Settings() {
       <h3>Tema (per browser)</h3>
       <select aria-label="Theme" value={theme} onChange={(e) => pickTheme(e.target.value)}><option value="light">Terang</option><option value="dark">Gelap</option></select>
       {isAdmin ? (
-        <form aria-label="Gemini key" onSubmit={(e) => { e.preventDefault(); void admin('PUT', '/api/admin/settings', { geminiApiKey: key.trim() }).then((r) => { setMsg(r.ok ? 'API Key TestForge disimpan.' : String(r.error)); if (r.ok) setKey(''); }); }}>
+        <form aria-label="Gemini key" onSubmit={(e) => { e.preventDefault(); void admin('PUT', '/api/admin/settings', { geminiApiKey: key.trim() }).then((r) => { setMsg(r.ok ? 'API Key TestForge disimpan.' : String(r.error)); if (r.ok) setKey(''); }).catch(() => setMsg('Tidak bisa menghubungi server.')); }}>
           <h3>API Key Gemini (TestForge, disimpan di server)</h3>
           <input aria-label="Gemini API key" type="password" autoComplete="off" value={key} onChange={(e) => setKey(e.target.value)} />
           <button type="submit">Simpan key</button> <span data-testid="key-status">{msg}</span>
@@ -129,10 +129,13 @@ export function Users() {
   const allowed = useCan('usermanagement');
   const { n, run, alert } = useRun();
   const [users, setUsers] = useState<UserRow[] | null>(null);
+  const [loadErr, setLoadErr] = useState<string | null>(null);
   const [form, setForm] = useState<{ id: string | null; email: string; name: string; role: string; workspaceIds: string[]; password: string } | null>(null);
   useEffect(() => {
     let alive = true;
-    void admin('GET', '/api/admin/users').then((r) => { if (alive) setUsers(Array.isArray(r.data) ? (r.data as UserRow[]) : null); });
+    void admin('GET', '/api/admin/users')
+      .then((r) => { if (!alive) return; setLoadErr(r.ok ? null : String(r.error)); setUsers(Array.isArray(r.data) ? (r.data as UserRow[]) : null); })
+      .catch(() => { if (alive) setLoadErr('Tidak bisa memuat daftar user.'); });
     return () => { alive = false; };
   }, [n]);
   if (!allowed || !app.config) return NO_ACCESS;
@@ -146,7 +149,7 @@ export function Users() {
   };
   return (
     <section>
-      {alert}
+      {alert}{loadErr ? <p role="alert">{loadErr}</p> : null}
       <button type="button" onClick={() => setForm({ id: null, email: '', name: '', role: cfg.roles[0]?.value ?? 'qa_internal', workspaceIds: [], password: '' })}>Tambah user</button>
       <table data-testid="user-table">
         <thead><tr><th>Email</th><th>Nama</th><th>Role</th><th>Workspace</th><th></th></tr></thead>
