@@ -20,6 +20,8 @@ export interface AppValue {
   // Bumped when a pull or push settle changed rows, deferred while the user is typing or dragging.
   version: number;
   offlineSince: boolean;
+  // Pull now (used after dismissing a parked rejection, which resets the cursor).
+  refresh(): Promise<void>;
   logout(): Promise<void>;
 }
 
@@ -109,7 +111,7 @@ export default function AppProvider({ children }: { children: React.ReactNode })
       });
       engineRef.current = engine;
       activeUserRef.current = snapshot.id;
-      setDb(db0); setConfig(cfg); setCtx({ db: db0, clock, email: snapshot.email, afterWrite: engine.notifyWrite, writeBlock: engine.writeBlock });
+      setDb(db0); setConfig(cfg); setCtx({ db: db0, clock, email: snapshot.email, role: snapshot.role, memberOf: snapshot.role === 'admin' ? undefined : snapshot.workspaceIds, afterWrite: engine.notifyWrite, writeBlock: engine.writeBlock });
 
       const onOnline = () => engine.setOnline(true);
       const onOffline = () => engine.setOnline(false);
@@ -175,7 +177,8 @@ export default function AppProvider({ children }: { children: React.ReactNode })
     location.href = '/login';
   }, []);
 
-  const value = useMemo<AppValue>(() => ({ phase, error, config, db, ctx, sync, version, offlineSince: !sync.online, logout }), [phase, error, config, db, ctx, sync, version, logout]);
+  const refresh = useCallback(async () => { await engineRef.current?.pull(); setVersion((v) => v + 1); }, []);
+  const value = useMemo<AppValue>(() => ({ phase, error, config, db, ctx, sync, version, offlineSince: !sync.online, refresh, logout }), [phase, error, config, db, ctx, sync, version, refresh, logout]);
   return <Ctx_.Provider value={value}>{children}</Ctx_.Provider>;
 }
 

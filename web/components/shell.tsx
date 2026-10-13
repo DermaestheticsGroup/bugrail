@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { ALL_WS, allowedWorkspaces, hrefFor, navBySlug, navFor } from '@/lib/client/nav';
 import { CLOCK_LIMIT_MS } from '@/lib/client/sync-engine';
 import { useApp } from './app-provider';
+import RejectedPanel from './rejected-panel';
 
 function Badge() {
   const { sync } = useApp();
@@ -54,6 +55,7 @@ export default function Shell({ ws, slug, children }: { ws: string; slug: string
         <button type="button" onClick={() => void app.logout()}>Log out</button>
       </header>
       {blocked ? <p role="alert" data-testid="clock-banner">Your device clock is more than 5 minutes off the server. Editing is paused until it is fixed.</p> : null}
+      <RejectedPanel />
       <nav aria-label="Main">
         {/* Every page lists every link, so Next prefetches them all while online and soft navigation keeps working offline. */}
         {items.map((n) => (

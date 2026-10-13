@@ -7,19 +7,19 @@ Slice = which Phase 6 PR delivers it. Status in this file is the AUTHOR's claim;
 | # | Feature (legacy source) | Slice | Built | QA tick |
 |---|--------------------------|-------|-------|---------|
 | **Files (shared by Test Case and Bug Report)** |
-| F1 | List files visible to my workspace, with counts (`testcase.js:48-54`) | 6a | | |
-| F2 | Create a file in the current workspace (`createFile`) | 6a | | |
-| F3 | Rename a file (`editFile`) | 6a | | |
-| F4 | Delete a file removes its test cases and bugs (`deleteFile`, `files.ts`) | 6a | | |
-| F5 | Share a file into another workspace; unshare (`testcase_fileShare`) | 6a | | |
-| F6 | Vendor sees own files plus files shared into its workspace, nothing else | 6a | | |
+| F1 | List files visible to my workspace, with counts (`testcase.js:48-54`) | 6a | yes (Chrome) | |
+| F2 | Create a file in the current workspace (`createFile`) | 6a | yes (Chrome) | |
+| F3 | Rename a file (`editFile`) | 6a | yes (Chrome) | |
+| F4 | Delete a file removes its test cases and bugs (`deleteFile`, `files.ts`) | 6a | yes (Chrome) | |
+| F5 | Share a file into another workspace; unshare (`testcase_fileShare`) | 6a | yes (Chrome) | |
+| F6 | Vendor sees own files plus files shared into its workspace, nothing else | 6a | yes (Chrome) | |
 | **Test Case (`testcase.js`)** |
-| T1 | List with search, filters (module, type, status), sort, pagination, reset filters | 6a | | |
-| T2 | Create / edit via form with module combobox, add new module, custom fields | 6a | | |
-| T3 | Detail view | 6a | | |
-| T4 | Execute (set status, actual result, evidence, execution date) | 6a | | |
-| T5 | Duplicate | 6a | | |
-| T6 | Delete one, bulk delete, bulk status update | 6a | | |
+| T1 | List with search, filters (module, type, status), sort, pagination, reset filters | 6a | yes (Chrome) | |
+| T2 | Create / edit via form with module combobox, add new module, custom fields | 6a | partly: module datalist and custom fields yes; no separate "add module" dialog | |
+| T3 | Detail view | 6a | yes (Chrome) | |
+| T4 | Execute (set status, actual result, evidence, execution date) | 6a | yes (Chrome) | |
+| T5 | Duplicate | 6a | yes (Chrome) | |
+| T6 | Delete one, bulk delete, bulk status update | 6a | yes (Chrome) | |
 | T7 | Display codes arrive from the server (`LOG-0001`) | done in Phase 5 | yes | |
 | T8 | Create bug from a failed test case (prefill) | 6b | | |
 | T9 | Import from Excel (`TC_IMPORT`), template | 6d | | |
@@ -50,6 +50,6 @@ Slice = which Phase 6 PR delivers it. Status in this file is the AUTHOR's claim;
 | A7 | Import / export of whole data, backup and restore (online only) | 6d | | |
 | **Offline and safety (new behavior to confirm)** |
 | O1 | Create bugs offline, reload offline, go online: codes appear within one push | 5 | yes (Chrome) | |
-| O2 | A write the server refuses shows up for the user (rejected writes UI) | 6a | | |
+| O2 | A write the server refuses shows up for the user (rejected writes UI) | 6a | yes (Chrome) | |
 | O3 | Clock more than 5 minutes off blocks writes with a banner | 5 | unit only | |
 | O4 | Revoked access removes the data from the device on next pull | 1 | tests | |

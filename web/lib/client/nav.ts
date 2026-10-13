@@ -30,3 +30,10 @@ export const ALL_WS = 'all';
 export function allowedWorkspaces(role: string, workspaceIds: string[], all: string[] = workspaceIds): string[] {
   return role === 'admin' ? [ALL_WS, ...all] : workspaceIds;
 }
+
+// "/w/<ws>/master/status" has two segments, everything else one; the rest is the screen's own sub-path (a file id, a bug id).
+export function resolveScreen(segments: string[]): { slug: string; rest: string[] } {
+  const two = segments.slice(0, 2).join('/');
+  if (NAV.some((n) => n.slug === two)) return { slug: two, rest: segments.slice(2) };
+  return { slug: segments[0] ?? '', rest: segments.slice(1) };
+}
