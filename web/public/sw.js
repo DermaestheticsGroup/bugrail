@@ -1,46 +1,70 @@
-// Shell + static cache. API calls always go to the network (sync handles offline data).
-const CACHE = 'bugrail-spike-v1';
-const SHELL = ['/', '/opfs', '/other'];
+// App shell and static cache. /api/* always goes to the network: sync handles offline data, not the cache.
+// Three caches: hashed build assets (kept), documents, and RSC payloads. Documents and RSC are kept apart because they
+// share a pathname: one cache would let an offline page load match a flight payload (or the reverse) once Vary is ignored.
+const STATIC = 'bugrail-static-v3';
+const PAGES = 'bugrail-pages-v3';
+const RSC = 'bugrail-rsc-v3';
+const SHELL = ['/login'];
+// Pages and payloads are bounded so they cannot crowd out the local database's storage.
+const MAX_ENTRIES = 60;
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));
+  event.waitUntil(caches.open(PAGES).then((c) => c.addAll(SHELL)));
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => ![STATIC, PAGES, RSC].includes(k)).map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
 });
 
-const put = (req, res) => caches.open(CACHE).then((c) => c.put(req, res));
+async function remember(cacheName, req, res, bounded) {
+  const c = await caches.open(cacheName);
+  await c.put(req, res);
+  if (!bounded) return;
+  // keys() is in insertion order, so the oldest entries go first; /login is the offline entry point and stays.
+  const keys = (await c.keys()).filter((k) => new URL(k.url).pathname !== '/login');
+  for (const k of keys.slice(0, Math.max(0, keys.length - MAX_ENTRIES))) await c.delete(k);
+}
 const offlineRes = () => new Response('offline', { status: 503, headers: { 'Content-Type': 'text/plain' } });
+const isRsc = (req, url) => req.headers.get('RSC') === '1' || url.searchParams.has('_rsc');
+
+// Network first, remember the answer, fall back to the last one. For RSC the match ignores the query string (the _rsc value
+// changes with router state) but NOT Vary: ignoring it hands a partial prefetch payload to a full navigation, which Next cannot
+// render (offline soft navigation then falls back to a hard load and fails).
+function networkFirst(event, cacheName, rsc) {
+  const req = event.request;
+  event.respondWith(
+    fetch(req)
+      .then((res) => {
+        if (res.ok) event.waitUntil(remember(cacheName, req, res.clone(), true));
+        return res;
+      })
+      .catch(() => caches.open(cacheName)
+        .then((c) => c.match(req, rsc ? { ignoreSearch: true } : undefined))
+        .then((hit) => hit || offlineRes())),
+  );
+}
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
   if (req.method !== 'GET' || url.origin !== self.location.origin || url.pathname.startsWith('/api/')) return;
 
+  // Hashed build assets (JS, CSS, the wasm engine): cache first, they never change under the same URL.
   if (url.pathname.startsWith('/_next/static/')) {
     event.respondWith(
-      caches.match(req).then((hit) => hit || fetch(req).then((res) => {
-        if (res.ok) event.waitUntil(put(req, res.clone()));
+      caches.open(STATIC).then((c) => c.match(req).then((hit) => hit || fetch(req).then((res) => {
+        if (res.ok) event.waitUntil(remember(STATIC, req, res.clone(), false));
         return res;
-      })),
+      }))),
     );
     return;
   }
 
-  if (req.mode === 'navigate') {
-    event.respondWith(
-      fetch(req)
-        .then((res) => {
-          if (res.ok) event.waitUntil(put(req, res.clone()));
-          return res;
-        })
-        .catch(() => caches.match(req).then((hit) => hit || offlineRes())),
-    );
-  }
+  if (isRsc(req, url)) return networkFirst(event, RSC, true); // soft navigation payloads and prefetches
+  if (req.mode === 'navigate') return networkFirst(event, PAGES, false);
 });

@@ -4,6 +4,7 @@ import { nextInScope } from '../id-gen';
 import type { Db, Row, Tx } from '../db-types';
 import type { User } from './users';
 import { can, type RolePermissions } from '../domain/auth';
+import { moduleAbbrev } from '../domain/ids';
 import { statusTransitionRule } from '../domain/status';
 
 export interface PushRow { tbl: SyncedTable; row: Row }
@@ -203,20 +204,21 @@ export async function push(db: Db, user: User, input: unknown[], touched?: Set<s
       sent.set(`${tbl}:${id}`, { tbl, row });
     }
 
-    // Assign display codes: scope = owning workspace of the bug's file.
-    const pending = await tx.all(
-      `SELECT b.id, f.workspace_id FROM bugs b JOIN files f ON f.id = b.file_id
-       WHERE b.code IS NULL AND b.deleted_at IS NULL`,
-    );
-    for (const p of pending) {
-      const codes = await tx.all(
-        `SELECT b.code FROM bugs b JOIN files f ON f.id = b.file_id
-         WHERE f.workspace_id = ? AND b.code IS NOT NULL`, // tombstoned codes count: a revived bug keeps its code
-        p.workspace_id,
+    // Assign display codes: scope = owning workspace of the row's file; bugs use BUG, test cases moduleAbbrev(module).
+    // Tombstoned codes count, so a revived row keeps its code and a number is never reused. `IS` also matches a file with no workspace.
+    for (const [tbl, prefixOf] of [['bugs', () => 'BUG'], ['testcases', (m: unknown) => moduleAbbrev(typeof m === 'string' ? m : '')]] as const) {
+      const pending = await tx.all(
+        `SELECT r.id, r.module, f.workspace_id FROM ${tbl} r JOIN files f ON f.id = r.file_id WHERE r.code IS NULL AND r.deleted_at IS NULL ORDER BY r.rowid`,
       );
-      seq += 1;
-      await tx.run('UPDATE bugs SET code = ?, server_seq = ? WHERE id = ? AND code IS NULL',
-        nextInScope('BUG', codes.map((c) => c.code)), seq, p.id);
+      for (const p of pending) {
+        const codes = await tx.all(
+          `SELECT r.code FROM ${tbl} r JOIN files f ON f.id = r.file_id WHERE f.workspace_id IS ? AND r.code IS NOT NULL`,
+          p.workspace_id,
+        );
+        seq += 1;
+        await tx.run(`UPDATE ${tbl} SET code = ?, server_seq = ? WHERE id = ? AND code IS NULL`,
+          nextInScope(prefixOf(p.module), codes.map((c) => c.code)), seq, p.id);
+      }
     }
 
     await tx.run("UPDATE sync_meta SET value = ? WHERE key = 'seq'", seq);
