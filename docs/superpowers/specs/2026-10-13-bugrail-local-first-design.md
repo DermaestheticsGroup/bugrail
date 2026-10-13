@@ -179,7 +179,7 @@ The server, in one write transaction:
 2. For each row, run the permission check (below). A failed row goes to `rejected` with a reason and is not applied.
 3. Ignore any client-supplied `server_seq`, and any client `code` on insert.
 4. Apply the guarded upsert (or `DO NOTHING` for insert-only), and set `server_seq = ++seq` if the row changed.
-5. Assign display codes to any row with `code IS NULL AND deleted_at IS NULL`: scope = the owning workspace of the row's file; prefix = `moduleAbbrev(module)` for test cases and `BUG` for bugs; next = `IdGen.nextInScope(prefix, codes of non-tombstoned rows in scope)` (`utils.js:450-462`, same rule as today, so deleting rows frees numbers).
+5. Assign display codes to any row with `code IS NULL AND deleted_at IS NULL`: scope = the owning workspace of the row's file; prefix = `moduleAbbrev(module)` for test cases and `BUG` for bugs; next = `IdGen.nextInScope(prefix, codes of all rows in scope, tombstoned included)` (`utils.js:450-462` minus its tombstone exclusion: today deleting rows frees numbers, but a revived row keeps its code, so reuse could give two live rows one code. Phase 1 ruling: a deleted number is never reused).
 6. Respond `{ accepted: [id], rejected: [{ id, reason }], server: [row] }`, where `server` holds the server's current row for every pushed id whose stored values differ from what was sent (the server won, or a code was assigned).
 7. After commit, `live.broadcast(workspaceIds touched)`.
 
@@ -299,7 +299,7 @@ All tests run with `bun test`.
 
 ## Phases
 
-0 spike and G0 → 1 scaffold and schema → 2 domain ports → 3 server (auth, sync, admin, AI, SSE) → 4 data migration → 5 client shell and offline → 6 feature parity → 7 cutover. Each phase ends in its gate. Rough size, carried from the v2 estimate plus the own-sync work: 32–42 dev days. Implementation plans are written per phase, starting with Phase 0.
+0 spike and G0 (done) → 1 scaffold and schema (done, G1 in `docs/spike-g0/PHASE1-RESULT.md`) → 2 domain ports → 3 server (auth, sync, admin, AI, SSE) → 4 data migration → 5 client shell and offline → 6 feature parity → 7 cutover. Each phase ends in its gate. Rough size, carried from the v2 estimate plus the own-sync work: 32–42 dev days. Implementation plans are written per phase, starting with Phase 0.
 
 **Cutover runbook:** announce a freeze → stop the old `bugrail` → `mongodump` → run the migration → start the new `bugrail` → smoke test with 2 browsers, 1 offline device and 1 vendor account → lift the freeze. Rollback within 48 h: stop, run the export, start the old `server/`. After 2 stable weeks: final `mongodump`, then retire MongoDB, `qa-app/` and `server/`.
 
