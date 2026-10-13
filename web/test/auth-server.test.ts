@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 import { connect } from '@tursodatabase/database';
 import { applyMigrations } from '../db/migrate';
 import { hashPassword, verifyPassword } from '../lib/server/password';
-import { rateLimited, resetRateLimit } from '../lib/server/rate-limit';
+import { rateLimited, rateLimitSize, resetRateLimit } from '../lib/server/rate-limit';
 import { clientIp, login } from '../lib/server/auth-routes';
 import { userFromSession } from '../lib/server/session';
 import type { Db } from '../lib/db-types';
@@ -65,10 +65,9 @@ describe('rateLimited window', () => {
   });
   test('expired keys are evicted once the map is large', () => {
     for (let i = 0; i <= 10_000; i++) rateLimited(`old${i}`, 1, 1000, 0);
-    expect(rateLimited('old0', 1, 1000, 500)).toBe(true);
+    expect(rateLimitSize()).toBe(10_001);
     rateLimited('new', 1, 1000, 5000);
-    expect(rateLimited('old1', 1, 1000, 5000)).toBe(false);
-    expect(rateLimited('old1', 1, 1000, 5000)).toBe(true);
+    expect(rateLimitSize()).toBe(1);
   });
 });
 

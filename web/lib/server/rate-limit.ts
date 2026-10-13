@@ -12,4 +12,6 @@ export function rateLimited(key: string, max = 10, windowMs = 15 * 60_000, now =
   return false;
 }
 
+export const rateLimitSize = () => hits.size;
+
 export function resetRateLimit() { hits.clear(); }
