@@ -40,3 +40,34 @@ export function planBoot(snapshot: Snapshot | null, hasLocalData: boolean, onlin
 export const dbName = (userId: string) => `bugrail-${userId}.db`;
 export const previousUser = () => store()?.getItem('bugrail.lastUserId') ?? null;
 export const rememberUser = (id: string) => store()?.setItem('bugrail.lastUserId', id);
+
+export type SwitchDeps = {
+  previous: string | null;
+  open(userId: string): Promise<unknown>;
+  outboxSize(db: unknown): Promise<number>;
+  close(userId: string): Promise<void>;
+  wipe(userId: string): Promise<void>;
+  confirm(message: string): boolean;
+  alert(message: string): void;
+  remember(userId: string): void;
+};
+
+// Signing in as someone else: warn about unsent changes, release the old database, wipe it, and only then remember the new user.
+export async function switchUser(userId: string, d: SwitchDeps): Promise<boolean> {
+  const prev = d.previous;
+  if (prev && prev !== userId) {
+    try {
+      const n = await d.outboxSize(await d.open(prev));
+      if (n > 0 && !d.confirm(`${n} change(s) by the previous user were never sent and will be lost. Continue?`)) return false;
+    } catch { /* an unreadable database has nothing worth warning about */ }
+    try {
+      await d.close(prev);
+      await d.wipe(prev);
+    } catch (e) {
+      d.alert(`The previous user's data could not be removed: ${(e as Error).message}`);
+      return false;
+    }
+  }
+  d.remember(userId);
+  return true;
+}

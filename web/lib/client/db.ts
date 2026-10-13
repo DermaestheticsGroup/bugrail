@@ -5,13 +5,16 @@ import { dbName } from './boot';
 import { serializeTx } from './serialize';
 
 const opened = new Map<string, Promise<Db>>();
+const closers = new Map<string, () => Promise<void>>();
 
 export function openLocalDb(userId: string): Promise<Db> {
   let p = opened.get(userId);
   if (!p) {
     p = (async () => {
       const { connect } = await import('@tursodatabase/database-wasm/turbopack');
-      const db = serializeTx((await connect(dbName(userId))) as unknown as Db);
+      const raw = (await connect(dbName(userId))) as unknown as Db & { close?: () => Promise<void> | void };
+      const db = serializeTx(raw);
+      closers.set(userId, async () => { await raw.close?.(); });
       await applyMigrations(db, 'local');
       return db;
     })();
@@ -29,7 +32,17 @@ export async function outboxSize(db: Db): Promise<number> {
   return Number((await db.get('SELECT count(*) AS n FROM outbox')).n);
 }
 
-// Removes the user's OPFS files (database, wal, journal). The caller closes nothing: we only drop our cached handle.
+// Releases the OPFS handles so the files can be removed.
+export async function closeLocalDb(userId: string): Promise<void> {
+  const p = opened.get(userId);
+  const close = closers.get(userId);
+  opened.delete(userId);
+  closers.delete(userId);
+  if (p) await p.catch(() => undefined);
+  await close?.();
+}
+
+// Removes the user's OPFS files (database, wal, journal); throws naming every file that could not be removed.
 export async function wipeLocalDb(userId: string): Promise<void> {
   opened.delete(userId);
   const root = await navigator.storage.getDirectory();
@@ -37,7 +50,9 @@ export async function wipeLocalDb(userId: string): Promise<void> {
   // for await over the directory handle: removing while iterating is allowed, but collect first to be safe.
   const names: string[] = [];
   for await (const [name] of (root as unknown as { entries(): AsyncIterable<[string, unknown]> }).entries()) if (name.startsWith(prefix)) names.push(name);
-  for (const n of names) await root.removeEntry(n).catch(() => undefined);
+  const failed: string[] = [];
+  for (const n of names) await root.removeEntry(n).catch(() => { failed.push(n); });
+  if (failed.length) throw new Error(`could not remove local data: ${failed.join(', ')}`);
 }
 
 export async function requestPersistence(): Promise<boolean> {

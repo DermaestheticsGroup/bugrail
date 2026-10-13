@@ -3,8 +3,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { createClock } from '@/lib/hlc';
 import type { Db } from '@/lib/db-types';
 import type { ClientConfig } from '@/lib/server/config';
-import { clearSnapshot, fetchConfig, loadConfig, loadSnapshot, planBoot, previousUser, rememberUser, saveConfig, saveSnapshot } from '@/lib/client/boot';
-import { hasLocalData, openLocalDb, outboxSize, requestPersistence, wipeLocalDb } from '@/lib/client/db';
+import { clearSnapshot, fetchConfig, loadConfig, loadSnapshot, planBoot, previousUser, rememberUser, saveConfig, saveSnapshot, switchUser } from '@/lib/client/boot';
+import { closeLocalDb, hasLocalData, openLocalDb, outboxSize, requestPersistence, wipeLocalDb } from '@/lib/client/db';
 import { SyncEngine, type SyncState } from '@/lib/client/sync-engine';
 import { cookieTransport } from '@/lib/client/transport';
 import type { Ctx } from '@/lib/client/repo';
@@ -125,10 +125,11 @@ export default function AppProvider({ children }: { children: React.ReactNode })
       if (plan === 'render-then-verify') {
         const r = await fetchConfig();
         if (cancelled) return;
+        const stopAll = () => { cleanups.splice(0).forEach((c) => c()); };
         if (r.kind === 'ok') {
           saveConfig(r.config); saveSnapshot(r.config.me); setConfig(r.config);
-          if (r.config.me.id !== snapshot.id) { clearSnapshot(); setPhase('anon'); }
-        } else if (r.kind === 'unauthorized') { setPhase('anon'); }
+          if (r.config.me.id !== snapshot.id) { clearSnapshot(); stopAll(); setPhase('anon'); }
+        } else if (r.kind === 'unauthorized') { stopAll(); setPhase('anon'); }
       }
     })().catch((e) => { setError((e as Error).message); setPhase('error'); });
 
@@ -150,15 +151,6 @@ export default function AppProvider({ children }: { children: React.ReactNode })
 }
 
 // Exposed for the login page: wipe the previous user's local data when a different user signs in.
-export async function prepareLoginFor(userId: string, confirmFn: (m: string) => boolean = (m) => confirm(m)): Promise<boolean> {
-  const prev = previousUser();
-  if (prev && prev !== userId) {
-    try {
-      const n = await outboxSize(await openLocalDb(prev));
-      if (n > 0 && !confirmFn(`${n} change(s) by the previous user were never sent and will be lost. Continue?`)) return false;
-    } catch { /* an unreadable database has nothing worth warning about */ }
-    await wipeLocalDb(prev);
-  }
-  rememberUser(userId);
-  return true;
+export function prepareLoginFor(userId: string, confirmFn: (m: string) => boolean = (m) => confirm(m)): Promise<boolean> {
+  return switchUser(userId, { previous: previousUser(), open: openLocalDb, outboxSize: (db) => outboxSize(db as Db), close: closeLocalDb, wipe: wipeLocalDb, confirm: confirmFn, alert: (m) => alert(m), remember: rememberUser });
 }
