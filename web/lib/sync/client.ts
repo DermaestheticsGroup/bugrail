@@ -38,7 +38,7 @@ export async function pushOutbox(db: Db, t: Transport): Promise<PushResult | nul
       const e = entries.find((x) => x.row_id === r.id && (!r.tbl || x.tbl === r.tbl));
       if (!e) continue;
       await tx.run(
-        'INSERT INTO rejected (row_id, tbl, reason, at) VALUES (?, ?, ?, ?) ON CONFLICT(row_id) DO UPDATE SET tbl = excluded.tbl, reason = excluded.reason, at = excluded.at',
+        'INSERT INTO rejected (row_id, tbl, reason, at) VALUES (?, ?, ?, ?) ON CONFLICT(tbl, row_id) DO UPDATE SET reason = excluded.reason, at = excluded.at',
         r.id, e.tbl, r.reason, at,
       );
     }
@@ -58,14 +58,16 @@ export async function listRejected(db: Db): Promise<Row[]> {
 // The local copy holds state the server refused: a never-accepted insert, or an edit to a row the user may no longer
 // write. Drop it (unless a newer write is queued) and re-pull from 0 so any server copy the user can still see returns.
 // shortcut: full re-pull per dismiss, fine while dismissals are rare; upgrade to a per-row fetch if they are not.
-export async function dismissRejected(db: Db, rowId: string): Promise<void> {
+// The key is (tbl, row_id); omit tbl to dismiss every parked rejection with that id.
+export async function dismissRejected(db: Db, rowId: string, tbl?: string): Promise<void> {
   const dismiss = db.transactionAsync(async (tx: Tx) => {
-    const r = await tx.get('SELECT tbl FROM rejected WHERE row_id = ?', rowId);
-    if (!r) return;
-    await tx.run('DELETE FROM rejected WHERE row_id = ?', rowId);
-    if (!isSyncedTable(r.tbl) || (await tx.get('SELECT 1 FROM outbox WHERE tbl = ? AND row_id = ?', r.tbl, rowId))) return;
-    await tx.run(`DELETE FROM ${r.tbl} WHERE id = ?`, rowId);
-    await tx.run("INSERT INTO meta (key, value) VALUES ('since', '0') ON CONFLICT(key) DO UPDATE SET value = excluded.value");
+    const parked = await tx.all('SELECT tbl FROM rejected WHERE row_id = ? AND (? IS NULL OR tbl = ?)', rowId, tbl ?? null, tbl ?? null);
+    for (const r of parked) {
+      await tx.run('DELETE FROM rejected WHERE row_id = ? AND tbl = ?', rowId, r.tbl);
+      if (!isSyncedTable(r.tbl) || (await tx.get('SELECT 1 FROM outbox WHERE tbl = ? AND row_id = ?', r.tbl, rowId))) continue;
+      await tx.run(`DELETE FROM ${r.tbl} WHERE id = ?`, rowId);
+      await tx.run("INSERT INTO meta (key, value) VALUES ('since', '0') ON CONFLICT(key) DO UPDATE SET value = excluded.value");
+    }
   });
   await dismiss();
 }
@@ -94,6 +96,8 @@ export async function pullAll(db: Db, t: Transport, clock?: Clock): Promise<numb
       for (const { tbl, row } of page.rows) {
         if (!isSyncedTable(tbl)) continue;
         if (clock && typeof row.hlc === 'string') clock.observe(row.hlc);
+        // A queued local edit must reach the server intact; the push settles it by LWW there.
+        if (await tx.get('SELECT 1 FROM outbox WHERE tbl = ? AND row_id = ?', tbl, row.id)) continue;
         await tx.run(mergeSql(TABLES[tbl]), ...mergeArgs(TABLES[tbl], row));
       }
       await tx.run(

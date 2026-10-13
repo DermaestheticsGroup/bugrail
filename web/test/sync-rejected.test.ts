@@ -31,6 +31,39 @@ beforeEach(async () => {
 });
 
 describe('rejected pushes', () => {
+  test('same id in two tables parks two rejections; dismiss by tbl drops only that one', async () => {
+    const v = await device();
+    await v.run("INSERT INTO rejected (row_id, tbl, reason, at) VALUES ('Z', 'files', 'r1', 't'), ('Z', 'bugs', 'r2', 't')");
+    expect((await listRejected(v)).length).toBe(2);
+    await dismissRejected(v, 'Z', 'files');
+    expect((await listRejected(v)).map((p) => p.tbl)).toEqual(['bugs']);
+  });
+
+  test('reset pull keeps a parked rejection and its local row; dismiss then drops both', async () => {
+    const v = await device();
+    await pullAll(v, direct('vendor'));
+    await localWrite(v, 'bugs', bugRow({ id: 'N9', title: 'sneaky', hlc: h(5), status_hlc: h(5) }));
+    await pushOutbox(v, direct('vendor'));
+    await v.run("DELETE FROM meta WHERE key IN ('access_version', 'schema_version')");
+    await pullAll(v, direct('vendor'));
+    expect((await listRejected(v)).map((p) => p.row_id)).toEqual(['N9']);
+    expect((await v.get("SELECT title FROM bugs WHERE id = 'N9'"))?.title).toBe('sneaky');
+    await dismissRejected(v, 'N9');
+    expect(await listRejected(v)).toEqual([]);
+    expect(await v.get("SELECT id FROM bugs WHERE id = 'N9'")).toBeFalsy();
+  });
+
+  test('reset pull keeps a queued outbox row intact even when the server holds a newer copy', async () => {
+    const a = await device();
+    await pullAll(a, direct('alice'));
+    await localWrite(a, 'bugs', bugRow({ title: 'mine', hlc: h(5), status_hlc: h(5) }));
+    await push(server, USERS.admin, [{ tbl: 'bugs', row: bugRow({ title: 'theirs', hlc: h(9), status_hlc: h(9) }) }]);
+    await a.run("DELETE FROM meta WHERE key IN ('access_version', 'schema_version')");
+    await pullAll(a, direct('alice'));
+    expect((await a.get("SELECT title FROM bugs WHERE id = 'X'"))?.title).toBe('mine');
+    expect((await a.get("SELECT count(*) AS n FROM outbox WHERE row_id = 'X'")).n).toBe(1);
+  });
+
   test('a rejected write leaves the outbox and is parked with its reason', async () => {
     const v = await device();
     await localWrite(v, 'bugs', bugRow({ id: 'N1', title: 'sneaky', hlc: h(5), status_hlc: h(5) }));

@@ -20,7 +20,7 @@ Branch `feat/phase1-local-first-foundation`, plan `docs/superpowers/plans/2026-1
 - Production runs Node 24, Bun is local tooling (ADR-004).
 - Full synced schema as versioned files (`db/schema/001..004`), `applyMigrations`, `SCHEMA_VERSION` 4.
 - Pull reset on `access_version` / `schema_version` change keeps unpushed rows and parked rejections with their local rows until dismissed (gap a closed for the dev user table).
-- Rejected pushes parked in a local `rejected` table (review finding from the no-mistakes run).
+- Rejected pushes parked in a local `rejected` table (review finding from the no-mistakes run). Keyed by `(tbl, row_id)`. A reset keeps parked rejections and queued outbox rows (a reset pull does not overwrite queued rows with server copies) until dismissed or pushed; covered for both reset triggers in `web/test/sync-rejected.test.ts`.
 - ADR-001 gaps b, c, d, f closed; e not reproducible (test kept).
 
 ## Decisions worth a second look

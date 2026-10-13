@@ -12,7 +12,10 @@ const sqlFile = (n: string) => readFileSync(new URL(`../db/schema/${n}`, import.
 async function shape(db: Db): Promise<Record<string, string[]>> {
   const out: Record<string, string[]> = {};
   const tables = await db.all("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name");
-  for (const t of tables) out[t.name] = (await db.all(`PRAGMA table_info(${t.name})`)).map((c) => `${c.name}:${c.type}`).sort();
+  for (const t of tables) out[t.name] = (await db.all(`PRAGMA table_info(${t.name})`)).map((c) => `${c.name}:${c.type}:${c.dflt_value}:${c.notnull}:${c.pk}`).sort();
+  // Indexes and the stored CREATE text cover constraints and anything table_info misses.
+  const objs = await db.all("SELECT type, name, sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY type, name");
+  for (const o of objs) out[`${o.type}:${o.name}`] = [String(o.sql).replace(/\s+/g, ' ').trim()];
   return out;
 }
 
