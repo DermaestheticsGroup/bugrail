@@ -41,12 +41,12 @@ Slice = which Phase 6 PR delivers it. Status in this file is the AUTHOR's claim;
 | R4 | Notifications bell (`notifications.js`, `NotifCalc`) | 6c | yes (Chrome); reminders, assignment, deep link, badge clears; status texts show codes not names | |
 | R5 | Activity log (`activitylog.js`) | 6c | yes (Chrome); admin only by role matrix | |
 | **Admin and tools** | | | | |
-| A1 | Master status (`masterstatus.js`) | 6d | | |
-| A2 | Custom field definitions (`settings.js`) | 6d | | |
-| A3 | User management, online only (`usermanagement.js`) | 6d | | |
-| A4 | Role permission matrix, online only | 6d | | |
-| A5 | Workspaces, online only | 6d | | |
-| A6 | Settings: Gemini key, theme (per browser) | 6d | | |
+| A1 | Master status (`masterstatus.js`) | 6d | yes (Chrome); works offline; renaming keeps the code | |
+| A2 | Custom field definitions (`settings.js`) | 6d | yes (Chrome) | |
+| A3 | User management, online only (`usermanagement.js`) | 6d | yes (Chrome); a created user logs in | |
+| A4 | Role permission matrix, online only | 6d | yes (Chrome) | |
+| A5 | Workspaces, online only | 6d | yes (Chrome); add, rename, delete | |
+| A6 | Settings: Gemini key, theme (per browser) | 6d | yes (Chrome); key stored server-side, theme stored but only sets `data-theme`, no dark stylesheet exists yet | |
 | A7 | Import / export of whole data, backup and restore (online only) | 6d | | |
 | **Offline and safety (new behavior to confirm)** | | | | |
 | O1 | Create bugs offline, reload offline, go online: codes appear within one push | 5 | yes (Chrome) | |
