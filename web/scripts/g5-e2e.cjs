@@ -122,7 +122,7 @@ const open = (name) => chromium.launchPersistentContext(`${SC}/${name}`, { execu
   await v.waitForSelector('[data-testid=sync-badge]', { timeout: 30000 });
   await v.waitForTimeout(4000);
   const configText = await v.evaluate(async () => (await fetch('/api/config')).text());
-  await V(v, '[data-testid=file-list]').first().waitFor({ timeout: 15000 }); // the list rendered, so a zero count means empty
+  await v.locator('[data-testid=file-list]').first().waitFor({ state: 'attached', timeout: 15000 }); // an empty list has no height, so 'attached' not 'visible' // the list rendered, so a zero count means empty
   const vendorFiles = await V(v, '[data-testid=file-list] li').count();
   // and the known Alpha file URL must expose none of its bugs
   await v.goto(fileUrl);
