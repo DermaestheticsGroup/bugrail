@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed (2026-10-13). Decided by G0.4.
+Accepted (2026-10-13): production runtime is Node 24 LTS. G0.4 passed (the native binding loads under Bun and convergence holds), but under 30 clients for 10 minutes on the same seeded DB Bun's p95 was 107 ms against Node's 57 ms, a ratio of 1.88 against the 1.20 limit. One run per runtime, so variance is unmeasured. Bun stays for tooling.
 
 ## Date
 
@@ -31,4 +31,5 @@ The team wants Bun across the project. Bun as package manager, script runner and
 ## Consequences
 
 - `deploy.yml` uses `bun install --frozen-lockfile && bun run build`; only the systemd `ExecStart` differs between outcomes.
-- When G0.4 is recorded, this ADR moves to Accepted with the chosen runtime.
+- The systemd `ExecStart` runs `node node_modules/next/dist/bin/next start`; CI keeps `bun install --frozen-lockfile && bun run build`.
+- Revisit if a later Bun release closes the p95 gap: repeat the G0.4 load on production-like hardware.

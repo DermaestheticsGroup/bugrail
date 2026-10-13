@@ -53,3 +53,20 @@ Full design: `docs/superpowers/specs/2026-10-13-bugrail-local-first-design.md`.
 - One process and one file to operate; backup is a file-level copy (`VACUUM INTO`).
 - Turso is pre-1.0. If the server engine fails G0, the server switches to `bun:sqlite`/`node:sqlite` with the same SQL and schema.
 - Pages need COOP/COEP headers for the wasm build's shared memory, and the 12.8 MB wasm is cached by the service worker.
+
+## G0 results (2026-10-13)
+
+Sizes are placeholders (24150 rows, 18.4 MB) until production counts are available, so G0.3 and G0.5 are provisional. Browser checks ran in headless Chrome 155 only.
+
+| Check | Result | Evidence |
+|-------|--------|----------|
+| G0.1 Browsers (Chrome, Edge, Firefox, Safari) | Chrome 155 headless: `crossOriginIsolated` true, OPFS `boots` 1, 2, 3 (`persist` false, cause not tested). Edge, Firefox, Safari: NOT YET VERIFIED | spike/G0-NOTES.md § Task 8 |
+| G0.2 Guarded upsert on both engines | PASS on Node (bun test) and wasm in Chrome (`wasmMerge` PASS) | bun test output; /opfs |
+| G0.3 30 clients × 10 min, p95 < 1 s, 0 errors | PASS: p95 = 38 ms (Node, 1802 cycles), errors = 0 | spike/G0-NOTES.md § Task 7 |
+| G0.4 Bun runtime | PASS (binding loads, converge 3 seeds). Bun p95 107 ms vs Node 57 ms, ratio 1.88 > 1.20, so production runs Node 24 | spike/G0-NOTES.md § Task 10 |
+| G0.5 Cold bootstrap < 10 s | Node 221 ms (single client), Chrome headless 3432 ms. At 30 concurrent cold clients the bootstrap p95 was about 20 s on both runtimes, over the target | spike/G0-NOTES.md § Tasks 7, 8, 10 |
+| G0.6 Offline reload + soft navigation | NOT YET PASSED: reload offline, `/opfs` offline and reconnect pass in headless Chrome; soft navigation passes only for routes prefetched in the same page load | spike/G0-NOTES.md § Task 9, g06-screens/ |
+| G0.7 Backup while writing | PASS: `VACUUM INTO` 379 ms mid-load, counts inside the live range, `integrity_check` ok | spike/G0-NOTES.md § Task 11 |
+| G0.8 Convergence (3 seeds) | PASS over HTTP, 300 rounds each | spike/G0-NOTES.md § Task 6 |
+
+Verdict: proceed to Phase 1 with no fallback taken. Open items that Phase 1 must close: Safari, Firefox and Edge runs of G0.1, G0.2 (wasm half), G0.5 (browser half) and G0.6; production-sized re-runs of G0.3 and G0.5; the concurrent-bootstrap time (about 20 s at 30 clients) needs a plan (paging, caching or staggering); offline navigation needs `<Link>`s visible on every offline-reachable page, or the service worker must also serve `?_rsc` requests.
