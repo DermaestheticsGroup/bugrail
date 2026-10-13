@@ -122,8 +122,14 @@ const open = (name) => chromium.launchPersistentContext(`${SC}/${name}`, { execu
   await v.waitForSelector('[data-testid=sync-badge]', { timeout: 30000 });
   await v.waitForTimeout(4000);
   const configText = await v.evaluate(async () => (await fetch('/api/config')).text());
+  await V(v, '[data-testid=file-list]').first().waitFor({ timeout: 15000 }); // the list rendered, so a zero count means empty
   const vendorFiles = await V(v, '[data-testid=file-list] li').count();
-  check('9 the vendor sees none of Alpha: no files and no workspace name in config', vendorFiles === 0 && !configText.includes('Alpha'), { vendorFiles });
+  // and the known Alpha file URL must expose none of its bugs
+  await v.goto(fileUrl);
+  await v.waitForSelector('[data-testid=sync-badge]', { timeout: 30000 });
+  await v.waitForTimeout(4000);
+  const alphaRows = await V(v, ROWS).count();
+  check('9 the vendor sees none of Alpha: no files, no bugs at the Alpha file URL, no workspace name in config', vendorFiles === 0 && alphaRows === 0 && !configText.includes('Alpha'), { vendorFiles, alphaRows });
 
   // user switch on the same device: the previous user's local database must really be gone
   const opfsNames = () => p.evaluate(async () => { const out = []; for await (const [n] of (await navigator.storage.getDirectory()).entries()) out.push(n); return out; });

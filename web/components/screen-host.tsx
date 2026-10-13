@@ -14,9 +14,11 @@ function BugHashShim({ ws }: { ws: string }) {
   const router = useRouter();
   useEffect(() => {
     if (app.phase !== 'ready' || !app.db) return;
-    const m = /^#bug=(.+)$/.exec(decodeURIComponent(window.location.hash));
-    if (!m) return;
-    void app.db.get('SELECT id, file_id FROM bugs WHERE id = ? AND deleted_at IS NULL', m[1]).then((b) => {
+    const raw = /^#bug=(.+)$/.exec(window.location.hash);
+    if (!raw) return;
+    let id: string;
+    try { id = decodeURIComponent(raw[1]); } catch { return; } // a malformed escape is just not a bug link
+    void app.db.get('SELECT id, file_id FROM bugs WHERE id = ? AND deleted_at IS NULL', id).then((b) => {
       if (b) router.replace(hrefFor(ws, `bugs/${encodeURIComponent(String(b.file_id))}/${encodeURIComponent(String(b.id))}`));
     });
   }, [app.phase, app.db, ws, router]);

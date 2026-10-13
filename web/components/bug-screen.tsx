@@ -6,7 +6,7 @@ import { can } from '@/lib/domain/auth';
 import { BUG_FORM } from '@/lib/domain/forms';
 import { stepsHtmlToText } from '@/lib/domain/steps';
 import { hrefFor } from '@/lib/client/nav';
-import { BugFormError, addComment, bugTimeline, changeStatus, deleteBugs, emptyBugForm, saveBug, type BugForm, type StatusChange } from '@/lib/client/bugs';
+import { BugFormError, addComment, changeStatus, deleteBugs, emptyBugForm, saveBug, type BugForm, type StatusChange } from '@/lib/client/bugs';
 import {
   SEVERITIES, boardColumns, bugCodeOf, defaultBugUi, filterBugs, inferPlatform, readExtra, reopenCount, similarBugs,
   statusMaster, statusName, statusRule, tcPrefill, QA_BLOCK_MESSAGE,
@@ -65,7 +65,7 @@ function BugFile({ ws, fileId, view }: { ws: string; fileId: string; view: 'tabl
   const tcLabel = useMemo(() => { const m = new Map((tcs ?? []).map((t) => [String(t.id), s(t.code) || String(t.id)])); return (id: unknown) => (id ? m.get(String(id)) ?? '' : ''); }, [tcs]);
   const rows = useMemo(() => filterBugs(all ?? [], ui, tcLabel), [all, ui, tcLabel]);
   const pg = paginate(rows, ui.page, ui.pageSize);
-  const run = async (fn: () => Promise<unknown>) => { setErr(null); try { await fn(); setN((x) => x + 1); } catch (e) { setErr((e as Error).message); } };
+  const run = async (fn: () => Promise<unknown>) => { setErr(null); try { await fn(); setN((x) => x + 1); return true; } catch (e) { setErr((e as Error).message); return false; } };
   const set = (p: Partial<typeof ui>) => setUi((u) => ({ ...u, ...p, page: 'page' in p ? p.page! : 1 }));
   const eff = effectiveSelection(selected, rows); // only ids still visible: bulk actions never touch hidden or deleted rows
 
@@ -75,13 +75,13 @@ function BugFile({ ws, fileId, view }: { ws: string; fileId: string; view: 'tabl
   if (file && file.length === 0) return <p data-testid="file-gone">This file no longer exists. <Link href={hrefFor(ws, 'bugs')}>Back to files</Link></p>;
 
   // One entry point for every status move: the rule, then the note when the rule asks for one, then the write.
-  async function move(ids: string[], to: string, label: string) {
+  async function move(ids: string[], to: string, label: string): Promise<boolean> {
     const bugs = (all ?? []).filter((b) => ids.includes(String(b.id)));
     const rule = statusRule(bugs, to, c.isQA);
-    if (!rule.ok) { setErr(QA_BLOCK_MESSAGE); return; }
+    if (!rule.ok) { setErr(QA_BLOCK_MESSAGE); return false; }
     let change: StatusChange | null = { note: '', attachment: '' };
-    if (rule.needNote) { change = await ask(label); if (!change) return; }
-    await run(() => changeStatus(app.ctx!, ids, to, change, c.isQA));
+    if (rule.needNote) { change = await ask(label); if (!change) return false; }
+    return run(() => changeStatus(app.ctx!, ids, to, change, c.isQA));
   }
 
   const ids = pg.items.map((r) => String(r.id));
@@ -118,7 +118,7 @@ function BugFile({ ws, fileId, view }: { ws: string; fileId: string; view: 'tabl
         <div data-testid="bulk-bar">
           {eff.length} selected{' '}
           {c.canEdit ? (
-            <select aria-label="Bulk status" value="" onChange={(e) => { const v = e.target.value; if (v) void move(eff, v, `${eff.length} bug → ${statusName(master, v)}`).then(() => setSelected(new Set())); }}>
+            <select aria-label="Bulk status" value="" onChange={(e) => { const v = e.target.value; if (v) void move(eff, v, `${eff.length} bug → ${statusName(master, v)}`).then((ok) => { if (ok) setSelected(new Set()); }); }}>
               <option value="">Set status…</option>{master.map((m) => <option key={m.code} value={m.code}>{m.name}</option>)}
             </select>
           ) : null}
@@ -363,7 +363,6 @@ function BugDetail({ ws, fileId, bugId }: { ws: string; fileId: string; bugId: s
   const events = useLive('SELECT * FROM bug_events WHERE bug_id = ? ORDER BY at, id', [bugId], n);
   const tc = useLive('SELECT code FROM testcases WHERE id = (SELECT test_case_id FROM bugs WHERE id = ?)', [bugId], n);
   const master = useMaster(n);
-  void bugTimeline;
   if (!bug || !events) return null;
   const b = bug[0];
   if (!b || b.deleted_at) return <p data-testid="bug-gone">This bug no longer exists. <Link href={hrefFor(ws, `bugs/${encodeURIComponent(fileId)}`)}>Back to the list</Link></p>;
