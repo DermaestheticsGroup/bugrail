@@ -52,3 +52,27 @@
   3. Reload twice. `boots` must read 1, 2, 3.
   4. Click "Run full bootstrap". Record `bootstrapMs` (< 10000) and `bootstrapRows` (24150 for the default seed).
   5. Paste the `results` block per browser into the table above. Safari: `localhost` is a secure context so OPFS should be available; if `opfs` shows FAIL, record the message.
+
+## Task 9: offline shell (G0.6)
+
+- Plan code (sw.js, sw-register, offline-badge, layout) ran unchanged. 0 discrepancies: `next/offline` `useOffline` exists in 16.4.0 (`node_modules/next/offline.d.ts`, doc `dist/docs/01-app/02-guides/offline-support.md`), build passes (`/`, `/opfs`, `/other` static).
+- Driven with playwright-core against installed Google Chrome 155.0.8059.40 (headless, fresh persistent profile), `next build` + `next start` on :3100, `context.setOffline(true/false)`. Screenshots in `g06-screens/`.
+
+| Step | Expected | Observed (Chrome 155 headless) |
+|---|---|---|
+| 1 SW | sw.js active, controls page | PASS: `navigator.serviceWorker.controller` set after one reload; cache holds `/`, `/opfs`, `/other` + 14 `/_next/static` chunks (incl. wasm worker chunk) |
+| 3 reload `/` offline | renders, badge `offline` | PASS: h1 "BugRail G0 spike", badge `offline` (the browser `offline` event flips it) |
+| 4 soft nav `/` -> `/other` offline | renders without browser error page | PASS only when the page session prefetched online first (same session, no reload): url `/other`, "Other page" visible, no error page. Link prefetch (`/_tree` + `/other/__PAGE__` RSC requests) happened online |
+| 4b soft nav `/other` -> `/` offline | renders | FAIL as written: stays on `/other`, "Home" click pending (`/` RSC request fails with ERR_INTERNET_DISCONNECTED and is retried). The new `/` Link on `/other` can't prefetch once offline |
+| 4c soft nav after an offline reload of `/` | renders | FAIL: reload clears the router prefetch cache, prefetch can't re-run offline; click stays pending (8 s waited), url stays `/` |
+| 5 `/opfs` offline goto + reload | renders, boots grows, wasmMerge PASS | PASS: boots 2 then 3, `wasmMerge: PASS`, `crossOriginIsolated: true` (wasm served from SW cache). Badge read `online` here (no failed Next request or offline event after the fresh load, so it is not a reliable status after a SW-served load) |
+| 6 back online | badge `online` within ~3 s | PASS: pending `/` navigation completed, badge `online` after 23 ms (probe run). Step 6 in the full script read 1-2 ms because badge was already `online` |
+
+- Next's own behavior (per docs): with `useOffline`, failed navigation/prefetch is held pending and retried on reconnect, not thrown. That matches: pending, then completes after reconnect.
+- G0.6 verdict: steps 3, 5, 6 PASS. Step 4 PASS only for routes whose shell was prefetched earlier in the same page load. Navigation offline to a route not prefetched in the current page load (including after an offline reload) hangs pending until online. Consequence for the app: every route reachable offline needs a `<Link>` visible on the page after load, or the SW must also serve RSC (`?_rsc`) requests from cache. Not tried here.
+- Chrome only. Edge, Firefox, Safari: NOT YET VERIFIED. Manual steps (DevTools Network -> Offline, or Safari Develop -> Disable network):
+  1. `cd spike && bun scripts/seed.ts && bun run build && BUGRAIL_DB_PATH=data/server.db bun run start`
+  2. Open `http://localhost:3100/`, confirm sw.js active, wait 5 s (prefetch), visit `/opfs` once, go back to `/`.
+  3. Go offline. Click "Other page": must render `/other`. Click "Home": record whether it renders.
+  4. Reload `/`, then `/opfs`: must render, `boots` grows, `wasmMerge: PASS`.
+  5. Go online: badge returns to `online` within ~3 s.
