@@ -109,6 +109,10 @@ export async function bulkTestcaseStatus(ctx: Ctx, ids: string[], status: string
 }
 
 export async function bulkTestcaseDelete(ctx: Ctx, ids: string[]): Promise<number> {
-  for (const id of ids) await softDelete(ctx, 'testcases', id);
-  return ids.length;
+  let n = 0;
+  for (const id of ids) {
+    // Missing or already-deleted rows are skipped, so the count is what actually changed and no stray row is created.
+    if (await ctx.db.get('SELECT 1 AS x FROM testcases WHERE id = ? AND deleted_at IS NULL', id)) { await softDelete(ctx, 'testcases', id); n++; }
+  }
+  return n;
 }

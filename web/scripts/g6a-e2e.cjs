@@ -17,11 +17,13 @@ async function login(p, email, password) {
 }
 // Next keeps visited screens mounted but hidden: every locator must mean the visible one.
 const V = (page, sel) => page.locator(`${sel}:visible`);
+const codeCells = async (p) => (await V(p, '[data-testid=tc-table] tbody tr td:nth-child(2)').allTextContents()).map((x) => x.trim());
 const rowsText = (p) => V(p, '[data-testid=tc-table] tbody tr').allTextContents();
 const until = async (what, fn, ms = 15000) => { const t = Date.now(); for (;;) { try { const v = await fn(); if (v) return Date.now() - t; } catch { /* retry */ } if (Date.now() - t > ms) throw new Error('timeout: ' + what); await new Promise((r) => setTimeout(r, 250)); } };
 const step = async (name, fn) => { try { const d = await fn(); check(name, true, d); } catch (e) { check(name, false, String(e.message || e).slice(0, 160)); } };
 
 (async () => {
+  let admin = null, adminPage = null;
   const a = await open('a');
   const p = a.pages()[0] || await a.newPage();
   const errors = [];
@@ -51,7 +53,7 @@ const step = async (name, fn) => { try { const d = await fn(); check(name, true,
       await p.click('form[aria-label="Test case form"] button:has-text("Save")');
       await p.waitForSelector(`tr:has-text("${sc}")`);
     }
-    return until('codes', async () => (await rowsText(p)).every((t) => /LOG-\d{4}|PAY|PAYM|PAM/.test(t) || /[A-Z]{2,3}-\d{4}/.test(t)));
+    return until('codes', async () => (await codeCells(p)).length === 3 && (await codeCells(p)).every((c) => /^[A-Z]{2,3}-\d{4}$/.test(c)));
   });
   await step('T1 search narrows the list; reset restores it', async () => {
     await p.fill('input[aria-label=Search]', 'wrong password');
@@ -69,9 +71,13 @@ const step = async (name, fn) => { try { const d = await fn(); check(name, true,
     await p.click('button:has-text("Reset filters")');
   });
   await step('T5 duplicate gets its own code from the server', async () => {
-    await p.locator('tr:has-text("Happy path") button:has-text("Duplicate")').click();
+    const happy = async () => (await V(p, 'tr:has-text("Happy path") td:nth-child(2)').allTextContents()).map((x) => x.trim());
+    await p.locator('tr:has-text("Happy path") button:has-text("Duplicate")').first().click();
     await until('dup', async () => (await rowsText(p)).length === 4);
-    return until('dup code', async () => (await rowsText(p)).every((t) => !/pending/.test(t)));
+    await until('dup code', async () => (await happy()).length === 2 && (await happy()).every((c) => /^[A-Z]{2,3}-\d{4}$/.test(c)));
+    const [a, b] = await happy();
+    if (a === b) throw new Error('duplicate shares the original code ' + a);
+    return { original: a, duplicate: b };
   });
   await step('T6 bulk status update (qa_internal has no delete permission, so no delete button)', async () => {
     await V(p, 'input[aria-label="Select page"]').check();
@@ -118,7 +124,8 @@ const step = async (name, fn) => { try { const d = await fn(); check(name, true,
     await login(ap, 'root@x.test', 'rootpass123');
     const st = await ap.evaluate(async () => (await fetch('/api/admin/roles', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ qa_vendor: { testcase_read: true, testcase_update: false } }) })).status);
     if (st !== 200) throw new Error('role change ' + st);
-    await adm.close();
+    admin = adm;
+    adminPage = ap;
     await V(vp, 'tr:has-text("Happy path") button:has-text("Edit")').first().click();
     await vp.fill('form[aria-label="Test case form"] label:has-text("Scenario") input', 'Vendor edit');
     await vp.click('form[aria-label="Test case form"] button:has-text("Save")');
@@ -128,10 +135,14 @@ const step = async (name, fn) => { try { const d = await fn(); check(name, true,
     await V(vp, '[data-testid=rejected-panel] button:has-text("Discard")').first().click();
     await until('panel gone', async () => (await V(vp, '[data-testid=rejected-panel]').count()) === 0, 20000).catch(async (e) => { throw new Error(e.message + ' | ' + JSON.stringify(await vp.locator('[data-testid=rejected-panel]').allInnerTexts())); });
     await until('row reverted', async () => !/Vendor edit/.test((await rowsText(vp)).join()) && /Happy path/.test((await rowsText(vp)).join()));
+    // put the matrix back so later steps (and a re-run on the same database) see the default permissions
+    const back = await adminPage.evaluate(async () => (await fetch('/api/admin/roles', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ qa_vendor: { testcase_read: true, testcase_update: true, testcase_create: true } }) })).status);
+    await admin.close();
+    if (back !== 200) throw new Error('could not restore the permission matrix: ' + back);
     return text.slice(0, 80);
   });
 
-  await step('F4 admin deletes a file: its test cases go too, on every device', async () => {
+  await step('F4 admin deletes a file: it disappears for admin, QA and the vendor (child tombstones are unit-tested, not read back here)', async () => {
     const adm = await open('adm2');
     const ap = adm.pages()[0] || await adm.newPage();
     await login(ap, 'root@x.test', 'rootpass123');

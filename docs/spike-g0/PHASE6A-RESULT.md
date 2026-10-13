@@ -9,7 +9,7 @@
 
 ## Evidence
 - `bun test` passes (includes `effectiveSelection` cases); `tsc` clean; `next build` passes.
-- `scripts/g6a-e2e.cjs` (headless Chrome 155, three users plus an admin): create, rename, share and unshare a file; create test cases with codes within 15 s; search and reset; execute and filter by status; duplicate gets its own code; bulk status; vendor sees nothing before sharing, sees the file within 15 s of sharing and loses it within 15 s of unsharing; a write the server refuses after an admin removes a permission shows its reason and is discarded and reverts; an admin deleting a file removes it for the vendor and for QA.
+- `scripts/g6a-e2e.cjs` (headless Chrome 155, three users plus an admin): create, rename, share and unshare a file; create test cases with codes within 15 s; search and reset; execute and filter by status; duplicate gets its own code; bulk status; vendor sees nothing before sharing, sees the file within 15 s of sharing and loses it within 15 s of unsharing; a write the server refuses after an admin removes a permission shows its reason and is discarded and reverts; an admin deleting a file removes it for the vendor and for QA (the child test case tombstones are covered by unit tests, not read back in the browser).
 
 ## Not done or not checked
 - No dialog for adding a new module (the module field suggests existing ones and accepts any new text), no toast or undo (browser `confirm` is used), no import, export, print, translate or TestForge (slice 6d), no Create Bug from a test case (6b).

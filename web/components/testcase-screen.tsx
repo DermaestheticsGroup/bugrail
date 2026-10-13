@@ -33,7 +33,7 @@ function FileList({ ws }: { ws: string }) {
   const [name, setName] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
-  const where = ws === ALL_WS ? '1' : `workspace_id = ? OR id IN (SELECT file_id FROM file_shares WHERE workspace_id = ? AND deleted_at IS NULL)`;
+  const where = ws === ALL_WS ? '1' : `f.workspace_id = ? OR f.id IN (SELECT s.file_id FROM file_shares s WHERE s.workspace_id = ? AND s.deleted_at IS NULL)`;
   const params = ws === ALL_WS ? [] : [ws, ws];
   const files = useLive(
     `SELECT f.id, f.name, f.workspace_id, (SELECT count(*) FROM testcases t WHERE t.file_id = f.id AND t.deleted_at IS NULL) AS n

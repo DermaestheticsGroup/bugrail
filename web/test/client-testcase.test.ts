@@ -53,8 +53,6 @@ describe('files', () => {
     await setFileShares(ctx, String(f.id), ['ws-v']);
     await sync('alice');
     const vendor = await make();
-    const vctx = { ...ctx, db: vendor };
-    void vctx;
     await pullAll(vendor, t('vendor'));
     expect((await vendor.all('SELECT id FROM files')).map((r) => r.id)).toEqual([f.id]);
     expect(Number((await vendor.get('SELECT count(*) AS n FROM testcases')).n)).toBe(1);
@@ -135,7 +133,9 @@ describe('test cases', () => {
     const b = await saveTestcase(ctx, fid, { module: 'M', scenario: 'b' });
     await executeTestcase(ctx, String(b.id), { status: 'Passed', actual_result: '', evidence: '' });
     expect(await bulkTestcaseStatus(ctx, [String(a.id), String(b.id)], 'Passed')).toBe(1);
-    expect(await bulkTestcaseDelete(ctx, [String(a.id), String(b.id)])).toBe(2);
+    expect(await bulkTestcaseDelete(ctx, [String(a.id), String(b.id), 'ghost'])).toBe(2); // the missing id is skipped, not created
+    expect(await bulkTestcaseDelete(ctx, [String(a.id)])).toBe(0); // already deleted
+    expect(await local.get("SELECT 1 AS x FROM testcases WHERE id = 'ghost'")).toBeUndefined();
     expect((await local.all('SELECT id FROM testcases WHERE deleted_at IS NULL')).length).toBe(0);
   });
 
