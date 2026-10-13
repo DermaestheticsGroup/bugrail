@@ -13,8 +13,13 @@ describe('writePrivateFileAtomic', () => {
     chmodSync(f, 0o644);
     writePrivateFileAtomic(f, 'new');
     expect(readFileSync(f, 'utf8')).toBe('new');
-    expect(statSync(f).mode & 0o777).toBe(0o600);
+    if (process.platform !== 'win32') expect(statSync(f).mode & 0o777).toBe(0o600); // POSIX modes only
     expect(readdirSync(d)).toEqual(['out.json']); // no temp left behind
+  });
+  test('a large export is written completely', () => {
+    const d = dir(), f = join(d, 'big.json'), text = 'x'.repeat(5_000_000);
+    writePrivateFileAtomic(f, text);
+    expect(statSync(f).size).toBe(text.length);
   });
   test('a planted predictable temp file or symlink is never written through', () => {
     const d = dir(), f = join(d, 'out.json'), victim = join(d, 'victim.txt');
