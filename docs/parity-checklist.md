@@ -21,18 +21,18 @@ Slice = which Phase 6 PR delivers it. Status in this file is the AUTHOR's claim;
 | T5 | Duplicate | 6a | yes (Chrome) | |
 | T6 | Delete one, bulk delete, bulk status update | 6a | bulk status: yes (Chrome); delete one and bulk delete: unit tests only (only admin holds testcase_delete by default) | |
 | T7 | Display codes arrive from the server (`LOG-0001`) | done in Phase 5 | yes | |
-| T8 | Create bug from a failed test case (prefill) | 6b | | |
+| T8 | Create bug from a failed test case (prefill) | 6b | yes (Chrome) | |
 | T9 | Import from Excel (`TC_IMPORT`), template | 6d | | |
 | T10 | Export Excel / CSV, print | 6d | | |
 | T11 | Translate active file (`translateActiveFile`) | 6d | | |
 | T12 | Generate test cases with AI (TestForge), online only | 6d | | |
 | **Bug Report (`bugreport.js`)** | | | | |
-| B1 | List, board (drag and drop), filters, sort, pagination | 6b | | |
-| B2 | Create / edit form with test case link, similar-bug check, field lock, platform fields | 6b | | |
-| B3 | Status change with transition rule and required note (`statusTransitionRule`) | 6b | | |
-| B4 | Detail with timeline, comments, assignments, reopen count | 6b | | |
-| B5 | Bulk delete, bulk status update | 6b | | |
-| B6 | AI analyze a failed test case (online only) | 6b | | |
+| B1 | List, board (drag and drop), filters, sort, pagination | 6b | list, board drag and drop, filters: yes (Chrome); sort and pagination: unit tests only | |
+| B2 | Create / edit form with test case link, similar-bug check, field lock, platform fields | 6b | yes (Chrome) | |
+| B3 | Status change with transition rule and required note (`statusTransitionRule`) | 6b | yes (Chrome) | |
+| B4 | Detail with timeline, comments, assignments, reopen count | 6b | yes (Chrome) | |
+| B5 | Bulk delete, bulk status update | 6b | yes (Chrome), admin | |
+| B6 | AI analyze a failed test case (online only) | 6b | button and graceful failure without a key: yes (Chrome); a real Gemini answer: not tested | |
 | B7 | Import / export / template / print | 6d | | |
 | **Read-only screens** | | | | |
 | R1 | Dashboard (`dashboard.js`) | 6c | | |

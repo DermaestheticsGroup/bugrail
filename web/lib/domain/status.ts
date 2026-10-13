@@ -28,3 +28,15 @@ export function computeBugResolutionStats(bugs?: ResolvedBug[] | null): { resolv
   const avgHours = durations.length ? durations.reduce((a, b) => a + b, 0) / durations.length / 3600000 : 0;
   return { resolvedCount: durations.length, avgHours };
 }
+
+export interface StatusDef { code: string; name: string; color: string | null; order: number }
+
+// Mirrors BugReportModule.DEFAULT_STATUS_MASTER: used when the master list is empty (a fresh install).
+export const DEFAULT_STATUS_MASTER: StatusDef[] = [
+  { code: 'OPEN', name: 'Open', color: '#2563EB', order: 1 },
+  { code: 'IN_PROGRESS', name: 'In Progress', color: '#F59E0B', order: 2 },
+  { code: 'RETEST', name: 'Retest', color: '#06B6D4', order: 3 },
+  { code: 'RESOLVED', name: 'Resolved', color: '#22C55E', order: 4 },
+  { code: 'CLOSED', name: 'Closed', color: '#6B7280', order: 5 },
+  { code: 'REJECTED', name: 'Rejected', color: '#EF4444', order: 6 },
+];

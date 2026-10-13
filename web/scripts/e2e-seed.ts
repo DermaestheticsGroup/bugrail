@@ -12,5 +12,6 @@ if (!a.ok || !v.ok) throw new Error('workspace');
 await createUser(db, { email: 'root@x.test', role: 'admin', password: 'rootpass123' });
 await createUser(db, { email: 'qa@x.test', role: 'qa_internal', password: 'qapass1234', workspaceIds: [a.id] });
 await createUser(db, { email: 'qa2@x.test', role: 'qa_internal', password: 'qapass1234', workspaceIds: [a.id] });
+await createUser(db, { email: 'pm@x.test', role: 'pm_ba', password: 'pmpass12345', workspaceIds: [a.id] });
 await createUser(db, { email: 'vendor@x.test', role: 'qa_vendor', password: 'vendorpass1', workspaceIds: [v.id] });
 console.log(JSON.stringify({ alpha: a.id, vendor: v.id }));
