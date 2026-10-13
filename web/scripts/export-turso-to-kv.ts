@@ -3,7 +3,7 @@
 // --original is the untouched legacy dump (or the live kv_store): cutover users get their old plaintext password back from it.
 // Users created after cutover get a temporary password. The export file is written 0600 and the passwords print only with --print-temp-passwords.
 import { connect } from '@tursodatabase/database';
-import { chmodSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { exportKv } from '../lib/migrate/kv';
 import type { Db } from '../lib/db-types';
@@ -17,14 +17,23 @@ const db = (await connect(a.db)) as unknown as Db;
 const { blobs, tempPasswords } = await exportKv(db, { originalSettings });
 
 if (a.out) {
-  // The export holds plaintext passwords: owner-only, even when the file already existed (the mode in writeFileSync only applies on create).
-  writeFileSync(a.out, JSON.stringify(blobs, null, 2), { mode: 0o600 });
-  chmodSync(a.out, 0o600);
+  // The export holds plaintext passwords and is the rollback path, so: owner-only from the first byte, and replaced atomically
+  // (a crash mid-write must not truncate an earlier good export).
+  const tmp = `${a.out}.${process.pid}.tmp`;
+  try {
+    writeFileSync(tmp, JSON.stringify(blobs, null, 2), { mode: 0o600 });
+    chmodSync(tmp, 0o600);
+    renameSync(tmp, a.out);
+  } catch (e) {
+    rmSync(tmp, { force: true });
+    throw e;
+  }
 }
 const temps = Object.keys(tempPasswords);
 if (temps.length) {
   if (a['print-temp-passwords']) console.log('temporary passwords (give to each user, then they reset):\n' + JSON.stringify(tempPasswords, null, 2));
-  else console.log(`${temps.length} user(s) got a temporary password; they are in the exported settings. Rerun with --print-temp-passwords to print them.`);
+  // A rerun would generate different ones, so point at the export instead of suggesting it.
+  else console.log(`${temps.length} user(s) got a temporary password (${temps.join(', ')}); they are in the exported settings${a.out ? ` (${a.out})` : ''}. Rerunning generates new ones. Use --print-temp-passwords on the run you keep.`);
 }
 
 if (a['to-mongo']) {
