@@ -1,3 +1,5 @@
+> **Superseded** (2026-10-13) by [`docs/superpowers/specs/2026-10-13-bugrail-local-first-design.md`](../superpowers/specs/2026-10-13-bugrail-local-first-design.md). Kept for history.
+
 # BugRail → Next.js + Turso (self-hosted sync), local-first, LWW — Migration Plan
 
 ## Goal

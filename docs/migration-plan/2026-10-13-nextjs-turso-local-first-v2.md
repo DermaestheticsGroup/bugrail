@@ -1,3 +1,5 @@
+> **Superseded** (2026-10-13) by [`docs/superpowers/specs/2026-10-13-bugrail-local-first-design.md`](../superpowers/specs/2026-10-13-bugrail-local-first-design.md). Kept for history.
+
 # BugRail → Next.js 16 + self-hosted Turso Sync, local-first, last-write-wins: Migration Plan v2
 
 > Replaces v1 (`2026-10-13-nextjs-turso-local-first.md`). Cross-checked 2026-10-13 against commit `33e1e49`, the published type definitions of `@tursodatabase/sync-wasm@0.8.3` / `@tursodatabase/sync-common@0.8.3`, the Turso docs ([local sync server](https://docs.turso.tech/sync/local-sync-server), [sync usage](https://docs.turso.tech/sync/usage)), [turso PR #9025](https://github.com/tursodatabase/turso/pull/9025) and `next@16.4.0`.

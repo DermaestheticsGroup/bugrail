@@ -5,6 +5,13 @@ Web app for managing Test Cases and Bug Reports, fully integrated. Two parts:
 - **`qa-app/`** — frontend (Vanilla JS, HTML, CSS). Runs standalone with localStorage, or connects to the MongoDB backend.
 - **`server/`** — Express + MongoDB backend, storage API replacing localStorage so data syncs across browsers/devices.
 
+## Migration in progress
+
+BugRail is moving to a single Next.js 16 app in `web/`. It will be local-first: each browser keeps a Turso database that syncs with a self-hosted Turso database on the VM. It will work offline, and workspaces will be isolated on the server, so vendor accounts see only their own workspace. `qa-app/` and `server/` stay in production until cutover.
+
+- Design: [`docs/superpowers/specs/2026-10-13-bugrail-local-first-design.md`](docs/superpowers/specs/2026-10-13-bugrail-local-first-design.md)
+- Decisions: [`docs/adr/`](docs/adr/)
+
 ## Features
 
 - Realtime dashboard stats (Chart.js): Test Case status, Bug severity, per-module progress.
@@ -37,5 +44,5 @@ API runs at `http://localhost:3001`. Frontend reads API URL from `API_BASE` in `
 ```
 qa-app/    frontend (index.html, css/, js/)
 server/    backend Express + MongoDB (server.js, app.js, db.js)
-docs/      development plans & specs
+docs/      specs (superpowers/specs), decisions (adr), plans, reviews
 ```

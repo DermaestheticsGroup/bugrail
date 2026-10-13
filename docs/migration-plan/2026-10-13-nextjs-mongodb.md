@@ -1,3 +1,5 @@
+> **Superseded** (2026-10-13) by [`docs/superpowers/specs/2026-10-13-bugrail-local-first-design.md`](../superpowers/specs/2026-10-13-bugrail-local-first-design.md). Kept for history.
+
 # BugRail → Next.js, keep MongoDB — Migration Plan
 
 > Supersedes the Postgres/Prisma direction in `specs/2026-08-11-bugrail-next-migration-design.md` for teams that want to keep MongoDB.

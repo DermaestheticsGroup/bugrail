@@ -1,3 +1,5 @@
+> **Superseded** (2026-10-13) by [`docs/superpowers/specs/2026-10-13-bugrail-local-first-design.md`](../superpowers/specs/2026-10-13-bugrail-local-first-design.md). Kept for history.
+
 # BugRail → Next.js 16 + MongoDB: Migration Plan v2
 
 > Replaces v1 (`2026-10-13-nextjs-mongodb.md`) and the Postgres/Prisma spec (`specs/2026-08-11-bugrail-next-migration-design.md`), which was never built (no `BugRail-Next/` exists).

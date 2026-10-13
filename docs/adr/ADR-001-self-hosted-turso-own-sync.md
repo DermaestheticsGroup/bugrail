@@ -1,0 +1,55 @@
+# ADR-001: Local-first on self-hosted Turso with our own sync protocol
+
+## Status
+
+Accepted (2026-10-13). Gate G0 validates it; see "If G0 fails" in the spec.
+
+## Date
+
+2026-10-13
+
+## Context
+
+BugRail today keeps every collection as one MongoDB `kv_store` blob. Each browser downloads all of it (`GET /api/kv`), caches it in localStorage and writes whole blobs back, merged by `KvMerge`. A session that boots offline can never write back.
+
+We want the app to feel instant and to work offline, so the database has to live in the browser. Three constraints narrow the transport:
+
+- **Fully self-hosted** on the existing VM. No Turso Cloud, no Vercel.
+- **Workspace isolation** (ADR-003): a vendor account must never receive another workspace's rows.
+- **Strict feature parity**, including files shared across workspaces.
+
+## Decision
+
+- Server: one `server.db` opened in the Next.js process with `@tursodatabase/database` (embedded Turso engine, MIT), pinned to `0.8.3`.
+- Browser: `@tursodatabase/database-wasm` `0.8.3` in OPFS, holding only rows the user may see.
+- Sync: our own `POST /api/sync/push` and `GET /api/sync/pull` route handlers. Push checks permission per row, applies the guarded upsert (ADR-002) and assigns display codes in one transaction. Pull returns visible rows by `server_seq` cursor, and forces a full re-pull when the user's access changes.
+
+Full design: `docs/superpowers/specs/2026-10-13-bugrail-local-first-design.md`.
+
+## Alternatives Considered
+
+### Native Turso Sync with self-hosted `tursodb --sync-server` (Turso plan v2)
+
+- Pros: no sync code of our own; offline writes queue natively.
+- Cons: pull replicates the whole DB with no row filtering; the server has no auth and serves one connection at a time; the Turso docs position it for dev/test.
+- Rejected: can't isolate workspaces. One `tursodb` process per workspace would isolate, but breaks cross-workspace file sharing, multiplies the single-connection limit, and still needs an agent process for codes and identity tables.
+
+### Native Turso Sync on Turso Cloud, hosted on Vercel
+
+- Pros: managed sync and backups.
+- Cons: same whole-DB replication; isolation needs one cloud DB per workspace with browser-held tokens.
+- Rejected: violates the self-hosted constraint.
+
+### Online-only Next.js + MongoDB collections (Mongo plan v2)
+
+- Pros: smallest change; change streams for live refresh.
+- Cons: no offline work; every interaction waits on the network.
+- Rejected: fails the instant and offline goals.
+
+## Consequences
+
+- We own a small sync protocol: two routes and one merge function shared by browser and server. A convergence property test and a 3-client harness guard it.
+- Isolation, permission checks and code assignment run on the server inside the push transaction, so no agent process and no client trust are needed.
+- One process and one file to operate; backup is a file-level copy (`VACUUM INTO`).
+- Turso is pre-1.0. If the server engine fails G0, the server switches to `bun:sqlite`/`node:sqlite` with the same SQL and schema.
+- Pages need COOP/COEP headers for the wasm build's shared memory, and the 12.8 MB wasm is cached by the service worker.
