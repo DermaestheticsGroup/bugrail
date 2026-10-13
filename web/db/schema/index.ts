@@ -63,6 +63,11 @@ INSERT INTO sync_meta (key, value) VALUES ('seq', 0) ON CONFLICT(key) DO NOTHING
 INSERT INTO sync_meta (key, value) VALUES ('schema_version', 0) ON CONFLICT(key) DO NOTHING;
 `;
 
+export const WORKSPACES_SQL = `
+-- Server-only. Admin-managed; delivery to browsers arrives with the client shell.
+CREATE TABLE IF NOT EXISTS workspaces (id TEXT PRIMARY KEY, name TEXT, created_at TEXT);
+`;
+
 export const LOCAL_SQL = `
 -- Browser-only.
 CREATE TABLE IF NOT EXISTS outbox (seq INTEGER PRIMARY KEY AUTOINCREMENT, tbl TEXT, row_id TEXT);
@@ -78,7 +83,7 @@ CREATE TABLE IF NOT EXISTS rejected (row_id TEXT NOT NULL, tbl TEXT NOT NULL, re
 export type Migration = readonly [number, string, string];
 
 export const MIGRATIONS: Record<'server' | 'local', Migration[]> = {
-  server: [[1, '001_core.sql', CORE_SQL], [2, '002_server.sql', SERVER_SQL]],
+  server: [[1, '001_core.sql', CORE_SQL], [2, '002_server.sql', SERVER_SQL], [5, '005_workspaces.sql', WORKSPACES_SQL]],
   local: [[1, '001_core.sql', CORE_SQL], [3, '003_local.sql', LOCAL_SQL], [4, '004_local_rejected.sql', LOCAL_REJECTED_SQL]],
 };
 

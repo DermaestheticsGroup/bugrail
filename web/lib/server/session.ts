@@ -30,3 +30,10 @@ export async function requireUser(req: Request): Promise<User | undefined> {
   if (dev) return dev;
   return userFromSession(await getServerDb(), await getSession());
 }
+
+export async function requireAdmin(req: Request): Promise<{ user: User } | { res: Response }> {
+  const user = await requireUser(req);
+  if (!user) return { res: new Response(null, { status: 401 }) };
+  if (user.role !== 'admin') return { res: new Response(null, { status: 403 }) };
+  return { user };
+}

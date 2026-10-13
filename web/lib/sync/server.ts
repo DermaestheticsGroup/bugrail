@@ -156,7 +156,8 @@ async function denyReason(tx: Tx, u: User, perms: RolePermissions | null, tbl: S
 const comparable = (tbl: SyncedTable, row: Row) =>
   JSON.stringify(TABLES[tbl].columns.filter((c) => c !== 'server_seq').map((c) => row[c] ?? null));
 
-export async function push(db: Db, user: User, input: unknown[]): Promise<PushResult> {
+// `touched` (optional) collects the workspaces that can see a changed row, for the live-refresh poke.
+export async function push(db: Db, user: User, input: unknown[], touched?: Set<string>): Promise<PushResult> {
   const rows = input.slice(0, MAX_PUSH);
   const overflow = input.slice(MAX_PUSH);
   const run = db.transactionAsync(async (tx: Tx) => {
@@ -216,6 +217,17 @@ export async function push(db: Db, user: User, input: unknown[]): Promise<PushRe
     }
 
     await tx.run("UPDATE sync_meta SET value = ? WHERE key = 'seq'", seq);
+    if (touched) {
+      for (const [, s] of sent) {
+        const fid = s.tbl === 'files' ? s.row.id : s.tbl === 'bug_events' ? (await tx.get('SELECT file_id FROM bugs WHERE id = ?', s.row.bug_id))?.file_id : s.row.file_id;
+        if (s.tbl === 'activity_log' && typeof s.row.workspace_id === 'string') touched.add(s.row.workspace_id);
+        if (typeof fid !== 'string') continue;
+        const f = await tx.get('SELECT workspace_id FROM files WHERE id = ?', fid);
+        if (f?.workspace_id) touched.add(f.workspace_id);
+        for (const sh of await tx.all('SELECT workspace_id FROM file_shares WHERE file_id = ? AND deleted_at IS NULL', fid)) touched.add(sh.workspace_id);
+      }
+      for (const w of moved) touched.add(w);
+    }
     if (moved.size) {
       for (const u of await tx.all('SELECT id, workspace_ids FROM users')) {
         const ws: string[] = JSON.parse(u.workspace_ids || '[]');
