@@ -145,7 +145,10 @@ export default function AppProvider({ children }: { children: React.ReactNode })
   useEffect(() => {
     if (phase !== 'ready' || version === 0 || !configStale.current) return;
     configStale.current = false;
-    void fetchConfig().then((r) => { if (r.kind === 'ok') { saveConfig(r.config); setConfig(r.config); } });
+    // A later refresh supersedes an earlier one: if this effect re-runs (or the provider unmounts) before the response lands, drop it.
+    let current = true;
+    void fetchConfig().then((r) => { if (current && r.kind === 'ok') { saveConfig(r.config); setConfig(r.config); } });
+    return () => { current = false; };
   }, [version, phase]);
 
   const logout = useCallback(async () => {
