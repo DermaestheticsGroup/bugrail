@@ -3,7 +3,7 @@ import { connect } from '@tursodatabase/database';
 import { applyMigrations } from '../db/migrate';
 import { hashPassword, verifyPassword } from '../lib/server/password';
 import { rateLimited, resetRateLimit } from '../lib/server/rate-limit';
-import { login } from '../lib/server/auth-routes';
+import { clientIp, login } from '../lib/server/auth-routes';
 import { userFromSession } from '../lib/server/session';
 import type { Db } from '../lib/db-types';
 
@@ -35,10 +35,25 @@ describe('login', () => {
     expect(await login(db, 'ip', 'who@x.test', 's3cret')).toEqual({ ok: false, status: 401 });
     expect(await login(db, 'ip', 5, 's3cret')).toEqual({ ok: false, status: 400 });
   });
-  test('rate limit trips after 10 attempts per IP, other IPs unaffected', async () => {
-    for (let i = 0; i < 10; i++) await login(db, 'ip', 'ann@x.test', 'bad');
+  test('email bucket trips after 10 attempts even across different IPs', async () => {
+    for (let i = 0; i < 10; i++) await login(db, `ip${i}`, ' Ann@x.test', 'bad');
+    expect(await login(db, 'fresh', 'ann@x.test', 's3cret')).toEqual({ ok: false, status: 429 });
+    expect(await login(db, 'fresh', 'who@x.test', 'bad')).toEqual({ ok: false, status: 401 });
+  });
+  test('IP bucket trips after 50 attempts, other IPs unaffected', async () => {
+    for (let i = 0; i < 50; i++) await login(db, 'ip', `u${i}@x.test`, 'bad');
     expect(await login(db, 'ip', 'ann@x.test', 's3cret')).toEqual({ ok: false, status: 429 });
     expect((await login(db, 'other', 'ann@x.test', 's3cret')).ok).toBe(true);
+  });
+  test('clientIp reads x-forwarded-for only when BUGRAIL_TRUSTED_PROXY=1', () => {
+    const h = new Headers({ 'x-forwarded-for': '1.2.3.4, 5.6.7.8' });
+    delete process.env.BUGRAIL_TRUSTED_PROXY;
+    expect(clientIp(h)).toBe('unknown');
+    process.env.BUGRAIL_TRUSTED_PROXY = '1';
+    try {
+      expect(clientIp(h)).toBe('1.2.3.4');
+      expect(clientIp(new Headers())).toBe('unknown');
+    } finally { delete process.env.BUGRAIL_TRUSTED_PROXY; }
   });
 });
 
@@ -47,6 +62,13 @@ describe('rateLimited window', () => {
     for (let i = 0; i < 2; i++) expect(rateLimited('k', 2, 1000, 0)).toBe(false);
     expect(rateLimited('k', 2, 1000, 500)).toBe(true);
     expect(rateLimited('k', 2, 1000, 2000)).toBe(false);
+  });
+  test('expired keys are evicted once the map is large', () => {
+    for (let i = 0; i <= 10_000; i++) rateLimited(`old${i}`, 1, 1000, 0);
+    expect(rateLimited('old0', 1, 1000, 500)).toBe(true);
+    rateLimited('new', 1, 1000, 5000);
+    expect(rateLimited('old1', 1, 1000, 5000)).toBe(false);
+    expect(rateLimited('old1', 1, 1000, 5000)).toBe(true);
   });
 });
 

@@ -126,7 +126,10 @@ async function denyReason(tx: Tx, u: User, perms: RolePermissions | null, tbl: S
       if (existing && !(await fileVisible(tx, u, existing.file_id))) return 'bug not visible';
       if (existing && existing.file_id !== row.file_id) return 'only admin can move a bug';
       if (!(await fileVisible(tx, u, row.file_id))) return 'file not visible';
-      if (!existing) return ok('bugreport_create') ? null : 'not allowed: bugreport_create';
+      if (!existing) {
+        if (!ok('bugreport_create')) return 'not allowed: bugreport_create';
+        return isAdmin(u) || row.status_code === 'OPEN' ? null : 'new bugs must start OPEN';
+      }
       if (row.deleted_at && !existing.deleted_at) return ok('bugreport_delete') ? null : 'not allowed: bugreport_delete';
       const SP = new Set(['status_code', 'status_hlc', 'priority', 'hlc', 'updated_by', 'server_seq', 'code']);
       const onlySP = TABLES.bugs.columns.every((c) => SP.has(c) || (row[c] ?? null) === (existing[c] ?? null));

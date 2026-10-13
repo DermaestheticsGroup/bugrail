@@ -1,7 +1,7 @@
 # Phase 3 result: server side
 
 ## Built
-- Auth: iron-session cookie `bugrail_session` (7 days, httpOnly, lax), scrypt passwords with timing-safe compare, login rate limit (10 per 15 min per IP), `requireUser()` in every route, `session_version` checked on each request. `/api/auth/{login,logout,me}`.
+- Auth: iron-session cookie `bugrail_session` (7 days, httpOnly, lax), scrypt passwords with timing-safe compare, login rate limit (10 per 15 min per email, 50 per 15 min per IP; the IP is read from `x-forwarded-for` only when `BUGRAIL_TRUSTED_PROXY=1`, else one shared `unknown` key), `requireUser()` in every route, `session_version` checked on each request. `/api/auth/{login,logout,me}`.
 - `proxy.ts` redirects page loads without the cookie to `/login`. Route handlers still verify the session; the proxy is a convenience.
 - Push enforces the role matrix through `can()` (saved matrix in `secrets.role_permissions`, seed matrix otherwise) and the bug status transition rule (`statusTransitionRule`, by code). `bumpAccess` targets now come from the `users` table.
 - Pull: `testcases` gets file-based visibility; `bug_status_master` and `custom_field_defs` go to every user.

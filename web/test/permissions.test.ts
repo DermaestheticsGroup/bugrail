@@ -33,6 +33,12 @@ describe('role permission matrix on push', () => {
     expect(await one(umum, 'testcases', { id: 't', file_id: 'fa', status: 'Open', status_hlc: h(1), hlc: h(1) })).toBe('not allowed: testcase_create');
   });
 
+  test('non-admin must create bugs as OPEN, admin may pick any status', async () => {
+    expect(await one(USERS.alice, 'bugs', bug('n1', { status_code: 'CLOSED' }))).toBe('new bugs must start OPEN');
+    expect(await one(USERS.alice, 'bugs', bug('n2'))).toBe('ok');
+    expect(await one(USERS.admin, 'bugs', bug('n3', { status_code: 'CLOSED' }))).toBe('ok');
+  });
+
   test('pm_ba may change status and priority only', async () => {
     expect(await one(USERS.pm, 'bugs', bug('b1', { priority: 'High', status_code: 'IN_PROGRESS', status_hlc: h(5), hlc: h(5) }))).toBe('ok');
     expect(await one(USERS.pm, 'bugs', bug('b1', { title: 'renamed', hlc: h(6) }))).toBe('not allowed: bugreport_update');
