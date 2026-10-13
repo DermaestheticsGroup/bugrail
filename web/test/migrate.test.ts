@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, test } from 'bun:test';
 import { connect } from '@tursodatabase/database';
 import { applyMigrations } from '../db/migrate';
 import { TABLES, type SyncedTable } from '../db/tables';
-import { blobsFromJson, diffKv, exportKv, statusCodeFromName, transformKv, writeServerDb, type KvBlobs, type Migrated } from '../lib/migrate/kv';
+import { blobsFromJson, blockingProblems, diffKv, exportKv, statusCodeFromName, transformKv, writeServerDb, type KvBlobs, type Migrated } from '../lib/migrate/kv';
 import { hashPassword, verifyPassword } from '../lib/server/password';
 import { login } from '../lib/server/auth-routes';
 import { resetRateLimit } from '../lib/server/rate-limit';
@@ -278,5 +278,29 @@ describe('blobsFromJson', () => {
   test('accepts the /api/kv body and a mongoexport array', () => {
     expect(blobsFromJson('{"qa_bugs":[{"id":"B"}],"_revs":{"qa_bugs":3}}')).toEqual({ qa_bugs: [{ id: 'B' }] });
     expect(blobsFromJson('[{"_id":"qa_bugs","value":[{"id":"B"}],"rev":3}]')).toEqual({ qa_bugs: [{ id: 'B' }] });
+  });
+});
+
+describe('review hardening', () => {
+  test('a legacy workspace named Internal aborts the migration when files need a home', async () => {
+    const blobs = { qa_files: [{ id: 'F', name: 'f' }], qa_settings: { workspaces: [{ id: 'w1', name: ' internal ' }] } };
+    await expect(transformKv(blobs, { now: NOW, hash: fastHash })).rejects.toThrow(/already named "Internal"/);
+    // no homeless file, no conflict
+    const ok = await transformKv({ qa_files: [{ id: 'F', name: 'f', workspaceId: 'w1' }], qa_settings: blobs.qa_settings }, { now: NOW, hash: fastHash });
+    expect(ok.report.internalWorkspaceCreated).toBe(false);
+  });
+  test('skipped users are blocking problems', async () => {
+    const r = await transformKv({ qa_settings: { users: [{ email: 'a@x.test', password: 'p' }, { email: 'A@x.test', password: 'q' }, { email: '' }] } }, { now: NOW, hash: fastHash });
+    expect(r.report.skippedUsers).toEqual(['A@x.test'.toLowerCase(), '(empty email)']);
+    expect(blockingProblems(r.report).length).toBe(2);
+    expect(blockingProblems((await transformKv({}, { now: NOW, hash: fastHash })).report)).toEqual([]);
+  });
+  test('custom field defs export in server_seq order, not id order', async () => {
+    const d = await fresh();
+    await writeServerDb(d, await transformKv({ qa_settings: { customFieldDefs: [{ label: 'First' }, { label: 'Second' }] } }, { now: NOW, hash: fastHash }));
+    // a def created after cutover with an id that sorts first
+    await d.run("INSERT INTO custom_field_defs (id, label, hlc, server_seq) VALUES ('aaa', 'Third', 'h', 99)");
+    const labels = ((await exportKv(d)).blobs.qa_settings.customFieldDefs as { label: string }[]).map((x) => x.label);
+    expect(labels).toEqual(['First', 'Second', 'Third']);
   });
 });

@@ -7,6 +7,9 @@ import type { Db, Row, Tx } from '../db-types';
 export type Rec = Record<string, any>;
 export interface KvBlobs { qa_files?: Rec[]; qa_testcases?: Rec[]; qa_bugs?: Rec[]; qa_settings?: Rec; qa_activity_log?: Rec[]; [k: string]: unknown }
 
+// Problems an operator must resolve (or explicitly accept) before the database is written.
+export const blockingProblems = (r: Report): string[] => r.skippedUsers.map((u) => `user would be skipped and lose access: ${u}`);
+
 // A dump is either the GET /api/kv body or a mongoexport of kv_store ([{ _id, value }]).
 export function blobsFromJson(text: string): KvBlobs {
   const j = JSON.parse(text);
@@ -63,6 +66,8 @@ export interface Report {
   unknownStatusesAdded: { code: string; name: string }[];
   orphansToDefaultFile: { testcases: number; bugs: number };
   droppedKeys: string[];
+  // Users that would lose access if the migration went ahead (empty or duplicate email). The CLI refuses unless told to skip them.
+  skippedUsers: string[];
   warnings: string[];
 }
 
@@ -119,7 +124,7 @@ export async function transformKv(blobs: KvBlobs, opts: TransformOpts): Promise<
   const log = blobs.qa_activity_log ?? [];
   const report: Report = {
     counts: {}, duplicateCodes: [], movedToInternal: [], internalWorkspaceCreated: false, usersHashed: 0, usersWithoutPassword: [],
-    unknownStatusesAdded: [], orphansToDefaultFile: { testcases: 0, bugs: 0 }, droppedKeys: [], warnings: [],
+    unknownStatusesAdded: [], skippedUsers: [], orphansToDefaultFile: { testcases: 0, bugs: 0 }, droppedKeys: [], warnings: [],
   };
   const tables = Object.fromEntries(TABLE_ORDER.map((t) => [t, [] as Row[]])) as Record<SyncedTable, Row[]>;
   const stamp = (cols: Row): Row => ({ ...cols, hlc, deleted_at: null, updated_by: MIGRATE_DEVICE });
@@ -137,11 +142,15 @@ export async function transformKv(blobs: KvBlobs, opts: TransformOpts): Promise<
   for (const b of bugs) if (!b.fileId) { b.fileId = DEFAULT_FILE_ID; report.orphansToDefaultFile.bugs++; }
 
   const homeless = files.filter((f) => !f.workspaceId);
-  let internalId = INTERNAL_WS_ID;
+  const internalId = INTERNAL_WS_ID;
   if (homeless.length) {
-    const existing = workspaces.find((w) => w.name === 'Internal');
-    if (existing) internalId = String(existing.id);
-    else { workspaces.push({ id: internalId, name: 'Internal', created_at: null }); report.internalWorkspaceCreated = true; }
+    // The spec wants a NEW workspace. Reusing a legacy one named Internal would hand homeless files to its existing members
+    // (vendors included), so refuse and let the operator rename it first.
+    if (workspaces.some((w) => String(w.name).trim().toLowerCase() === 'internal' || w.id === internalId)) {
+      throw new Error('migration refused: a legacy workspace is already named "Internal" (or uses id ws-internal); rename it, then rerun');
+    }
+    workspaces.push({ id: internalId, name: 'Internal', created_at: null });
+    report.internalWorkspaceCreated = true;
     for (const f of homeless) { f.workspaceId = internalId; report.movedToInternal.push(String(f.id)); }
   }
 
@@ -231,7 +240,11 @@ export async function transformKv(blobs: KvBlobs, opts: TransformOpts): Promise<
     const email = String(u.email ?? '').trim().toLowerCase();
     const ws: string[] = Array.isArray(u.workspaceIds) ? u.workspaceIds.map(String) : u.workspaceId ? [String(u.workspaceId)] : [];
     const id = emailId(email);
-    if (!email || users.some((x) => x.id === id)) { report.warnings.push(email ? `user ${email}: duplicate email, skipped` : 'user with empty email skipped'); continue; }
+    if (!email || users.some((x) => x.id === id)) {
+      report.skippedUsers.push(email || '(empty email)');
+      report.warnings.push(email ? `user ${email}: duplicate email, skipped` : 'user with empty email skipped');
+      continue;
+    }
     if (homeless.length && u.role !== 'qa_vendor' && u.role !== 'admin' && !ws.includes(internalId)) { ws.push(internalId); internalUsers.push(id); }
     let password_hash: string | null = null;
     if (typeof u.password === 'string' && u.password) { password_hash = await opts.hash(u.password); report.usersHashed++; }
@@ -373,7 +386,7 @@ export async function exportKv(db: Db, opts: ExportOpts = {}): Promise<Exported>
   const perms = await secret('role_permissions');
   if (perms) qa_settings.rolePermissions = JSON.parse(perms);
   qa_settings.bugStatusMaster = master.map((s) => clean({ code: s.id, name: s.name, color: s.color, order: s.sort_order }));
-  const defs = (await live('custom_field_defs', 'id')).map((d) => ({ label: d.label }));
+  const defs = (await live('custom_field_defs', 'server_seq, rowid')).map((d) => ({ label: d.label }));
   if (defs.length) qa_settings.customFieldDefs = defs;
   const gem = await secret('gemini_api_key');
   if (gem) qa_settings.geminiApiKey = gem;
