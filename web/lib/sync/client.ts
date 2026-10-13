@@ -32,6 +32,16 @@ export async function pushOutbox(db: Db, t: Transport): Promise<PushResult | nul
   const result = await t.push(rows);
   const settle = db.transactionAsync(async (tx: Tx) => {
     for (const s of result.server) await tx.run(mergeSql(TABLES[s.tbl]), ...mergeArgs(TABLES[s.tbl], s.row));
+    // A rejected write is parked for the UI, and its outbox entry still clears so it never retries forever.
+    const at = new Date().toISOString();
+    for (const r of result.rejected) {
+      const e = entries.find((x) => x.row_id === r.id);
+      if (!e) continue;
+      await tx.run(
+        'INSERT INTO rejected (row_id, tbl, reason, at) VALUES (?, ?, ?, ?) ON CONFLICT(row_id) DO UPDATE SET tbl = excluded.tbl, reason = excluded.reason, at = excluded.at',
+        r.id, e.tbl, r.reason, at,
+      );
+    }
     // Only entries that existed when the push started; later writes stay queued.
     for (const e of entries) {
       await tx.run('DELETE FROM outbox WHERE tbl = ? AND row_id = ? AND seq <= ?', e.tbl, e.row_id, maxSeq);
@@ -39,6 +49,25 @@ export async function pushOutbox(db: Db, t: Transport): Promise<PushResult | nul
   });
   await settle();
   return result;
+}
+
+export async function listRejected(db: Db): Promise<Row[]> {
+  return db.all('SELECT row_id, tbl, reason, at FROM rejected ORDER BY at, row_id');
+}
+
+// The local copy holds state the server refused: a never-accepted insert, or an edit to a row the user may no longer
+// write. Drop it (unless a newer write is queued) and re-pull from 0 so any server copy the user can still see returns.
+// shortcut: full re-pull per dismiss, fine while dismissals are rare; upgrade to a per-row fetch if they are not.
+export async function dismissRejected(db: Db, rowId: string): Promise<void> {
+  const dismiss = db.transactionAsync(async (tx: Tx) => {
+    const r = await tx.get('SELECT tbl FROM rejected WHERE row_id = ?', rowId);
+    if (!r) return;
+    await tx.run('DELETE FROM rejected WHERE row_id = ?', rowId);
+    if (!isSyncedTable(r.tbl) || (await tx.get('SELECT 1 FROM outbox WHERE tbl = ? AND row_id = ?', r.tbl, rowId))) return;
+    await tx.run(`DELETE FROM ${r.tbl} WHERE id = ?`, rowId);
+    await tx.run("INSERT INTO meta (key, value) VALUES ('since', '0') ON CONFLICT(key) DO UPDATE SET value = excluded.value");
+  });
+  await dismiss();
 }
 
 export async function pullAll(db: Db, t: Transport, clock?: Clock): Promise<number> {

@@ -23,6 +23,7 @@ We want the app to feel instant and to work offline, so the database has to live
 - Server: one `server.db` opened in the Next.js process with `@tursodatabase/database` (embedded Turso engine, MIT), pinned to `0.8.3`.
 - Browser: `@tursodatabase/database-wasm` `0.8.3` in OPFS, holding only rows the user may see.
 - Sync: our own `POST /api/sync/push` and `GET /api/sync/pull` route handlers. Push checks permission per row, applies the guarded upsert (ADR-002) and assigns display codes in one transaction. Pull returns visible rows by `server_seq` cursor, and forces a full re-pull when the user's access changes.
+- Rejected writes are parked in a local `rejected` table (row id, table, reason, time) and leave the outbox, so they never retry forever and are never silently dropped. Dismissing one drops the refused local copy and re-pulls. UI toast lands in Phase 5.
 
 Full design: `docs/superpowers/specs/2026-10-13-bugrail-local-first-design.md`.
 

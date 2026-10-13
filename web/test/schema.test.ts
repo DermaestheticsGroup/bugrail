@@ -41,7 +41,7 @@ describe('schema', () => {
       const db = await fresh();
       const v1 = await applyMigrations(db, scope);
       const v2 = await applyMigrations(db, scope);
-      expect(v1).toBe(3);
+      expect(v1).toBe(4);
       expect(v2).toBe(v1);
       const meta = scope === 'server' ? 'sync_meta' : 'meta';
       expect(Number((await db.get(`SELECT value FROM ${meta} WHERE key = 'schema_version'`)).value)).toBe(v1);

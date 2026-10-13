@@ -69,12 +69,17 @@ CREATE TABLE IF NOT EXISTS outbox (seq INTEGER PRIMARY KEY AUTOINCREMENT, tbl TE
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
 `;
 
+export const LOCAL_REJECTED_SQL = `
+-- Browser-only. Pushes the server refused, kept for the UI instead of dropped.
+CREATE TABLE IF NOT EXISTS rejected (row_id TEXT PRIMARY KEY, tbl TEXT, reason TEXT, at TEXT);
+`;
+
 // [file number, file name, sql]; every script is IF NOT EXISTS so re-running is safe.
 export type Migration = readonly [number, string, string];
 
 export const MIGRATIONS: Record<'server' | 'local', Migration[]> = {
   server: [[1, '001_core.sql', CORE_SQL], [2, '002_server.sql', SERVER_SQL]],
-  local: [[1, '001_core.sql', CORE_SQL], [3, '003_local.sql', LOCAL_SQL]],
+  local: [[1, '001_core.sql', CORE_SQL], [3, '003_local.sql', LOCAL_SQL], [4, '004_local_rejected.sql', LOCAL_REJECTED_SQL]],
 };
 
 // One version for both scopes, so a client and server compare like with like.
