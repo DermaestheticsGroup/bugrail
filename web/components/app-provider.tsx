@@ -20,6 +20,8 @@ export interface AppValue {
   // Bumped when a pull or push settle changed rows, deferred while the user is typing or dragging.
   version: number;
   offlineSince: boolean;
+  // Pull now (used after dismissing a parked rejection, which resets the cursor).
+  refresh(): Promise<void>;
   logout(): Promise<void>;
 }
 
@@ -56,6 +58,8 @@ export default function AppProvider({ children }: { children: React.ReactNode })
   const pendingChange = useRef(false);
   // Stops the engine, listeners and event stream of the user loaded at boot; set once they exist.
   const teardownRef = useRef<(() => void) | null>(null);
+  // Read through a getter on ctx so a refreshed config (membership changed) reaches writes that are already wired up.
+  const memberRef = useRef<string[] | undefined>(undefined);
   const activeUserRef = useRef<string | null>(null);
   const configStale = useRef(false);
 
@@ -109,7 +113,12 @@ export default function AppProvider({ children }: { children: React.ReactNode })
       });
       engineRef.current = engine;
       activeUserRef.current = snapshot.id;
-      setDb(db0); setConfig(cfg); setCtx({ db: db0, clock, email: snapshot.email, afterWrite: engine.notifyWrite, writeBlock: engine.writeBlock });
+      setDb(db0); setConfig(cfg); memberRef.current = snapshot.role === 'admin' ? undefined : snapshot.workspaceIds;
+      setCtx({
+        db: db0, clock, email: snapshot.email, role: snapshot.role,
+        get memberOf() { return memberRef.current; },
+        afterWrite: engine.notifyWrite, writeBlock: engine.writeBlock,
+      });
 
       const onOnline = () => engine.setOnline(true);
       const onOffline = () => engine.setOnline(false);
@@ -175,7 +184,10 @@ export default function AppProvider({ children }: { children: React.ReactNode })
     location.href = '/login';
   }, []);
 
-  const value = useMemo<AppValue>(() => ({ phase, error, config, db, ctx, sync, version, offlineSince: !sync.online, logout }), [phase, error, config, db, ctx, sync, version, logout]);
+  useEffect(() => { if (config) memberRef.current = config.me.role === 'admin' ? undefined : config.me.workspaceIds; }, [config]);
+
+  const refresh = useCallback(async () => { await engineRef.current?.pull(); setVersion((v) => v + 1); }, []);
+  const value = useMemo<AppValue>(() => ({ phase, error, config, db, ctx, sync, version, offlineSince: !sync.online, refresh, logout }), [phase, error, config, db, ctx, sync, version, refresh, logout]);
   return <Ctx_.Provider value={value}>{children}</Ctx_.Provider>;
 }
 

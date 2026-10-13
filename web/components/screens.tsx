@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { can } from '@/lib/domain/auth';
 import { ALL_WS } from '@/lib/client/nav';
-import { createBug, createFile, createTestcase } from '@/lib/client/repo';
+import { createBug, createFile } from '@/lib/client/repo';
 import { useApp } from './app-provider';
 import { useLive } from './use-live';
 
@@ -63,42 +63,6 @@ export function Bugs({ ws }: { ws: string }) {
       {err ? <p role="alert">{err}</p> : null}
       <ul data-testid="bug-list">
         {(rows ?? []).map((b) => <li key={String(b.id)} data-code={String(b.code ?? '')}>{String(b.code ?? 'pending')} — {String(b.title)} [{String(b.status_code)}]</li>)}
-      </ul>
-    </section>
-  );
-}
-
-export function Testcases({ ws }: { ws: string }) {
-  const app = useApp();
-  const [n, setN] = useState(0);
-  const [scenario, setScenario] = useState('');
-  const [module, setModule] = useState('');
-  const [err, setErr] = useState<string | null>(null);
-  const s = scope(ws);
-  const rows = useLive(`SELECT id, code, module, scenario, status FROM testcases WHERE deleted_at IS NULL AND (${s.sql}) ORDER BY rowid DESC`, s.params, n);
-  const canCreate = ws !== ALL_WS && can({ role: app.config!.me.role }, 'testcase_create', app.config!.rolePermissions);
-  async function add(e: React.FormEvent) {
-    e.preventDefault();
-    setErr(null);
-    const fields = { scenario, module };
-    setScenario('');
-    try {
-      await createTestcase(app.ctx!, await ensureFile(app, ws), fields);
-      setN((x) => x + 1);
-    } catch (x) { setErr((x as Error).message); setScenario(fields.scenario); }
-  }
-  return (
-    <section>
-      {canCreate ? (
-        <form onSubmit={add} aria-label="Add test case">
-          <input aria-label="Scenario" value={scenario} onChange={(e) => setScenario(e.target.value)} required />
-          <input aria-label="Test module" value={module} onChange={(e) => setModule(e.target.value)} />
-          <button type="submit">Add test case</button>
-        </form>
-      ) : null}
-      {err ? <p role="alert">{err}</p> : null}
-      <ul data-testid="tc-list">
-        {(rows ?? []).map((t) => <li key={String(t.id)}>{String(t.code ?? 'pending')} — {String(t.scenario)} [{String(t.status)}]</li>)}
       </ul>
     </section>
   );

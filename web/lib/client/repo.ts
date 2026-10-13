@@ -8,6 +8,9 @@ export interface Ctx {
   db: Db;
   clock: Clock;
   email: string;
+  role?: string;
+  // Workspaces the user belongs to. Activity is logged under one of them: the server refuses a log row for a workspace the author is not in.
+  memberOf?: string[];
   // Called after each write (the engine schedules a push). Optional so tests and scripts can write without an engine.
   afterWrite?: () => void;
   // Returns a reason when writes are not allowed right now (device clock too far off); throws before touching the db.
@@ -58,3 +61,12 @@ export const createTestcase = (ctx: Ctx, fileId: string, fields: Row) =>
 // Live (non-tombstoned) rows for a screen.
 export const liveRows = (db: Db, tbl: SyncedTable, where = '1', ...params: unknown[]): Promise<Row[]> =>
   db.all(`SELECT * FROM ${tbl} WHERE deleted_at IS NULL AND (${where}) ORDER BY rowid`, ...params);
+
+// Activity log rows are insert-only and the server only accepts the author's own email in a workspace they belong to.
+export const logActivity = (ctx: Ctx, workspaceId: string | null, action: string, label: string) =>
+  upsertRow(ctx, 'activity_log', newId('log'), {
+    ts: new Date().toISOString(), actor_email: ctx.email, actor_role: ctx.role ?? '',
+    // The file's workspace when the user belongs to it, else their own first one (a vendor editing a shared file).
+    workspace_id: ctx.memberOf && !(workspaceId && ctx.memberOf.includes(workspaceId)) ? ctx.memberOf[0] ?? null : workspaceId,
+    action, label,
+  });
