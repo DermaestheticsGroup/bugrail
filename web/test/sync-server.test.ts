@@ -174,8 +174,8 @@ describe('isolation', () => {
 
   test('vendor can write inside a file shared into ws-v', async () => {
     await push(db, USERS.alice, [{ tbl: 'file_shares', row: { id: 'fa:ws-v', file_id: 'fa', workspace_id: 'ws-v', hlc: h(9) } }]);
-    const r = await push(db, USERS.vendor, [{ tbl: 'bugs', row: bug('bnew', 'fa', { hlc: h(12) }) }]);
-    expect(r.accepted).toEqual(['bnew']);
+    const r = await push(db, USERS.vendor, [{ tbl: 'bugs', row: bug('ba', 'fa', { title: 'vendor edit', hlc: h(12) }) }]);
+    expect(r.accepted).toEqual(['ba']); // qa_vendor may edit but not create bugs
   });
 });
 

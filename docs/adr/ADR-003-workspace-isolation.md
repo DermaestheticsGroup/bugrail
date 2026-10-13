@@ -36,6 +36,6 @@ Today nothing enforces this. Every browser downloads every blob (`GET /api/kv`, 
 
 ## Consequences
 
-- A vendor's browser storage and network traffic contain only its workspace's data: pull isolation verified by tests; activity_log write scoping covered by test in Phase 1; revoke-bump verified only for the dev users until Phase 3. A vendor account checks it again at the parity gate.
+- A vendor's browser storage and network traffic contain only its workspace's data: pull isolation verified by tests; activity_log write scoping covered by test in Phase 1; revoke-bump now reads the `users` table (Phase 3); real sessions replace the dev header, and the role matrix is enforced on push. A vendor account checks it again at the parity gate.
 - Data already on a device stays there until it reconnects and pulls; departing vendors should also have their sessions revoked.
 - Isolation is at the file level. Finer, per-row access within a workspace is out of scope.

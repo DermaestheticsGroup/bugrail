@@ -81,4 +81,4 @@ Verdict: proceed to Phase 1 with no fallback taken. Non-Chromium OPFS/wasm resul
 - ~~(d) activity_log is not in db/tables.ts, its isolation is unreviewed.~~ Closed in Phase 1 Task 6: activity_log is in db/tables.ts; non-admins may only push rows with their own actor_email ('actor is not you') and pull only rows of their workspaces.
 - ~~(e) One shared server connection runs concurrent transactionAsync pushes: unverified hypothesis that two pushes can read the same seq, add a targeted test.~~ Not reproducible (Phase 1 Task 6): 10 concurrent push() calls on one connection gave 10 distinct server_seq values, 5 runs; test kept, no queue added.
 - ~~(f) hlc.observe has no validation or drift cap.~~ Closed in Phase 1 Task 6: observe ignores malformed strings and anything more than 24 h ahead of the wall clock.
-- (g) The G0 spike is never deployed: x-spike-user auth and the backup route are stand-ins.
+- (g) ~~The G0 spike is never deployed: x-spike-user auth and the backup route are stand-ins.~~ Auth closed in Phase 3 (iron-session; `x-dev-user` stays dev-only behind `BUGRAIL_DEV_AUTH=1`). The backup route is still a stand-in until Phase 7.

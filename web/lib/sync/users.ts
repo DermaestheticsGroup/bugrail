@@ -1,13 +1,14 @@
 import type { Db } from '../db-types';
 
 // shortcut: hard-coded users stand in for the session in the spike only; Phase 3 replaces this with iron-session + the users table.
-export interface User { id: string; email: string; role: 'admin' | 'user'; workspaceIds: string[] }
+export interface User { id: string; email: string; role: string; workspaceIds: string[] }
 
 export const USERS: Record<string, User> = {
   admin: { id: 'admin', email: 'admin@bugrail.test', role: 'admin', workspaceIds: [] },
-  alice: { id: 'alice', email: 'alice@bugrail.test', role: 'user', workspaceIds: ['ws-a'] },
-  bob: { id: 'bob', email: 'bob@bugrail.test', role: 'user', workspaceIds: ['ws-a'] },
-  vendor: { id: 'vendor', email: 'qa@vendor.test', role: 'user', workspaceIds: ['ws-v'] },
+  alice: { id: 'alice', email: 'alice@bugrail.test', role: 'qa_internal', workspaceIds: ['ws-a'] },
+  bob: { id: 'bob', email: 'bob@bugrail.test', role: 'qa_internal', workspaceIds: ['ws-a'] },
+  pm: { id: 'pm', email: 'pm@bugrail.test', role: 'pm_ba', workspaceIds: ['ws-a'] },
+  vendor: { id: 'vendor', email: 'qa@vendor.test', role: 'qa_vendor', workspaceIds: ['ws-v'] },
 };
 
 // Dev auth is opt-in so a missing NODE_ENV never opens it.
