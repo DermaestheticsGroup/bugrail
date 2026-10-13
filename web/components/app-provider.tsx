@@ -54,6 +54,9 @@ export default function AppProvider({ children }: { children: React.ReactNode })
   const engineRef = useRef<SyncEngine | null>(null);
   const [ctx, setCtx] = useState<Ctx | null>(null);
   const pendingChange = useRef(false);
+  // Stops the engine, listeners and event stream of the user loaded at boot; set once they exist.
+  const teardownRef = useRef<(() => void) | null>(null);
+  const activeUserRef = useRef<string | null>(null);
   const configStale = useRef(false);
 
   const bump = useCallback((source: 'push' | 'pull' = 'pull') => {
@@ -105,6 +108,7 @@ export default function AppProvider({ children }: { children: React.ReactNode })
         onDbChanged: bump,
       });
       engineRef.current = engine;
+      activeUserRef.current = snapshot.id;
       setDb(db0); setConfig(cfg); setCtx({ db: db0, clock, email: snapshot.email, afterWrite: engine.notifyWrite, writeBlock: engine.writeBlock });
       setPhase('ready');
       void requestPersistence();
@@ -128,6 +132,7 @@ export default function AppProvider({ children }: { children: React.ReactNode })
         const r = await fetchConfig();
         if (cancelled) return;
         const stopAll = () => { cleanups.splice(0).forEach((c) => c()); };
+        teardownRef.current = stopAll;
         if (r.kind === 'ok') {
           if (r.config.me.id !== snapshot.id) {
             // The cookie belongs to someone else. Keep the old user's outbox on disk (their next login pushes it), but release it,
@@ -147,7 +152,18 @@ export default function AppProvider({ children }: { children: React.ReactNode })
     configStale.current = false;
     // A later refresh supersedes an earlier one: if this effect re-runs (or the provider unmounts) before the response lands, drop it.
     let current = true;
-    void fetchConfig().then((r) => { if (current && r.kind === 'ok') { saveConfig(r.config); setConfig(r.config); } });
+    void fetchConfig().then(async (r) => {
+      if (!current || r.kind !== 'ok') return;
+      // Another tab may have signed in as someone else. Their config must never meet this user's database and engine:
+      // same cleanup as the boot-time mismatch (the old user's outbox stays on disk for their own next login).
+      if (activeUserRef.current && r.config.me.id !== activeUserRef.current) {
+        const old = activeUserRef.current;
+        activeUserRef.current = null;
+        clearSnapshot(); teardownRef.current?.(); await closeLocalDb(old); setPhase('anon');
+        return;
+      }
+      saveConfig(r.config); setConfig(r.config);
+    });
     return () => { current = false; };
   }, [version, phase]);
 
