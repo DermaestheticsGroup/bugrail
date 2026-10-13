@@ -4,7 +4,8 @@ import { useEffect } from 'react';
 import { hrefFor, navBySlug, resolveScreen } from '@/lib/client/nav';
 import { useApp } from './app-provider';
 import Shell from './shell';
-import { Dashboard, Later } from './screens';
+import { Activity, Dashboard, Report, Summary } from './analytics-screens';
+import { Later } from './screens';
 import BugScreen from './bug-screen';
 import TestcaseScreen from './testcase-screen';
 
@@ -33,7 +34,7 @@ export default function ScreenHost() {
   return (
     <Shell ws={ws} slug={slug}>
       <BugHashShim ws={ws} />
-      {slug === 'dashboard' ? <Dashboard ws={ws} /> : slug === 'bugs' ? <BugScreen ws={ws} rest={rest} /> : slug === 'testcases' ? <TestcaseScreen ws={ws} fileId={rest[0] ? decodeURIComponent(rest[0]) : null} /> : <Later title={nav?.title ?? slug} />}
+      {slug === 'dashboard' ? <Dashboard ws={ws} /> : slug === 'summary' ? <Summary ws={ws} /> : slug === 'report' ? <Report ws={ws} /> : slug === 'activity' ? <Activity ws={ws} /> : slug === 'bugs' ? <BugScreen ws={ws} rest={rest} /> : slug === 'testcases' ? <TestcaseScreen ws={ws} fileId={rest[0] ? decodeURIComponent(rest[0]) : null} /> : <Later title={nav?.title ?? slug} />}
     </Shell>
   );
 }
