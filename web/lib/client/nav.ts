@@ -26,6 +26,7 @@ export const hrefFor = (ws: string, slug: string) => `/w/${encodeURIComponent(ws
 
 // "all" is the admin's "Semua workspace" view; everyone else must pick one of their own.
 export const ALL_WS = 'all';
-export function allowedWorkspaces(role: string, workspaceIds: string[]): string[] {
-  return role === 'admin' ? [ALL_WS, ...workspaceIds] : workspaceIds;
+// `all` is every workspace the config lists (an admin need not belong to a workspace to open it); others get only their own.
+export function allowedWorkspaces(role: string, workspaceIds: string[], all: string[] = workspaceIds): string[] {
+  return role === 'admin' ? [ALL_WS, ...all] : workspaceIds;
 }

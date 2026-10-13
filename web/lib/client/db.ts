@@ -44,7 +44,7 @@ export async function closeLocalDb(userId: string): Promise<void> {
 
 // Removes the user's OPFS files (database, wal, journal); throws naming every file that could not be removed.
 export async function wipeLocalDb(userId: string): Promise<void> {
-  opened.delete(userId);
+  await closeLocalDb(userId); // open handles lock the files; closing is idempotent, so callers that already closed lose nothing
   const root = await navigator.storage.getDirectory();
   const prefix = dbName(userId);
   // for await over the directory handle: removing while iterating is allowed, but collect first to be safe.

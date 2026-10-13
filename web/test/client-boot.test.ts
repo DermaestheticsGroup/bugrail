@@ -47,8 +47,10 @@ describe('nav', () => {
   test('user, role and workspace admin pages are online-only', () => {
     expect(NAV.filter((n) => n.onlineOnly).map((n) => n.slug).sort()).toEqual(['roles', 'users', 'workspaces']);
   });
-  test('only the admin may pick "all workspaces"', () => {
+  test('only the admin may pick "all workspaces", and can open workspaces they do not belong to', () => {
     expect(allowedWorkspaces('admin', ['a'])).toEqual([ALL_WS, 'a']);
+    expect(allowedWorkspaces('admin', [], ['a', 'b'])).toEqual([ALL_WS, 'a', 'b']);
+    expect(allowedWorkspaces('qa_vendor', ['v'], ['v', 'a'])).toEqual(['v']);
     expect(allowedWorkspaces('qa_vendor', ['v'])).toEqual(['v']);
   });
   test('hrefs encode the workspace', () => {

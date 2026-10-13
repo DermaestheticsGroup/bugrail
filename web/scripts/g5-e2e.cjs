@@ -32,7 +32,7 @@ const waitFor = (p, fn, arg, ms = 20000) => p.waitForFunction(fn, arg, { timeout
   // online adds
   for (const t of ['online one', 'online two']) { await p.fill('input[aria-label=Title]', t); await p.fill('input[aria-label=Module]', 'Login'); await p.click('button:has-text("Add bug")'); }
   try {
-    await waitFor(p, () => [...document.querySelectorAll('[data-testid=bug-list] li')].filter((l) => /BUG-\d{4}/.test(l.textContent)).length === 2, null);
+    await waitFor(p, () => [...document.querySelectorAll('[data-testid=bug-list] li')].filter((l) => /BUG-\d{4}/.test(l.textContent)).length === 2, null, 15000);
     check('2 online bugs get codes from the server within 15 s', true, await bugs(p));
   } catch { check('2 online bugs get codes from the server within 15 s', false, { list: await bugs(p), badge: await p.locator('[data-testid=sync-badge]').textContent() }); }
 
@@ -42,7 +42,9 @@ const waitFor = (p, fn, arg, ms = 20000) => p.waitForFunction(fn, arg, { timeout
   await p.fill('input[aria-label=Title]', 'offline one'); await p.fill('input[aria-label=Module]', 'Login'); await p.click('button:has-text("Add bug")');
   await waitFor(p, () => /pending/.test(document.querySelector('[data-testid=bug-list]').textContent), null, 5000);
   const badge = await p.locator('[data-testid=sync-badge]').textContent();
-  check('3 offline bug shows as pending, badge says offline with 1 pending', /offline/.test(badge) && /1 pending|offline/.test(badge), badge);
+  // Next keeps the previous screens mounted but hidden, so the badge exists more than once: read the visible one.
+  const pendingText = () => p.locator('[data-testid=pending]:visible').first().textContent();
+  check('3 offline bug shows as pending, badge says offline and counts exactly 1 pending', /offline/.test(badge) && /\b1 pending\b/.test(await pendingText()), badge);
   await p.reload();
   await p.waitForSelector('[data-testid=bug-list]', { timeout: 30000 }).catch(() => {});
   const afterReload = (await p.locator('[data-testid=bug-list]').count()) ? await bugs(p) : [];
@@ -58,10 +60,11 @@ const waitFor = (p, fn, arg, ms = 20000) => p.waitForFunction(fn, arg, { timeout
   // back online
   await ctx.setOffline(false);
   await p.evaluate(() => window.dispatchEvent(new Event('online')));
+  const t6 = Date.now();
   try {
-    await waitFor(p, () => [...document.querySelectorAll('[data-testid=bug-list] li')].every((l) => /BUG-\d{4}/.test(l.textContent)) && document.querySelectorAll('[data-testid=bug-list] li').length === 3, null, 20000);
-    check('6 after reconnect the offline bug gets its code within 15 s and nothing is pending', true, await bugs(p));
-  } catch { check('6 after reconnect the offline bug gets its code within 15 s and nothing is pending', false, await bugs(p)); }
+    await waitFor(p, () => [...document.querySelectorAll('[data-testid=bug-list] li')].every((l) => /BUG-\d{4}/.test(l.textContent)) && document.querySelectorAll('[data-testid=bug-list] li').length === 3 && !/pending/.test([...document.querySelectorAll('[data-testid=pending]')].find((e) => e.offsetParent !== null).textContent), null, 15000);
+    check('6 after reconnect the offline bug gets its code within 15 s and nothing is pending', /up to date|syncing/.test(await pendingText()), { ms: Date.now() - t6, list: await bugs(p), badge: await pendingText() });
+  } catch { check('6 after reconnect the offline bug gets its code within 15 s and nothing is pending', false, { ms: Date.now() - t6, list: await bugs(p), badge: await pendingText() }); }
 
   // second browser: same user, fresh profile, sees all three; live refresh via SSE
   const ctx2 = await chromium.launchPersistentContext(SC + '/profile-b', { executablePath: CHROME, headless: true, args: ['--no-first-run'] });

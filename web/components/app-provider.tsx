@@ -54,10 +54,12 @@ export default function AppProvider({ children }: { children: React.ReactNode })
   const engineRef = useRef<SyncEngine | null>(null);
   const [ctx, setCtx] = useState<Ctx | null>(null);
   const pendingChange = useRef(false);
+  const configStale = useRef(false);
 
   const bump = useCallback((source: 'push' | 'pull' = 'pull') => {
     // Our own settled writes are what the user is waiting to see (the assigned code); only other people's changes wait.
     if (source === 'push') { setVersion((v) => v + 1); return; }
+    configStale.current = true; // roles or workspaces can only have moved because of someone else's change
     pendingChange.current = true;
     const flush = () => {
       if (!pendingChange.current) return;
@@ -127,8 +129,11 @@ export default function AppProvider({ children }: { children: React.ReactNode })
         if (cancelled) return;
         const stopAll = () => { cleanups.splice(0).forEach((c) => c()); };
         if (r.kind === 'ok') {
-          saveConfig(r.config); saveSnapshot(r.config.me); setConfig(r.config);
-          if (r.config.me.id !== snapshot.id) { clearSnapshot(); stopAll(); setPhase('anon'); }
+          if (r.config.me.id !== snapshot.id) {
+            // The cookie belongs to someone else. Keep the old user's outbox on disk (their next login pushes it), but release it,
+            // and do not store the new user's config here: their own login does that.
+            clearSnapshot(); stopAll(); await closeLocalDb(snapshot.id); setPhase('anon');
+          } else { saveConfig(r.config); saveSnapshot(r.config.me); setConfig(r.config); }
         } else if (r.kind === 'unauthorized') { stopAll(); setPhase('anon'); }
       }
     })().catch((e) => { setError((e as Error).message); setPhase('error'); });
@@ -136,8 +141,12 @@ export default function AppProvider({ children }: { children: React.ReactNode })
     return () => { cancelled = true; cleanups.forEach((c) => c()); es?.close(); };
   }, [bump]);
 
-  // A new config arrives with every pull cycle's visible change (roles or workspaces may have moved).
-  useEffect(() => { if (phase === 'ready' && version > 0) void fetchConfig().then((r) => { if (r.kind === 'ok') { saveConfig(r.config); setConfig(r.config); } }); }, [version, phase]);
+  // Refresh the shell config after a pull that changed rows; our own settled writes do not need it.
+  useEffect(() => {
+    if (phase !== 'ready' || version === 0 || !configStale.current) return;
+    configStale.current = false;
+    void fetchConfig().then((r) => { if (r.kind === 'ok') { saveConfig(r.config); setConfig(r.config); } });
+  }, [version, phase]);
 
   const logout = useCallback(async () => {
     engineRef.current?.stop();

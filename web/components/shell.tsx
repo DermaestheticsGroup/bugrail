@@ -9,7 +9,8 @@ import { useApp } from './app-provider';
 function Badge() {
   const { sync } = useApp();
   const last = sync.lastPullAt ? new Date(sync.lastPullAt).toLocaleTimeString() : 'never';
-  const label = !sync.online ? 'offline' : sync.pending > 0 ? `${sync.pending} pending` : sync.syncing ? 'syncing' : 'online';
+  // The pending count shows offline too: that is when it matters most.
+  const label = sync.pending > 0 ? `${sync.pending} pending` : sync.syncing ? 'syncing' : 'up to date';
   return (
     <p data-testid="sync-badge" title={`last pull: ${last}`}>
       <span data-testid="conn">{sync.online ? 'online' : 'offline'}</span> · <span data-testid="pending">{label}</span> · pulled {last}
@@ -35,7 +36,7 @@ export default function Shell({ ws, slug, children }: { ws: string; slug: string
   const { me, workspaces, rolePermissions } = app.config;
   const items = navFor(me.role, rolePermissions[me.role] ? rolePermissions : null);
   const current = navBySlug(slug);
-  const choices = allowedWorkspaces(me.role, me.workspaceIds);
+  const choices = allowedWorkspaces(me.role, me.workspaceIds, workspaces.map((w) => w.id));
   const nameOf = (id: string) => (id === ALL_WS ? 'Semua workspace' : workspaces.find((w) => w.id === id)?.name ?? id);
   const blocked = Math.abs(app.sync.skewMs) > CLOCK_LIMIT_MS;
 

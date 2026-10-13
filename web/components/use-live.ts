@@ -11,7 +11,9 @@ export function useLive(sql: string, params: unknown[] = [], dep = 0): Row[] | n
   useEffect(() => {
     if (!db) return;
     let alive = true;
-    db.all(sql, ...(JSON.parse(key) as unknown[])).then((r) => { if (alive) setRows(r); });
+    db.all(sql, ...(JSON.parse(key) as unknown[]))
+      .then((r) => { if (alive) setRows(r); })
+      .catch((e) => { console.error('useLive query failed', e); if (alive) setRows([]); }); // an empty list with a console error, not a silent unhandled rejection
     return () => { alive = false; };
   }, [db, sql, key, version, dep]);
   return rows;
