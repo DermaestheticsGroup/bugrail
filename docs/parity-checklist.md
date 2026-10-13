@@ -35,11 +35,11 @@ Slice = which Phase 6 PR delivers it. Status in this file is the AUTHOR's claim;
 | B6 | AI analyze a failed test case (online only) | 6b | button and graceful failure without a key: yes (Chrome); a real Gemini answer: not tested | |
 | B7 | Import / export / template / print | 6d | | |
 | **Read-only screens** | | | | |
-| R1 | Dashboard (`dashboard.js`) | 6c | | |
-| R2 | Summary (`summary.js`) | 6c | | |
-| R3 | Report Go-Live with export (`report.js`) | 6c | | |
-| R4 | Notifications bell (`notifications.js`, `NotifCalc`) | 6c | | |
-| R5 | Activity log (`activitylog.js`) | 6c | | |
+| R1 | Dashboard (`dashboard.js`) | 6c | yes (Chrome); module and tester filters only, SVG charts, PDF export is browser print | |
+| R2 | Summary (`summary.js`) | 6c | yes (Chrome); analysis text and filters, no Excel export yet (6d) | |
+| R3 | Report Go-Live with export (`report.js`) | 6c | yes (Chrome) for verdict, reasons, per-module table, must-fix, reopen, speed; export is browser print, no dedicated PDF layout | |
+| R4 | Notifications bell (`notifications.js`, `NotifCalc`) | 6c | yes (Chrome); reminders, assignment, deep link, badge clears; status texts show codes not names | |
+| R5 | Activity log (`activitylog.js`) | 6c | yes (Chrome); admin only by role matrix | |
 | **Admin and tools** | | | | |
 | A1 | Master status (`masterstatus.js`) | 6d | | |
 | A2 | Custom field definitions (`settings.js`) | 6d | | |

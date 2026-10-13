@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { ALL_WS, allowedWorkspaces, hrefFor, navBySlug, navFor } from '@/lib/client/nav';
 import { CLOCK_LIMIT_MS } from '@/lib/client/sync-engine';
 import { useApp } from './app-provider';
+import NotifBell from './notif-bell';
 import RejectedPanel from './rejected-panel';
 
 function Badge() {
@@ -51,6 +52,7 @@ export default function Shell({ ws, slug, children }: { ws: string; slug: string
             {choices.map((id) => <option key={id} value={id}>{nameOf(id)}</option>)}
           </select>
         ) : <span>{nameOf(ws)}</span>}
+        <NotifBell ws={ws} />
         <span>{me.email}</span>
         <button type="button" onClick={() => void app.logout()}>Log out</button>
       </header>
