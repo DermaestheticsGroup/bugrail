@@ -241,6 +241,28 @@ describe('robustness', () => {
     expect(r.tables.bug_events.length).toBe(1);
     expect(r.report.warnings.join()).toMatch(/comment entry 0/);
   });
+  test('duplicate and empty emails are skipped with warnings and write one row', async () => {
+    const r = await transformKv({ qa_settings: { users: [{ email: 'A@x.test', password: 'p', role: 'admin' }, { email: ' a@X.test ', password: 'q' }, { email: '', password: 'r' }] } }, { now: NOW, hash: fastHash });
+    expect(r.report.warnings.join('|')).toMatch(/duplicate email/);
+    expect(r.report.warnings.join('|')).toMatch(/empty email/);
+    const d = await fresh();
+    await writeServerDb(d, r);
+    expect((await d.all('SELECT id FROM users')).length).toBe(1);
+  });
+  test('unknown customFieldDefs keys are reported as dropped', async () => {
+    const r = await transformKv({ qa_settings: { customFieldDefs: [{ label: 'L', type: 'text' }] } }, { now: NOW, hash: fastHash });
+    expect(r.report.droppedKeys).toContain('custom_field_defs.type');
+  });
+  test('default temp password is a distinct CSPRNG value of 12+ chars', async () => {
+    const d = await fresh();
+    await writeServerDb(d, m);
+    await d.run("INSERT INTO users (id, email, role, workspace_ids, password_hash, session_version, access_version) VALUES ('new1', 'new@x.test', 'qa_internal', '[]', 'x', 0, 0)");
+    const { tempPasswords } = await exportKv(d, { originalSettings: src.qa_settings });
+    const vals = Object.values(tempPasswords);
+    expect(vals.length).toBeGreaterThan(1);
+    expect(new Set(vals).size).toBe(vals.length);
+    for (const v of vals) expect(v).toMatch(/^[A-Za-z0-9_-]{16,}$/);
+  });
   test('a larger dataset round-trips with no diffs beyond the known ones', async () => {
     const big = legacyKv(7, 400);
     const mm = await transformKv(structuredClone(big), { now: NOW, hash: fastHash });

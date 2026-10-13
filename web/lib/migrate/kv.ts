@@ -1,5 +1,5 @@
 // Legacy kv_store blobs <-> server.db rows. Pure: no Mongo, no filesystem. The CLIs in scripts/ do the I/O.
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { TABLES, type SyncedTable } from '../../db/tables';
 import { DEFAULT_ROLES, DEFAULT_ROLE_PERMISSIONS } from '../domain/auth';
 import type { Db, Row, Tx } from '../db-types';
@@ -175,6 +175,7 @@ export async function transformKv(blobs: KvBlobs, opts: TransformOpts): Promise<
   }
   // bug_status_master + custom_field_defs (the master is filled after bugs, once unknown names are known)
   const defs: Rec[] = Array.isArray(settings.customFieldDefs) ? settings.customFieldDefs : [];
+  defs.forEach((d, i) => { for (const k of Object.keys(d ?? {})) if (k !== 'label') report.droppedKeys.push(`custom_field_defs.${k}`); });
   defs.forEach((d, i) => tables.custom_field_defs.push(stamp({ id: `cf-${pad(i + 1)}`, label: str(d?.label) ?? String(d?.label ?? '') })));
 
   for (const t of testcases) {
@@ -230,6 +231,7 @@ export async function transformKv(blobs: KvBlobs, opts: TransformOpts): Promise<
     const email = String(u.email ?? '').trim().toLowerCase();
     const ws: string[] = Array.isArray(u.workspaceIds) ? u.workspaceIds.map(String) : u.workspaceId ? [String(u.workspaceId)] : [];
     const id = emailId(email);
+    if (!email || users.some((x) => x.id === id)) { report.warnings.push(email ? `user ${email}: duplicate email, skipped` : 'user with empty email skipped'); continue; }
     if (homeless.length && u.role !== 'qa_vendor' && u.role !== 'admin' && !ws.includes(internalId)) { ws.push(internalId); internalUsers.push(id); }
     let password_hash: string | null = null;
     if (typeof u.password === 'string' && u.password) { password_hash = await opts.hash(u.password); report.usersHashed++; }
@@ -353,7 +355,7 @@ export async function exportKv(db: Db, opts: ExportOpts = {}): Promise<Exported>
   const tempPasswords: Record<string, string> = {};
   const orig = (opts.originalSettings?.users ?? []) as Rec[];
   const origByEmail = new Map(orig.map((u) => [String(u.email ?? '').trim().toLowerCase(), u]));
-  const mkTemp = opts.tempPassword ?? (() => Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6));
+  const mkTemp = opts.tempPassword ?? (() => randomBytes(12).toString('base64url'));
   const users = (await db.all('SELECT * FROM users ORDER BY rowid')).map((u) => {
     const ws: string[] = JSON.parse(u.workspace_ids || '[]').filter((w: string) => !(note.internalUsers ?? []).includes(u.id) || w !== internal);
     const old = origByEmail.get(u.email);
