@@ -110,9 +110,6 @@ export default function AppProvider({ children }: { children: React.ReactNode })
       engineRef.current = engine;
       activeUserRef.current = snapshot.id;
       setDb(db0); setConfig(cfg); setCtx({ db: db0, clock, email: snapshot.email, afterWrite: engine.notifyWrite, writeBlock: engine.writeBlock });
-      setPhase('ready');
-      void requestPersistence();
-      engine.start();
 
       const onOnline = () => engine.setOnline(true);
       const onOffline = () => engine.setOnline(false);
@@ -126,13 +123,17 @@ export default function AppProvider({ children }: { children: React.ReactNode })
       es = new EventSource('/api/events');
       es.addEventListener('sync', () => engine.poke());
       cleanups.push(() => es?.close());
+      // Registered before the verify await below, so a refresh that finds a different user can tear this session down at any point.
+      const stopAll = () => { cleanups.splice(0).forEach((c) => c()); };
+      teardownRef.current = stopAll;
+      setPhase('ready'); // only now: every cleanup above is registered, so nothing can run against a session that cannot be torn down
+      void requestPersistence();
+      engine.start();
 
       // Verify in the background: only a 401 ends the session (the outbox stays in OPFS for the same user's next login).
       if (plan === 'render-then-verify') {
         const r = await fetchConfig();
         if (cancelled) return;
-        const stopAll = () => { cleanups.splice(0).forEach((c) => c()); };
-        teardownRef.current = stopAll;
         if (r.kind === 'ok') {
           if (r.config.me.id !== snapshot.id) {
             // The cookie belongs to someone else. Keep the old user's outbox on disk (their next login pushes it), but release it,
