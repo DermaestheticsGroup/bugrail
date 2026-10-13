@@ -37,7 +37,6 @@ describe('access_version / schema_version reset', () => {
     await pullAll(a, direct('alice'));
     expect((await a.get("SELECT id FROM bugs WHERE id = 'X'"))?.id).toBe('X');
     await push(server, USERS.admin, [{ tbl: 'files', row: { id: 'fa', name: 'fa', workspace_id: 'ws-v', hlc: h(2) } }]);
-    await bumpAccess(server, 'alice');
     await pullAll(a, direct('alice'));
     expect(await a.get("SELECT id FROM bugs WHERE id = 'X'")).toBeFalsy();
     expect(await a.get("SELECT id FROM files WHERE id = 'fa'")).toBeFalsy();
@@ -87,5 +86,31 @@ describe('access_version / schema_version reset', () => {
     expect('reset' in (await pull(server, USERS.bob, 0, 0, SCHEMA_VERSION))).toBe(true);
     await push(server, USERS.alice, [{ tbl: 'file_shares', row: { ...share, deleted_at: 'now', hlc: h(3) } }]);
     expect('reset' in (await pull(server, USERS.vendor, 0, 1, SCHEMA_VERSION))).toBe(true);
+  });
+
+  test('admin moving a bug to a file in another workspace removes it from the client', async () => {
+    await push(server, USERS.admin, [{ tbl: 'files', row: { id: 'fv', name: 'fv', workspace_id: 'ws-v', hlc: h(1) } }]);
+    const a = await device();
+    await pullAll(a, direct('alice'));
+    expect((await a.get("SELECT id FROM bugs WHERE id = 'X'"))?.id).toBe('X');
+    await push(server, USERS.admin, [{ tbl: 'bugs', row: bugRow({ file_id: 'fv', hlc: h(2) }) }]);
+    await pullAll(a, direct('alice'));
+    expect(await a.get("SELECT id FROM bugs WHERE id = 'X'")).toBeFalsy();
+  });
+
+  test('an outbox bug survives a reset that wipes its parent file', async () => {
+    const a = await device();
+    await pullAll(a, direct('alice'));
+    await localWrite(a, 'bugs', bugRow({ id: 'N2', file_id: 'fa', title: 'orphan', hlc: h(5), status_hlc: h(5) }));
+    await push(server, USERS.admin, [{ tbl: 'files', row: { id: 'fa', name: 'fa', workspace_id: 'ws-v', hlc: h(2) } }]);
+    await pullAll(a, direct('alice'));
+    expect(await a.get("SELECT id FROM files WHERE id = 'fa'")).toBeFalsy();
+    expect((await a.get("SELECT title FROM bugs WHERE id = 'N2'"))?.title).toBe('orphan');
+    expect((await a.get("SELECT count(*) AS n FROM outbox WHERE row_id = 'N2'")).n).toBe(1);
+  });
+
+  test('pull throws when the user has no users row', async () => {
+    const ghost = { id: 'ghost', email: 'g@x.test', role: 'user' as const, workspaceIds: ['ws-a'] };
+    await expect(pull(server, ghost, 0, 0, SCHEMA_VERSION)).rejects.toThrow(/no users row/);
   });
 });

@@ -97,6 +97,7 @@ describe('push', () => {
 describe('isolation', () => {
   test('a non-admin with no workspaces sees nothing and writes nothing', async () => {
     const nobody = { id: 'n', email: 'n@x.test', role: 'user' as const, workspaceIds: [] };
+    await db.run("INSERT INTO users (id, access_version) VALUES ('n', 0)");
     expect((await pullPage(nobody, 0, 0, SCHEMA_VERSION)).rows).toEqual([]);
     const r = await push(db, nobody, [
       { tbl: 'files', row: file('fn', 'ws-a', { hlc: h(9) }) },

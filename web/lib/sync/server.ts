@@ -137,17 +137,19 @@ export async function push(db: Db, user: User, input: unknown[]): Promise<PushRe
       if (reason) { result.rejected.push({ id, reason }); continue; }
       if (TABLES[tbl].columns.includes('code')) row.code = null; // the server owns codes
       row.server_seq = seq + 1;
-      const before = tbl === 'files' ? await tx.get('SELECT workspace_id FROM files WHERE id = ?', row.id) : null;
+      const before = tbl === 'files' ? await tx.get('SELECT workspace_id FROM files WHERE id = ?', row.id)
+        : tbl === 'bugs' ? await tx.get('SELECT f.workspace_id FROM bugs b JOIN files f ON f.id = b.file_id WHERE b.id = ?', row.id) : null;
       const r = await tx.run(mergeSql(TABLES[tbl]), ...mergeArgs(TABLES[tbl], row));
       if (r.changes > 0) {
         seq += 1;
-        if (tbl === 'files' && before) {
-          const after = await tx.get('SELECT workspace_id FROM files WHERE id = ?', row.id);
-          if (after.workspace_id !== before.workspace_id) moved.add(before.workspace_id).add(after.workspace_id);
+        if (before) {
+          const after = tbl === 'files' ? await tx.get('SELECT workspace_id FROM files WHERE id = ?', row.id)
+            : await tx.get('SELECT f.workspace_id FROM bugs b JOIN files f ON f.id = b.file_id WHERE b.id = ?', row.id);
+          if (after && after.workspace_id !== before.workspace_id) moved.add(before.workspace_id).add(after.workspace_id);
         }
         if (tbl === 'file_shares') {
           const sh = await tx.get('SELECT s.workspace_id, f.workspace_id AS owner FROM file_shares s LEFT JOIN files f ON f.id = s.file_id WHERE s.id = ?', row.id);
-          moved.add(sh.workspace_id).add(sh.owner);
+          for (const w of [sh.workspace_id, sh.owner]) if (w) moved.add(w);
         }
       }
       result.accepted.push(id);
@@ -193,7 +195,10 @@ export async function bumpAccess(db: Tx, userId: string): Promise<number> {
 }
 
 export async function pull(db: Db, user: User, since: number, av: number, sv: number, limit = MAX_PULL): Promise<PullResult> {
-  const cur = Number((await db.get('SELECT access_version FROM users WHERE id = ?', user.id))?.access_version ?? 0);
+  const u = await db.get('SELECT access_version FROM users WHERE id = ?', user.id);
+  // A missing row would silently skip resets, so fail loudly.
+  if (!u) throw new Error(`pull: no users row for ${user.id}`);
+  const cur = Number(u.access_version ?? 0);
   const schema = Number((await db.get("SELECT value FROM sync_meta WHERE key = 'schema_version'"))?.value ?? 0);
   if (av !== cur || sv < schema) return { reset: true, av: cur, sv: schema };
   const pageSize = Math.max(1, Math.min(Math.floor(limit) || 1, MAX_PULL));

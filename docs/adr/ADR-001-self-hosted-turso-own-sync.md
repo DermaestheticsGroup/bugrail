@@ -74,6 +74,7 @@ Verdict: proceed to Phase 1 with no fallback taken. Non-Chromium OPFS/wasm resul
 ### Known gaps carried into Phase 1
 
 - (a) ~~access_version reset: visibility changes (file move, share, revoke) never reach clients that are past those rows, must be the first Phase 1 sync task.~~ Closed in 800f23c.
+  Closed for the dev user table only; Phase 3 wires the real users lookup for bumpAccess targets.
 - (b) Display codes can repeat after deleting the top bug then un-delete (id-gen.ts "highest in use + 1").
 - (c) file_shares.id is not checked against file_id:workspace_id so two live shares for one pair are possible.
 - (d) activity_log is not in db/tables.ts, its isolation is unreviewed.
