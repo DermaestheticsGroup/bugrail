@@ -81,3 +81,20 @@
   4. Reload `/`, then `/opfs`: must render, `boots` grows, `wasmMerge: PASS`. After the fresh offline load, record the badge (Chrome: reads `online`, known limitation).
   5. Offline reload `/`, then click "Other page": record whether it renders or hangs (Chrome: hangs, 4c).
   6. Go online: badge returns to `online` within ~3 s.
+
+## Task 10: Bun vs Node runtime (G0.4)
+
+- Versions: bun 1.4.2, node v24.21.0, next 16.4.0, @tursodatabase/database 0.8.3. macOS, same machine, back to back.
+- DB: scratch DB from `bun scripts/seed.ts` defaults (150 files, 6000 rows, 18000 events; 24150 rows, 18419712 bytes), one fresh copy per runtime (`bun.db`, `node.db`), so Bun's writes did not touch Node's data. Not committed.
+- Load: defaults, 30 clients, 10000 ms interval, 600000 ms duration, both runs complete, 0 errors.
+- Bun: `bun --bun next build` + `bun --bun next start -p 3100`. Native binding loads (pull returned JSON). G0.8 converge seeds 1, 2, 3 all `converged:true,allCoded:true`. G0.4 PASS.
+- Node: `npx next build` + `node .../next start -p 3100`.
+
+```
+Bun : {"check":"G0.3/G0.5","clients":30,"cycles":1796,"errors":0,"p50ms":35,"p95ms":107,"bootstrapP95ms":19990,"bootstrapMaxms":20067}
+Node: {"check":"G0.3/G0.5","clients":30,"cycles":1798,"errors":0,"p50ms":35,"p95ms":57,"bootstrapP95ms":21596,"bootstrapMaxms":21596}
+```
+
+- p95 ratio Bun/Node = 107/57 = 1.88 (limit 1.20). p50 equal (35 ms). Bootstrap p95 about equal (~20-22 s for both; both exceed the 10 s G0.5 target at 30 concurrent cold bootstraps, separate issue).
+- One Node load attempt was discarded (the output file stayed empty, the process was lost to a tool timeout) and rerun in full; only the complete run is recorded.
+- **Decision: Node 24 as production runtime** (G0.4 passes, but Bun p95 is 88% worse than Node). Single run per runtime, no repeats, so the p95 variance is unmeasured.
