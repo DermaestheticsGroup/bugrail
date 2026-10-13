@@ -19,7 +19,8 @@
     "iron-session": "^9.0.1",
     "next": "16.4.0",
     "react": "^19",
-    "react-dom": "^19"
+    "react-dom": "^19",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
     "@types/bun": "^1.4.3",

@@ -5,6 +5,7 @@ import { hrefFor, navBySlug, resolveScreen } from '@/lib/client/nav';
 import { useApp } from './app-provider';
 import Shell from './shell';
 import { Activity, Dashboard, Report, Summary } from './analytics-screens';
+import ImportExport from './import-export-screen';
 import { Later } from './screens';
 import { MasterStatus, Roles, Settings, Users, Workspaces } from './admin-screens';
 import BugScreen from './bug-screen';
@@ -35,7 +36,7 @@ export default function ScreenHost() {
   return (
     <Shell ws={ws} slug={slug}>
       <BugHashShim ws={ws} />
-      {slug === 'dashboard' ? <Dashboard ws={ws} /> : slug === 'summary' ? <Summary ws={ws} /> : slug === 'report' ? <Report ws={ws} /> : slug === 'activity' ? <Activity ws={ws} /> : slug === 'master/status' ? <MasterStatus /> : slug === 'settings' ? <Settings /> : slug === 'users' ? <Users /> : slug === 'roles' ? <Roles /> : slug === 'workspaces' ? <Workspaces /> : slug === 'bugs' ? <BugScreen ws={ws} rest={rest} /> : slug === 'testcases' ? <TestcaseScreen ws={ws} fileId={rest[0] ? decodeURIComponent(rest[0]) : null} /> : <Later title={nav?.title ?? slug} />}
+      {slug === 'dashboard' ? <Dashboard ws={ws} /> : slug === 'summary' ? <Summary ws={ws} /> : slug === 'report' ? <Report ws={ws} /> : slug === 'activity' ? <Activity ws={ws} /> : slug === 'import-export' ? <ImportExport ws={ws} /> : slug === 'master/status' ? <MasterStatus /> : slug === 'settings' ? <Settings /> : slug === 'users' ? <Users /> : slug === 'roles' ? <Roles /> : slug === 'workspaces' ? <Workspaces /> : slug === 'bugs' ? <BugScreen ws={ws} rest={rest} /> : slug === 'testcases' ? <TestcaseScreen ws={ws} fileId={rest[0] ? decodeURIComponent(rest[0]) : null} /> : <Later title={nav?.title ?? slug} />}
     </Shell>
   );
 }
