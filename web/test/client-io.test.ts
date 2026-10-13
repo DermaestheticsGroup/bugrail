@@ -49,6 +49,14 @@ describe('import', () => {
     expect(await importTestcases(ctx, fid, parsed).catch((e) => e.message)).toContain('Login baris 3');
     expect(await db.all('SELECT * FROM testcases')).toHaveLength(0);
   });
+  test('a failure mid-import soft-deletes the rows already written', async () => {
+    const parsed = parseImport(book({ Login: [header, ['Login', 'one', '', 'Positive', ''], ['Login', 'two', '', 'Positive', ''], ['Login', 'three', '', 'Positive', '']] }));
+    let calls = 0;
+    ctx.writeBlock = () => (++calls === 4 ? 'blocked' : null);
+    expect(await importTestcases(ctx, fid, parsed).catch((e) => e.message)).toBe('blocked');
+    ctx.writeBlock = undefined;
+    expect(await db.all('SELECT * FROM testcases WHERE deleted_at IS NULL')).toHaveLength(0);
+  });
   test('a Bug Report template is refused outright and a file with no rows is reported', async () => {
     expect(parseImport(book({ Bugs: [['Module', 'Scenario', 'Bug Title *'], ['a', 'b', 'c']] })).errors[0]).toContain('template Bug Report');
     expect(await importTestcases(ctx, fid, parseImport(book({ Sheet1: [header] }))).catch((e) => e.message)).toBe('Tidak ada test case di file.');

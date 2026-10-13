@@ -5,7 +5,7 @@ import type { Db, Row } from '../db-types';
 import { TC_IMPORT } from '../domain/forms';
 import { stepsHtmlToText, textToStepsHtml } from '../domain/steps';
 import { TABLES, type SyncedTable } from '../../db/tables';
-import { createTestcase, logActivity, upsertRow, type Ctx } from './repo';
+import { createTestcase, logActivity, softDelete, upsertRow, type Ctx } from './repo';
 import { TC_STATUSES, TC_TYPES } from './testcase-model';
 import { bugCodeOf } from './bug-model';
 
@@ -117,12 +117,21 @@ export async function importTestcases(ctx: Ctx, fileId: string, parsed: ParsedIm
   if (parsed.errors.length) throw new Error(parsed.errors.slice(0, 8).join('\n'));
   if (!parsed.rows.length) throw new Error('Tidak ada test case di file.');
   const ws = ((await ctx.db.get('SELECT workspace_id FROM files WHERE id = ?', fileId)) as Row | undefined)?.workspace_id as string | null ?? null;
-  for (const r of parsed.rows) {
-    await createTestcase(ctx, fileId, {
+  const blocked = ctx.writeBlock?.();
+  if (blocked) throw new Error(blocked);
+  const created: string[] = [];
+  try {
+    for (const r of parsed.rows) {
+      const row = await createTestcase(ctx, fileId, {
       module: r.module, role_user: r.roleUser || '', scenario: r.scenario, test_case: r.testCase || '', preconditions: r.preconditions || '',
       steps: textToStepsHtml(r.steps || ''), test_data: r.testData || '', expected_result: r.expectedResult || '', actual_result: r.actualResult || '',
       evidence: r.evidence || '', status: r.status || 'Open', type_test: r.typeTest || 'Positive', execution_date: '',
-    });
+      });
+      created.push(String(row.id));
+    }
+  } catch (e) {
+    for (const id of created) await softDelete(ctx, 'testcases', id).catch(() => {});
+    throw e;
   }
   await logActivity(ctx, ws, 'testcase_create', `${parsed.rows.length} test case di-import dari ${parsed.sheetsUsed} sheet`);
   return parsed.rows.length;
