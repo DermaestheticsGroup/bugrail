@@ -46,8 +46,10 @@ export function MasterStatus() {
     e.preventDefault();
     if (!form) return;
     setFields({});
-    try { await saveStatus(app.ctx!, form, form.code ?? undefined); setForm(null); await run(async () => {}); }
-    catch (x) { if (x instanceof AdminError && 'fields' in x) setFields((x as AdminError & { fields: typeof fields }).fields); else throw x; }
+    await run(async () => {
+      try { await saveStatus(app.ctx!, form, form.code ?? undefined); setForm(null); }
+      catch (x) { if (x instanceof AdminError && 'fields' in x) setFields((x as AdminError & { fields: typeof fields }).fields); else throw x; }
+    });
   };
   return (
     <section>
