@@ -204,7 +204,7 @@ Admin (`role = 'admin'`) passes every check, as today.
 ### Pull: `GET /api/sync/pull?since=<seq>&av=<access_version>&sv=<schema_version>`
 
 1. `requireUser()`.
-2. If `av` differs from the user's `access_version`, or `sv` is behind, respond `{ reset: true }`. The client wipes its synced tables (keeping the outbox), sets `since = 0`, and pulls again. It then re-pushes the outbox; rows the user can no longer write are rejected as above.
+2. If `av` differs from the user's `access_version`, or `sv` is behind, respond `{ reset: true }`. The client wipes its synced tables (keeping the outbox), sets `since = 0`, and pulls again. It then re-pushes the outbox; rows the user can no longer write are rejected as above. Unpushed rows (any row still in the outbox) and their outbox entries survive the wipe.
 3. Otherwise return `{ rows: [{ tbl, row }], next, more, av }`: visible rows with `server_seq > since`, ordered by `server_seq`, at most 2000 per page. The client loops while `more`.
 
 `access_version` is bumped for every affected user whenever visibility can change: a user's `workspace_ids` change, a `file_shares` row is created or tombstoned (users of that workspace), a file's `workspace_id` changes (users of the old and new workspace), or a backup is restored (everyone). Gaining and losing access both trigger a reset, because newly visible rows may have a `server_seq` below the client's cursor. Losing access also deletes the now-invisible rows from OPFS, which is how revocation reaches the device.

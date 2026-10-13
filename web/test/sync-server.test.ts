@@ -2,10 +2,17 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 import { connect } from '@tursodatabase/database';
 import { applyMigrations } from '../db/migrate';
 import { pull, push } from '../lib/sync/server';
-import { USERS } from '../lib/sync/users';
+import { USERS, seedUsers, type User } from '../lib/sync/users';
+import { SCHEMA_VERSION } from '../db/schema/index';
 import type { Db, Row } from '../lib/db-types';
 
 let db: Db;
+// Pull with matching av/sv; a reset here would be a test failure.
+async function pullPage(u: User, since: number, av: number, sv: number, limit?: number) {
+  const r = await pull(db, u, since, av, sv, limit);
+  if ('reset' in r) throw new Error('unexpected reset');
+  return r;
+}
 const h = (ms: number, dev = 'a') => `${String(ms).padStart(15, '0')}-00000-${dev}`;
 const file = (id: string, ws: string, over: Row = {}): Row => ({ id, name: id, workspace_id: ws, hlc: h(1), ...over });
 const bug = (id: string, fileId: string, over: Row = {}): Row => ({
@@ -15,6 +22,7 @@ const bug = (id: string, fileId: string, over: Row = {}): Row => ({
 beforeEach(async () => {
   db = (await connect(':memory:')) as unknown as Db;
   await applyMigrations(db, 'server');
+  await seedUsers(db);
   await push(db, USERS.admin, [
     { tbl: 'files', row: file('fa', 'ws-a') },
     { tbl: 'files', row: file('fv', 'ws-v') },
@@ -26,7 +34,7 @@ beforeEach(async () => {
 
 describe('push', () => {
   test('accepts rows, bumps server_seq, assigns codes per workspace', async () => {
-    const all = await pull(db, USERS.admin, 0);
+    const all = await pullPage(USERS.admin, 0, 0, SCHEMA_VERSION);
     expect(all.rows.length).toBe(5);
     expect(all.next).toBe(7); // 5 inserts + 2 code assignments
     const ba = await db.get('SELECT code FROM bugs WHERE id = ?', 'ba');
@@ -89,7 +97,7 @@ describe('push', () => {
 describe('isolation', () => {
   test('a non-admin with no workspaces sees nothing and writes nothing', async () => {
     const nobody = { id: 'n', email: 'n@x.test', role: 'user' as const, workspaceIds: [] };
-    expect((await pull(db, nobody, 0)).rows).toEqual([]);
+    expect((await pullPage(nobody, 0, 0, SCHEMA_VERSION)).rows).toEqual([]);
     const r = await push(db, nobody, [
       { tbl: 'files', row: file('fn', 'ws-a', { hlc: h(9) }) },
       { tbl: 'bugs', row: bug('bn', 'fa', { hlc: h(9) }) },
@@ -98,7 +106,7 @@ describe('isolation', () => {
   });
 
   test('vendor pull contains only ws-v rows', async () => {
-    const r = await pull(db, USERS.vendor, 0);
+    const r = await pullPage(USERS.vendor, 0, 0, SCHEMA_VERSION);
     expect(r.rows.map((x) => x.row.id).sort()).toEqual(['bv', 'fv']);
   });
 
@@ -117,12 +125,12 @@ describe('isolation', () => {
 
   test('a file shared into ws-v becomes visible to the vendor, and unsharing hides it', async () => {
     await push(db, USERS.alice, [{ tbl: 'file_shares', row: { id: 'fa:ws-v', file_id: 'fa', workspace_id: 'ws-v', hlc: h(9) } }]);
-    let ids = (await pull(db, USERS.vendor, 0)).rows.map((x) => x.row.id);
+    let ids = (await pullPage(USERS.vendor, 0, 1, SCHEMA_VERSION)).rows.map((x) => x.row.id);
     expect(ids).toContain('fa');
     expect(ids).toContain('ba');
     expect(ids).toContain('ea');
     await push(db, USERS.alice, [{ tbl: 'file_shares', row: { id: 'fa:ws-v', file_id: 'fa', workspace_id: 'ws-v', hlc: h(10), deleted_at: 'now' } }]);
-    ids = (await pull(db, USERS.vendor, 0)).rows.map((x) => x.row.id);
+    ids = (await pullPage(USERS.vendor, 0, 2, SCHEMA_VERSION)).rows.map((x) => x.row.id);
     expect(ids).not.toContain('fa');
     expect(ids).not.toContain('ba');
   });
@@ -159,7 +167,7 @@ describe('isolation', () => {
   });
 
   test('pull limit below 1 is clamped', async () => {
-    const r = await pull(db, USERS.admin, 0, 0);
+    const r = await pullPage(USERS.admin, 0, 0, SCHEMA_VERSION, 0);
     expect(r.rows.length).toBe(1);
   });
 
@@ -175,7 +183,7 @@ describe('pull', () => {
     const seen: string[] = [];
     let since = 0;
     for (;;) {
-      const page = await pull(db, USERS.admin, since, 2);
+      const page = await pullPage(USERS.admin, since, 0, SCHEMA_VERSION, 2);
       seen.push(...page.rows.map((r) => r.row.id as string));
       since = page.next;
       if (!page.more) break;

@@ -8,6 +8,7 @@ import { applyMigrations } from '../db/migrate';
 import { TABLES } from '../db/tables';
 import { mergeArgs, mergeSql } from '../lib/lww';
 import type { Db } from '../lib/db-types';
+import { seedUsers } from '../lib/sync/users';
 
 const { values } = parseArgs({
   options: {
@@ -20,6 +21,7 @@ const { values } = parseArgs({
 const n = (k: keyof typeof values) => Number(values[k]);
 const db = (await connect(values.db!)) as unknown as Db;
 await applyMigrations(db, 'server');
+await seedUsers(db);
 
 const hlc = '000000000000001-00000-migrate';
 const text = (len: number) => 'lorem ipsum dolor sit amet '.repeat(Math.ceil(len / 27)).slice(0, len);

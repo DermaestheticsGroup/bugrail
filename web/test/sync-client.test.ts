@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 import { connect } from '@tursodatabase/database';
 import { applyMigrations } from '../db/migrate';
 import { pull, push } from '../lib/sync/server';
-import { USERS } from '../lib/sync/users';
+import { USERS, seedUsers } from '../lib/sync/users';
+import { SCHEMA_VERSION } from '../db/schema/index';
 import { localWrite, pullAll, pushOutbox, type Transport } from '../lib/sync/client';
 import type { Db, Row } from '../lib/db-types';
 
@@ -10,7 +11,7 @@ let server: Db;
 const h = (ms: number, dev: string) => `${String(ms).padStart(15, '0')}-00000-${dev}`;
 const direct = (user: keyof typeof USERS, pageSize?: number): Transport => ({
   push: (rows) => push(server, USERS[user], rows),
-  pull: (since) => pull(server, USERS[user], since, pageSize),
+  pull: (since, av, sv) => pull(server, USERS[user], since, av, sv, pageSize),
 });
 async function device(): Promise<Db> {
   const db = (await connect(':memory:')) as unknown as Db;
@@ -23,6 +24,7 @@ const serverBug = (id = 'X') => server.get('SELECT * FROM bugs WHERE id = ?', id
 beforeEach(async () => {
   server = (await connect(':memory:')) as unknown as Db;
   await applyMigrations(server, 'server');
+  await seedUsers(server);
   await push(server, USERS.admin, [
     { tbl: 'files', row: { id: 'fa', name: 'fa', workspace_id: 'ws-a', hlc: h(1, 'a') } },
     { tbl: 'bugs', row: bugRow({}) },
@@ -127,7 +129,7 @@ describe('offline scenarios (G0.8)', () => {
         await localWrite(a, 'bugs', bugRow({ id: 'F2', hlc: h(61, 'a') }));
         return push(server, USERS.alice, rows);
       },
-      pull: (since) => pull(server, USERS.alice, since),
+      pull: (since, av, sv) => pull(server, USERS.alice, since, av, sv),
     };
     await pushOutbox(a, slow);
     const left = (await a.all('SELECT row_id FROM outbox')).map((r) => r.row_id);

@@ -1,4 +1,4 @@
-import { TABLES, isSyncedTable, type SyncedTable } from '../../db/tables';
+import { TABLES, SYNCED_TABLES, isSyncedTable, type SyncedTable } from '../../db/tables';
 import { mergeArgs, mergeSql } from '../lww';
 import type { Clock } from '../hlc';
 import type { Db, Row, Tx } from '../db-types';
@@ -6,7 +6,7 @@ import type { PullResult, PushResult, PushRow } from './server';
 
 export interface Transport {
   push(rows: PushRow[]): Promise<PushResult>;
-  pull(since: number): Promise<PullResult>;
+  pull(since: number, av: number, sv: number): Promise<PullResult>;
 }
 
 export async function localWrite(db: Db, tbl: SyncedTable, row: Row): Promise<void> {
@@ -44,8 +44,22 @@ export async function pushOutbox(db: Db, t: Transport): Promise<PushResult | nul
 export async function pullAll(db: Db, t: Transport, clock?: Clock): Promise<number> {
   let applied = 0;
   for (;;) {
-    const sinceRow = await db.get("SELECT value FROM meta WHERE key = 'since'");
-    const page = await t.pull(Number(sinceRow?.value ?? 0));
+    const meta = Object.fromEntries((await db.all('SELECT key, value FROM meta')).map((r) => [r.key, r.value]));
+    // No stored access_version yet: -1 forces a reset on first pull.
+    const page = await t.pull(Number(meta.since ?? 0), Number(meta.access_version ?? -1), Number(meta.schema_version ?? 0));
+    if ('reset' in page) {
+      const reset = db.transactionAsync(async (tx: Tx) => {
+        // Unpushed local writes survive; the next push re-sends them and the server rejects what is no longer writable.
+        for (const tbl of SYNCED_TABLES) {
+          await tx.run(`DELETE FROM ${tbl} WHERE id NOT IN (SELECT row_id FROM outbox WHERE tbl = ?)`, tbl);
+        }
+        for (const [k, v] of [['since', 0], ['access_version', page.av], ['schema_version', page.sv]]) {
+          await tx.run('INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value', k, String(v));
+        }
+      });
+      await reset();
+      continue;
+    }
     const apply = db.transactionAsync(async (tx: Tx) => {
       for (const { tbl, row } of page.rows) {
         if (!isSyncedTable(tbl)) continue;
@@ -72,8 +86,8 @@ export function httpTransport(base: string, user: string): Transport {
       if (!res.ok) throw new Error(`push ${res.status}`);
       return res.json();
     },
-    async pull(since) {
-      const res = await fetch(`${base}/api/sync/pull?since=${since}`, { headers });
+    async pull(since, av, sv) {
+      const res = await fetch(`${base}/api/sync/pull?since=${since}&av=${av}&sv=${sv}`, { headers });
       if (!res.ok) throw new Error(`pull ${res.status}`);
       return res.json();
     },

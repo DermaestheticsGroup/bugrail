@@ -2,11 +2,11 @@ import { TABLES, SYNCED_TABLES, isSyncedTable, type SyncedTable } from '../../db
 import { mergeArgs, mergeSql } from '../lww';
 import { nextInScope } from '../id-gen';
 import type { Db, Row, Tx } from '../db-types';
-import type { User } from './users';
+import { USERS, type User } from './users';
 
 export interface PushRow { tbl: SyncedTable; row: Row }
 export interface PushResult { accepted: string[]; rejected: { id: string; reason: string }[]; server: PushRow[] }
-export interface PullResult { rows: PushRow[]; next: number; more: boolean }
+export type PullResult = { rows: PushRow[]; next: number; more: boolean } | { reset: true; av: number; sv: number };
 
 export const MAX_PUSH = 500;
 export const MAX_PULL = 2000;
@@ -121,6 +121,7 @@ export async function push(db: Db, user: User, input: unknown[]): Promise<PushRe
     let seq = Number((await tx.get("SELECT value FROM sync_meta WHERE key = 'seq'")).value);
     const result: PushResult = { accepted: [], rejected: [], server: [] };
     const sent = new Map<string, PushRow>();
+    const moved = new Set<string>(); // workspaces whose visibility changed
     for (const item of overflow as { row?: Row }[]) result.rejected.push({ id: String(item?.row?.id ?? ''), reason: 'too many rows' });
 
     for (const item of rows as { tbl?: unknown; row?: Row }[]) {
@@ -136,8 +137,19 @@ export async function push(db: Db, user: User, input: unknown[]): Promise<PushRe
       if (reason) { result.rejected.push({ id, reason }); continue; }
       if (TABLES[tbl].columns.includes('code')) row.code = null; // the server owns codes
       row.server_seq = seq + 1;
+      const before = tbl === 'files' ? await tx.get('SELECT workspace_id FROM files WHERE id = ?', row.id) : null;
       const r = await tx.run(mergeSql(TABLES[tbl]), ...mergeArgs(TABLES[tbl], row));
-      if (r.changes > 0) seq += 1;
+      if (r.changes > 0) {
+        seq += 1;
+        if (tbl === 'files' && before) {
+          const after = await tx.get('SELECT workspace_id FROM files WHERE id = ?', row.id);
+          if (after.workspace_id !== before.workspace_id) moved.add(before.workspace_id).add(after.workspace_id);
+        }
+        if (tbl === 'file_shares') {
+          const sh = await tx.get('SELECT s.workspace_id, f.workspace_id AS owner FROM file_shares s LEFT JOIN files f ON f.id = s.file_id WHERE s.id = ?', row.id);
+          moved.add(sh.workspace_id).add(sh.owner);
+        }
+      }
       result.accepted.push(id);
       sent.set(`${tbl}:${id}`, { tbl, row });
     }
@@ -159,6 +171,10 @@ export async function push(db: Db, user: User, input: unknown[]): Promise<PushRe
     }
 
     await tx.run("UPDATE sync_meta SET value = ? WHERE key = 'seq'", seq);
+    // shortcut: dev USERS table; Phase 3 selects affected users from the users table.
+    for (const u of Object.values(USERS)) {
+      if (u.workspaceIds.some((w) => moved.has(w))) await bumpAccess(tx, u.id);
+    }
 
     for (const [, s] of sent) {
       const f = visibilityFilter(s.tbl, user);
@@ -170,7 +186,16 @@ export async function push(db: Db, user: User, input: unknown[]): Promise<PushRe
   return run();
 }
 
-export async function pull(db: Db, user: User, since: number, limit = MAX_PULL): Promise<PullResult> {
+// Bump whenever the user's visibility can change; their next pull resets.
+export async function bumpAccess(db: Tx, userId: string): Promise<number> {
+  await db.run('UPDATE users SET access_version = COALESCE(access_version, 0) + 1 WHERE id = ?', userId);
+  return Number((await db.get('SELECT access_version FROM users WHERE id = ?', userId))?.access_version ?? 0);
+}
+
+export async function pull(db: Db, user: User, since: number, av: number, sv: number, limit = MAX_PULL): Promise<PullResult> {
+  const cur = Number((await db.get('SELECT access_version FROM users WHERE id = ?', user.id))?.access_version ?? 0);
+  const schema = Number((await db.get("SELECT value FROM sync_meta WHERE key = 'schema_version'"))?.value ?? 0);
+  if (av !== cur || sv < schema) return { reset: true, av: cur, sv: schema };
   const pageSize = Math.max(1, Math.min(Math.floor(limit) || 1, MAX_PULL));
   const all: (PushRow & { seq: number })[] = [];
   for (const tbl of SYNCED_TABLES) {

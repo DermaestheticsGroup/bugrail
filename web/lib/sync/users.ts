@@ -1,3 +1,5 @@
+import type { Db } from '../db-types';
+
 // shortcut: hard-coded users stand in for the session in the spike only; Phase 3 replaces this with iron-session + the users table.
 export interface User { id: string; email: string; role: 'admin' | 'user'; workspaceIds: string[] }
 
@@ -10,4 +12,15 @@ export const USERS: Record<string, User> = {
 
 export function userFromHeader(h: string | null): User | undefined {
   return process.env.NODE_ENV !== 'production' && h !== null && Object.hasOwn(USERS, h) ? USERS[h] : undefined;
+}
+
+// Dev users need users rows so access_version exists; non-production only.
+export async function seedUsers(db: Db): Promise<void> {
+  if (process.env.NODE_ENV === 'production') return;
+  for (const u of Object.values(USERS)) {
+    await db.run(
+      'INSERT INTO users (id, email, role, workspace_ids, access_version) VALUES (?, ?, ?, ?, 0) ON CONFLICT(id) DO NOTHING',
+      u.id, u.email, u.role, JSON.stringify(u.workspaceIds),
+    );
+  }
 }
