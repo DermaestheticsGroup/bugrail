@@ -47,6 +47,8 @@ function visibilityFilter(tbl: SyncedTable, u: User): { sql: string; params: str
         sql: `workspace_id IN (${inList(w.length)}) OR file_id IN (SELECT id FROM files WHERE workspace_id IN (${inList(w.length)}))`,
         params: [...w, ...w],
       };
+    // shortcut: tables without rules yet are admin-only; Phase 3 adds their visibility rules.
+    default: return { sql: '0', params: [] };
   }
 }
 
@@ -105,6 +107,7 @@ async function denyReason(tx: Tx, u: User, tbl: SyncedTable, row: Row): Promise<
       const b = await tx.get('SELECT file_id FROM bugs WHERE id = ?', row.bug_id);
       return b && (await fileVisible(tx, u, b.file_id)) ? null : 'bug not visible';
     }
+    default: return 'admin only until Phase 3';
   }
 }
 

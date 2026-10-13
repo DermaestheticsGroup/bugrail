@@ -3,7 +3,7 @@ import { connect } from '@tursodatabase/database';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { applySchema } from '../lib/schema';
+import { applyMigrations } from '../db/migrate';
 import { createClock } from '../lib/hlc';
 import { httpTransport, localWrite, pullAll, pushOutbox } from '../lib/sync/client';
 import type { Db } from '../lib/db-types';
@@ -19,7 +19,7 @@ const names = ['alice', 'bob', 'admin'] as const;
 const devices: { name: string; db: Db; clock: ReturnType<typeof createClock> }[] = [];
 for (const name of names) {
   const db = (await connect(join(dir, `${name}.db`))) as unknown as Db;
-  await applySchema(db, ['schema', 'local']);
+  await applyMigrations(db, 'local');
   devices.push({ name, db, clock: createClock(`dev-${name}`) });
 }
 const t = (name: string) => httpTransport(BASE, name);

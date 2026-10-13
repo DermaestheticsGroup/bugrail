@@ -2,12 +2,12 @@ import { describe, expect, test } from 'bun:test';
 import { connect } from '@tursodatabase/database';
 import { TABLES } from '../db/tables';
 import { mergeArgs, mergeSql } from '../lib/lww';
-import { applySchema } from '../lib/schema';
+import { applyMigrations } from '../db/migrate';
 import type { Db, Row } from '../lib/db-types';
 
 async function freshDb(): Promise<Db> {
   const db = (await connect(':memory:')) as unknown as Db;
-  await applySchema(db, ['schema']);
+  await applyMigrations(db, 'local');
   return db;
 }
 

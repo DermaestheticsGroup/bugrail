@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { connect } from '@tursodatabase/database';
-import { applySchema } from '../lib/schema';
+import { applyMigrations } from '../db/migrate';
 import { pull, push } from '../lib/sync/server';
 import { USERS } from '../lib/sync/users';
 import { localWrite, pullAll, pushOutbox, type Transport } from '../lib/sync/client';
@@ -14,7 +14,7 @@ const direct = (user: keyof typeof USERS, pageSize?: number): Transport => ({
 });
 async function device(): Promise<Db> {
   const db = (await connect(':memory:')) as unknown as Db;
-  await applySchema(db, ['schema', 'local']);
+  await applyMigrations(db, 'local');
   return db;
 }
 const bugRow = (over: Row): Row => ({ id: 'X', file_id: 'fa', title: 't', description: 'd', status_code: 'OPEN', status_hlc: h(1, 'a'), hlc: h(1, 'a'), ...over });
@@ -22,7 +22,7 @@ const serverBug = (id = 'X') => server.get('SELECT * FROM bugs WHERE id = ?', id
 
 beforeEach(async () => {
   server = (await connect(':memory:')) as unknown as Db;
-  await applySchema(server, ['schema', 'server']);
+  await applyMigrations(server, 'server');
   await push(server, USERS.admin, [
     { tbl: 'files', row: { id: 'fa', name: 'fa', workspace_id: 'ws-a', hlc: h(1, 'a') } },
     { tbl: 'bugs', row: bugRow({}) },

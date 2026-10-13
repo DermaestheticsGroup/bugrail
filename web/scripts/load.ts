@@ -3,7 +3,7 @@ import { connect } from '@tursodatabase/database';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { applySchema } from '../lib/schema';
+import { applyMigrations } from '../db/migrate';
 import { createClock } from '../lib/hlc';
 import { httpTransport, localWrite, pullAll, pushOutbox } from '../lib/sync/client';
 import type { Db } from '../lib/db-types';
@@ -23,7 +23,7 @@ async function client(i: number) {
   const t = httpTransport(BASE, user);
   const clock = createClock(`load-${i}`);
   const db = (await connect(join(dir, `c${i}.db`))) as unknown as Db;
-  await applySchema(db, ['schema', 'local']);
+  await applyMigrations(db, 'local');
   const b0 = performance.now();
   await pullAll(db, t, clock);
   bootstraps.push(performance.now() - b0);

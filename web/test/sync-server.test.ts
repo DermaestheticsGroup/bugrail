@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { connect } from '@tursodatabase/database';
-import { applySchema } from '../lib/schema';
+import { applyMigrations } from '../db/migrate';
 import { pull, push } from '../lib/sync/server';
 import { USERS } from '../lib/sync/users';
 import type { Db, Row } from '../lib/db-types';
@@ -14,7 +14,7 @@ const bug = (id: string, fileId: string, over: Row = {}): Row => ({
 
 beforeEach(async () => {
   db = (await connect(':memory:')) as unknown as Db;
-  await applySchema(db, ['schema', 'server']);
+  await applyMigrations(db, 'server');
   await push(db, USERS.admin, [
     { tbl: 'files', row: file('fa', 'ws-a') },
     { tbl: 'files', row: file('fv', 'ws-v') },
