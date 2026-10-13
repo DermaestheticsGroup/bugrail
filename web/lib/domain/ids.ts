@@ -7,7 +7,9 @@ export const IdGen = {
      Computed from live data (no stored counter), so deleting rows frees their
      numbers. Gaps in the middle stay (nothing is renumbered). */
   nextInScope(prefix: string, codesInScope: string[] | null | undefined): string {
-    const re = new RegExp(`^${prefix}-(\\d+)$`);
+    // Module prefixes can hold regex metacharacters ("C++"); match them literally.
+    const literalPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp(`^${literalPrefix}-(\\d+)$`);
     const max = (codesInScope || []).reduce((m, c) => {
       const hit = String(c).match(re);
       return hit ? Math.max(m, parseInt(hit[1], 10)) : m;

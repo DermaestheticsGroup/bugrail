@@ -27,3 +27,8 @@ test('bug display codes, per-scope numbering, natural sort', () => {
   assert.strictEqual(JSON.stringify(rows.slice().sort((a, b) => compareRows(a, b, 'id', 'desc', code)).map(code)), '["LOG-0010","LOG-0002","LOG-0001"]');
 
 });
+
+test('nextInScope matches regex metacharacters in the prefix literally', () => {
+  assert.strictEqual(IdGen.nextInScope('C++', ['C++-0004', 'CCC-0009']), 'C++-0005');
+  assert.strictEqual(IdGen.nextInScope('A.B', ['A.B-0001', 'AXB-0007']), 'A.B-0002', '. is not a wildcard');
+});
