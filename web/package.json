@@ -1,1 +1,31 @@
-{"name":"bugrail-web","private":true,"type":"module","engines":{"node":">=24"},"packageManager":"bun@1.4.2","scripts":{"dev":"BUGRAIL_DEV_AUTH=1 next dev -p 3001","build":"next build","start":"node node_modules/next/dist/bin/next start -p 3001","test":"bun test","typecheck":"tsc --noEmit"},"dependencies":{"@tursodatabase/database":"0.8.3","@tursodatabase/database-wasm":"0.8.3","next":"16.4.0","react":"^19","react-dom":"^19"},"devDependencies":{"@types/bun":"^1.4.3","@types/node":"^24","@types/react":"^19","@types/react-dom":"^19","typescript":"^5"}}
+{
+  "name": "bugrail-web",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "bun@1.4.2",
+  "scripts": {
+    "dev": "BUGRAIL_DEV_AUTH=1 next dev -p 3001",
+    "build": "next build",
+    "start": "node node_modules/next/dist/bin/next start -p 3001",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tursodatabase/database": "0.8.3",
+    "@tursodatabase/database-wasm": "0.8.3",
+    "iron-session": "^9.0.1",
+    "next": "16.4.0",
+    "react": "^19",
+    "react-dom": "^19"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.3",
+    "@types/node": "^24",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5"
+  }
+}

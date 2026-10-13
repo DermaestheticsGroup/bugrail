@@ -1,9 +1,9 @@
 import { getServerDb } from '@/lib/server-db';
 import { pull } from '@/lib/sync/server';
-import { userFromHeader } from '@/lib/sync/users';
+import { requireUser } from '@/lib/server/session';
 
 export async function GET(req: Request) {
-  const user = userFromHeader(req.headers.get('x-dev-user'));
+  const user = await requireUser(req);
   if (!user) return new Response('unauthorized', { status: 401, headers: { date: new Date().toUTCString() } });
   const q = new URL(req.url).searchParams;
   // Missing av/sv force a reset rather than skipping the check.

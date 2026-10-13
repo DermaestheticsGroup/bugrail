@@ -86,11 +86,11 @@ describe('offline scenarios (G0.8)', () => {
   test('status clock: a status move and a description edit both survive', async () => {
     const a = await device();
     const b = await device();
-    await pullAll(a, direct('alice'));
+    await pullAll(a, direct('pm'));
     await pullAll(b, direct('bob'));
     await localWrite(a, 'bugs', { ...(await a.get("SELECT * FROM bugs WHERE id = 'X'")), status_code: 'RETEST', status_hlc: h(40, 'a') });
     await localWrite(b, 'bugs', { ...(await b.get("SELECT * FROM bugs WHERE id = 'X'")), description: 'edited', hlc: h(41, 'b') });
-    await pushOutbox(a, direct('alice'));
+    await pushOutbox(a, direct('pm')); // pm_ba moves dev-flow status; qa_internal could not leave OPEN for RETEST
     await pushOutbox(b, direct('bob'));
     const s = await serverBug();
     expect(s.status_code).toBe('RETEST');

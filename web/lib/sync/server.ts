@@ -2,7 +2,9 @@ import { TABLES, SYNCED_TABLES, isSyncedTable, type SyncedTable } from '../../db
 import { mergeArgs, mergeSql } from '../lww';
 import { nextInScope } from '../id-gen';
 import type { Db, Row, Tx } from '../db-types';
-import { USERS, type User } from './users';
+import type { User } from './users';
+import { can, type RolePermissions } from '../domain/auth';
+import { statusTransitionRule } from '../domain/status';
 
 export interface PushRow { tbl: SyncedTable; row: Row }
 export interface PushResult { accepted: string[]; rejected: { id: string; tbl?: SyncedTable; reason: string }[]; server: PushRow[] }
@@ -19,6 +21,12 @@ const badHlc = (v: unknown) => {
 };
 
 const isAdmin = (u: User) => u.role === 'admin';
+// Role permission matrix: admin edits it in `secrets.role_permissions`; a missing row falls back to the seed matrix.
+const allowed = (u: User, perms: RolePermissions | null, key: string) => can({ role: u.role }, key, perms);
+async function loadPerms(tx: Tx): Promise<RolePermissions | null> {
+  const r = await tx.get("SELECT value FROM secrets WHERE key = 'role_permissions'");
+  try { return r?.value ? JSON.parse(r.value) : null; } catch { return null; }
+}
 const inList = (n: number) => Array(n).fill('?').join(', ');
 
 // Files the user may see: owned by one of their workspaces or shared into one.
@@ -35,6 +43,8 @@ function visibleFilesSql(u: User): { sql: string; params: string[] } {
 
 function visibilityFilter(tbl: SyncedTable, u: User): { sql: string; params: string[] } {
   if (isAdmin(u)) return { sql: '1', params: [] };
+  // Global, non-secret config.
+  if (tbl === 'bug_status_master' || tbl === 'custom_field_defs') return { sql: '1', params: [] };
   const vf = visibleFilesSql(u);
   const w = u.workspaceIds;
   if (w.length === 0) return { sql: '0', params: [] };
@@ -48,7 +58,7 @@ function visibilityFilter(tbl: SyncedTable, u: User): { sql: string; params: str
         params: [...w, ...w],
       };
     case 'activity_log': return { sql: `workspace_id IN (${inList(w.length)})`, params: w };
-    // shortcut: tables without rules yet are admin-only; Phase 3 adds their visibility rules.
+    case 'testcases': return { sql: `file_id IN (${vf.sql})`, params: vf.params };
     default: return { sql: '0', params: [] };
   }
 }
@@ -65,8 +75,9 @@ async function ownsFile(tx: Tx, u: User, fileId: unknown): Promise<boolean> {
   return !!f && u.workspaceIds.includes(f.workspace_id);
 }
 
-// shortcut: workspace membership only; the role permission matrix (can()) and status transition rules arrive in Phase 3.
-async function denyReason(tx: Tx, u: User, tbl: SyncedTable, row: Row): Promise<string | null> {
+// shortcut: the "note required" half of statusTransitionRule is not enforced (the note arrives as a separate bug_events row); only ok/not-ok is.
+async function denyReason(tx: Tx, u: User, perms: RolePermissions | null, tbl: SyncedTable, row: Row): Promise<string | null> {
+  const ok = (k: string) => allowed(u, perms, k);
   if (typeof row.id !== 'string' || !row.id) return 'missing id';
   if (TABLES[tbl].kind !== 'insert-only' && typeof row.hlc !== 'string') return 'missing hlc';
   if (TABLES[tbl].kind === 'lww+status' && typeof row.status_hlc !== 'string') return 'missing status_hlc';
@@ -84,12 +95,15 @@ async function denyReason(tx: Tx, u: User, tbl: SyncedTable, row: Row): Promise<
       if (existing) {
         if (!u.workspaceIds.includes(existing.workspace_id)) return 'file belongs to another workspace';
         if (row.workspace_id !== existing.workspace_id) return 'only admin can move a file';
+        if (row.deleted_at && !ok('testcase_delete') && !ok('bugreport_delete')) return 'not allowed to delete files';
         return null;
       }
+      if (!ok('testcase_create') && !ok('bugreport_fileCreate')) return 'not allowed to create files';
       return u.workspaceIds.includes(row.workspace_id as string) ? null : 'cannot create a file in another workspace';
     }
     case 'file_shares': {
       if (typeof row.file_id !== 'string' || typeof row.workspace_id !== 'string') return 'bad share';
+      if (!ok('testcase_fileShare')) return 'not allowed to share files';
       const existing = await tx.get('SELECT file_id, workspace_id FROM file_shares WHERE id = ?', row.id);
       if (existing) {
         if (row.file_id !== existing.file_id || row.workspace_id !== existing.workspace_id) return 'share file or workspace cannot change';
@@ -97,22 +111,45 @@ async function denyReason(tx: Tx, u: User, tbl: SyncedTable, row: Row): Promise<
       }
       return (await ownsFile(tx, u, row.file_id)) ? null : 'only the owning workspace can share a file';
     }
+    case 'testcases': {
+      if (typeof row.file_id !== 'string') return 'bad file_id';
+      const existing = await tx.get('SELECT file_id FROM testcases WHERE id = ?', row.id);
+      if (existing && !(await fileVisible(tx, u, existing.file_id))) return 'test case not visible';
+      if (existing && existing.file_id !== row.file_id) return 'only admin can move a test case';
+      if (!(await fileVisible(tx, u, row.file_id))) return 'file not visible';
+      const need = !existing ? 'testcase_create' : row.deleted_at ? 'testcase_delete' : 'testcase_update';
+      return ok(need) ? null : `not allowed: ${need}`;
+    }
     case 'bugs': {
       if (typeof row.file_id !== 'string') return 'bad file_id';
-      const existing = await tx.get('SELECT file_id FROM bugs WHERE id = ?', row.id);
+      const existing = await tx.get('SELECT * FROM bugs WHERE id = ?', row.id);
       if (existing && !(await fileVisible(tx, u, existing.file_id))) return 'bug not visible';
       if (existing && existing.file_id !== row.file_id) return 'only admin can move a bug';
-      return (await fileVisible(tx, u, row.file_id)) ? null : 'file not visible';
+      if (!(await fileVisible(tx, u, row.file_id))) return 'file not visible';
+      if (!existing) return ok('bugreport_create') ? null : 'not allowed: bugreport_create';
+      if (row.deleted_at && !existing.deleted_at) return ok('bugreport_delete') ? null : 'not allowed: bugreport_delete';
+      const SP = new Set(['status_code', 'status_hlc', 'priority', 'hlc', 'updated_by', 'server_seq', 'code']);
+      const onlySP = TABLES.bugs.columns.every((c) => SP.has(c) || (row[c] ?? null) === (existing[c] ?? null));
+      if (!ok('bugreport_update') && !(onlySP && ok('bugreport_updateStatusPriority'))) return 'not allowed: bugreport_update';
+      // Only a write that wins the status clock changes the status, so only that one needs the transition check.
+      if (row.status_code !== existing.status_code && String(row.status_hlc) > String(existing.status_hlc ?? '')) {
+        const t = statusTransitionRule(String(existing.status_code), String(row.status_code), ok('bugreport_statusQA'));
+        if (!t.ok) return 'status transition not allowed';
+      }
+      return null;
     }
     case 'bug_events': {
       if (typeof row.bug_id !== 'string') return 'bad bug_id';
+      if (!['bugreport_create', 'bugreport_update', 'bugreport_updateStatusPriority', 'bugreport_statusQA'].some(ok)) return 'not allowed to write bug events';
       const b = await tx.get('SELECT file_id FROM bugs WHERE id = ?', row.bug_id);
       return b && (await fileVisible(tx, u, b.file_id)) ? null : 'bug not visible';
     }
+    case 'bug_status_master': return ok('master') ? null : 'not allowed: master';
+    case 'custom_field_defs': return ok('settings') ? null : 'not allowed: settings';
     case 'activity_log':
       if (row.actor_email !== u.email) return 'actor is not you';
       return u.workspaceIds.includes(row.workspace_id as string) ? null : 'workspace not yours';
-    default: return 'admin only until Phase 3';
+    default: return 'not allowed';
   }
 }
 
@@ -127,6 +164,7 @@ export async function push(db: Db, user: User, input: unknown[]): Promise<PushRe
     const result: PushResult = { accepted: [], rejected: [], server: [] };
     const sent = new Map<string, PushRow>();
     const moved = new Set<string>(); // workspaces whose visibility changed
+    const perms = await loadPerms(tx);
     for (const item of overflow as { row?: Row }[]) result.rejected.push({ id: String(item?.row?.id ?? ''), reason: 'too many rows' });
 
     for (const item of rows as { tbl?: unknown; row?: Row }[]) {
@@ -138,7 +176,7 @@ export async function push(db: Db, user: User, input: unknown[]): Promise<PushRe
       const id = String(row.id ?? '');
       const tbl = item?.tbl;
       if (!isSyncedTable(tbl)) { result.rejected.push({ id, reason: 'unknown table' }); continue; }
-      const reason = await denyReason(tx, user, tbl, row);
+      const reason = await denyReason(tx, user, perms, tbl, row);
       if (reason) { result.rejected.push({ id, tbl, reason }); continue; }
       if (TABLES[tbl].columns.includes('code')) row.code = null; // the server owns codes
       row.server_seq = seq + 1;
@@ -178,9 +216,11 @@ export async function push(db: Db, user: User, input: unknown[]): Promise<PushRe
     }
 
     await tx.run("UPDATE sync_meta SET value = ? WHERE key = 'seq'", seq);
-    // shortcut: dev USERS table; Phase 3 selects affected users from the users table.
-    for (const u of Object.values(USERS)) {
-      if (u.workspaceIds.some((w) => moved.has(w))) await bumpAccess(tx, u.id);
+    if (moved.size) {
+      for (const u of await tx.all('SELECT id, workspace_ids FROM users')) {
+        const ws: string[] = JSON.parse(u.workspace_ids || '[]');
+        if (ws.some((w) => moved.has(w))) await bumpAccess(tx, u.id);
+      }
     }
 
     for (const [, s] of sent) {
