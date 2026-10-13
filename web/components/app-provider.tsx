@@ -186,7 +186,8 @@ export default function AppProvider({ children }: { children: React.ReactNode })
 
   useEffect(() => { if (config) memberRef.current = config.me.role === 'admin' ? undefined : config.me.workspaceIds; }, [config]);
 
-  const refresh = useCallback(async () => { await engineRef.current?.pull(); setVersion((v) => v + 1); }, []);
+  // Called after an admin change (users, roles, workspaces): those live in the config, not in synced rows, so it is refetched too.
+  const refresh = useCallback(async () => { configStale.current = true; await engineRef.current?.pull(); setVersion((v) => v + 1); }, []);
   const value = useMemo<AppValue>(() => ({ phase, error, config, db, ctx, sync, version, offlineSince: !sync.online, refresh, logout }), [phase, error, config, db, ctx, sync, version, refresh, logout]);
   return <Ctx_.Provider value={value}>{children}</Ctx_.Provider>;
 }
