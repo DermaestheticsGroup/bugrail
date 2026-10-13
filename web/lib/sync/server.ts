@@ -47,6 +47,7 @@ function visibilityFilter(tbl: SyncedTable, u: User): { sql: string; params: str
         sql: `workspace_id IN (${inList(w.length)}) OR file_id IN (SELECT id FROM files WHERE workspace_id IN (${inList(w.length)}))`,
         params: [...w, ...w],
       };
+    case 'activity_log': return { sql: `workspace_id IN (${inList(w.length)})`, params: w };
     // shortcut: tables without rules yet are admin-only; Phase 3 adds their visibility rules.
     default: return { sql: '0', params: [] };
   }
@@ -75,6 +76,7 @@ async function denyReason(tx: Tx, u: User, tbl: SyncedTable, row: Row): Promise<
     const ev = await tx.get(`SELECT bug_id FROM ${tbl} WHERE id = ?`, row.id);
     if (ev && ev.bug_id !== row.bug_id) return 'id belongs to another bug';
   }
+  if (tbl === 'file_shares' && row.id !== `${row.file_id}:${row.workspace_id}`) return 'bad share id';
   if (isAdmin(u)) return null;
   switch (tbl) {
     case 'files': {
@@ -107,6 +109,7 @@ async function denyReason(tx: Tx, u: User, tbl: SyncedTable, row: Row): Promise<
       const b = await tx.get('SELECT file_id FROM bugs WHERE id = ?', row.bug_id);
       return b && (await fileVisible(tx, u, b.file_id)) ? null : 'bug not visible';
     }
+    case 'activity_log': return row.actor_email === u.email ? null : 'actor is not you';
     default: return 'admin only until Phase 3';
   }
 }
@@ -164,7 +167,7 @@ export async function push(db: Db, user: User, input: unknown[]): Promise<PushRe
     for (const p of pending) {
       const codes = await tx.all(
         `SELECT b.code FROM bugs b JOIN files f ON f.id = b.file_id
-         WHERE f.workspace_id = ? AND b.deleted_at IS NULL AND b.code IS NOT NULL`,
+         WHERE f.workspace_id = ? AND b.code IS NOT NULL`, // tombstoned codes count: a revived bug keeps its code
         p.workspace_id,
       );
       seq += 1;

@@ -76,9 +76,9 @@ Verdict: proceed to Phase 1 with no fallback taken. Non-Chromium OPFS/wasm resul
 
 - (a) ~~access_version reset: visibility changes (file move, share, revoke) never reach clients that are past those rows, must be the first Phase 1 sync task.~~ Closed in 800f23c.
   Closed for the dev user table only; Phase 3 wires the real users lookup for bumpAccess targets.
-- (b) Display codes can repeat after deleting the top bug then un-delete (id-gen.ts "highest in use + 1").
-- (c) file_shares.id is not checked against file_id:workspace_id so two live shares for one pair are possible.
-- (d) activity_log is not in db/tables.ts, its isolation is unreviewed.
-- (e) One shared server connection runs concurrent transactionAsync pushes: unverified hypothesis that two pushes can read the same seq, add a targeted test.
-- (f) hlc.observe has no validation or drift cap.
+- ~~(b) Display codes can repeat after deleting the top bug then un-delete (id-gen.ts "highest in use + 1").~~ Closed in Phase 1 Task 6: the code pass counts tombstoned codes, so a revived bug keeps its code and new bugs never reuse it (web/test/sync-gaps.test.ts).
+- ~~(c) file_shares.id is not checked against file_id:workspace_id so two live shares for one pair are possible.~~ Closed in Phase 1 Task 6: push rejects a share whose id is not `${file_id}:${workspace_id}` with 'bad share id', admin included.
+- ~~(d) activity_log is not in db/tables.ts, its isolation is unreviewed.~~ Closed in Phase 1 Task 6: activity_log is in db/tables.ts; non-admins may only push rows with their own actor_email ('actor is not you') and pull only rows of their workspaces.
+- ~~(e) One shared server connection runs concurrent transactionAsync pushes: unverified hypothesis that two pushes can read the same seq, add a targeted test.~~ Not reproducible (Phase 1 Task 6): 10 concurrent push() calls on one connection gave 10 distinct server_seq values, 5 runs; test kept, no queue added.
+- ~~(f) hlc.observe has no validation or drift cap.~~ Closed in Phase 1 Task 6: observe ignores malformed strings and anything more than 24 h ahead of the wall clock.
 - (g) The G0 spike is never deployed: x-spike-user auth and the backup route are stand-ins.

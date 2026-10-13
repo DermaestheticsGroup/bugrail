@@ -137,17 +137,17 @@ describe('isolation', () => {
   });
 
   test('share id collision cannot rewrite another workspace share', async () => {
-    await push(db, USERS.admin, [{ tbl: 'file_shares', row: { id: 'sh1', file_id: 'fv', workspace_id: 'ws-a', hlc: h(2) } }]);
-    const r = await push(db, USERS.alice, [{ tbl: 'file_shares', row: { id: 'sh1', file_id: 'fa', workspace_id: 'ws-v', hlc: h(50) } }]);
+    await push(db, USERS.admin, [{ tbl: 'file_shares', row: { id: 'fv:ws-a', file_id: 'fv', workspace_id: 'ws-a', hlc: h(2) } }]);
+    const r = await push(db, USERS.alice, [{ tbl: 'file_shares', row: { id: 'fv:ws-a', file_id: 'fa', workspace_id: 'ws-v', hlc: h(50) } }]);
     expect(r.accepted).toEqual([]);
     expect(r.rejected.length).toBe(1);
-    const row = await db.get('SELECT file_id, workspace_id FROM file_shares WHERE id = ?', 'sh1');
+    const row = await db.get('SELECT file_id, workspace_id FROM file_shares WHERE id = ?', 'fv:ws-a');
     expect(row).toEqual({ file_id: 'fv', workspace_id: 'ws-a' });
   });
 
   test('share cannot change file_id or workspace_id on an owned share', async () => {
-    await push(db, USERS.alice, [{ tbl: 'file_shares', row: { id: 'sh2', file_id: 'fa', workspace_id: 'ws-v', hlc: h(2) } }]);
-    const r = await push(db, USERS.alice, [{ tbl: 'file_shares', row: { id: 'sh2', file_id: 'fa', workspace_id: 'ws-x', hlc: h(3) } }]);
+    await push(db, USERS.alice, [{ tbl: 'file_shares', row: { id: 'fa:ws-v', file_id: 'fa', workspace_id: 'ws-v', hlc: h(2) } }]);
+    const r = await push(db, USERS.alice, [{ tbl: 'file_shares', row: { id: 'fa:ws-v', file_id: 'fa', workspace_id: 'ws-x', hlc: h(3) } }]);
     expect(r.accepted).toEqual([]);
   });
 

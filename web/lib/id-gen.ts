@@ -1,5 +1,5 @@
-// Next display number in a scope = highest number still in use + 1. Deleting rows frees
-// their numbers; gaps in the middle stay (people refer to these numbers).
+// Next display number in a scope = highest number among the codes passed + 1. Codes the caller omits are free;
+// the server passes tombstoned codes too, so a revived bug keeps its number. Gaps stay (people refer to these numbers).
 export function nextInScope(prefix: string, codesInScope: (string | null)[]): string {
   const re = new RegExp(`^${prefix}-(\\d+)$`);
   const max = codesInScope.reduce((m, c) => {

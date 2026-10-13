@@ -116,3 +116,8 @@ after : {"files":150,"bugs":6118,"bug_events":18000}
 - `PRAGMA integrity_check` is supported by this driver and returned `ok`.
 - Not tested: backup under the 30-client load, larger DB, concurrent backup requests. The route is unauthenticated and interpolates `target` into SQL behind the `/^[\w./-]+\.db$/` regex (spike only; the shortcut comment says so).
 - **G0.7 PASS**: backup opened, has rows, counts in range, integrity ok, 379 ms for an 18 MB DB while writes continued.
+
+## ADR-001 gap (e): concurrent pushes on one connection
+
+- 10 concurrent `push()` calls on one shared connection, disjoint rows: 10 distinct `server_seq`, `sync_meta.seq` advanced by exactly 10, 5 of 5 runs (`web/test/sync-gaps.test.ts`).
+- Not reproducible, test kept. No in-process push queue added.

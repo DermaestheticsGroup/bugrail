@@ -80,7 +80,7 @@ describe('access_version / schema_version reset', () => {
   });
 
   test('a file_shares change bumps users of the target and owning workspace', async () => {
-    const share = { id: 's1', file_id: 'fb', workspace_id: 'ws-v', hlc: h(2) };
+    const share = { id: 'fb:ws-v', file_id: 'fb', workspace_id: 'ws-v', hlc: h(2) };
     await push(server, USERS.alice, [{ tbl: 'file_shares', row: share }]);
     expect('reset' in (await pull(server, USERS.vendor, 0, 0, SCHEMA_VERSION))).toBe(true);
     expect('reset' in (await pull(server, USERS.bob, 0, 0, SCHEMA_VERSION))).toBe(true);

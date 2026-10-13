@@ -67,3 +67,20 @@ describe('hlc', () => {
     expect(d.now() > h).toBe(true);
   });
 });
+
+describe('hlc observe (ADR-001 gap f)', () => {
+  const wall = 1_700_000_000_000;
+  const at = (ms: number) => `${String(ms).padStart(15, '0')}-00000-x`;
+  test('ignores malformed strings', () => {
+    const c = createClock('dev-a', () => wall);
+    for (const bad of ['', 'garbage', '9-9', `${'9'.repeat(15)}`, `${String(wall + 5).padStart(15, '0')}-zz-x`]) c.observe(bad);
+    expect(c.now()).toBe(`${String(wall).padStart(15, '0')}-00000-dev-a`);
+  });
+  test('ignores an HLC more than 24 h ahead of the wall clock', () => {
+    const c = createClock('dev-a', () => wall);
+    c.observe(at(wall + 24 * 3600_000 + 1));
+    expect(c.now()).toBe(`${String(wall).padStart(15, '0')}-00000-dev-a`);
+    c.observe(at(wall + 1000));
+    expect(c.now()).toBe(`${String(wall + 1000).padStart(15, '0')}-00001-dev-a`);
+  });
+});
