@@ -26,6 +26,12 @@ describe('generateTestCases', () => {
     expect((await gen(b, say('no array here'))).body.error).toBe('AI response had no JSON array');
     expect((await gen(b, say('[not json]'))).body.error).toBe('AI response JSON parse failed');
   });
+  test('a screenshot request with no usable image is rejected before calling the model', async () => {
+    let called = false;
+    const r = await gen({ mode: 'screenshot', fields: ['module'], images: ['http://evil/x', 'junk'] }, async () => { called = true; return '[]'; });
+    expect(r.status).toBe(400);
+    expect(called).toBe(false);
+  });
   test('only data-URL images are forwarded', async () => {
     let parts: any[] = [];
     await gen({ mode: 'screenshot', fields: ['module'], images: ['data:image/png;base64,AAA', 'http://evil/x'] }, async (_k, p) => { parts = p as any[]; return '[]'; });
@@ -46,6 +52,9 @@ describe('analyzeBug', () => {
     expect(r.status).toBe(200);
     expect((r.body.title as string).length).toBe(150);
     expect(r.body).toMatchObject({ severity: '', priority: 'Urgent', analysis: 'ok' });
+  });
+  test('an empty array from the provider gives 502', async () => {
+    expect((await analyzeBug({ testcase: tc }, 'k', say('[]'))).status).toBe(502);
   });
   test('unparsable output gives 502', async () => {
     expect((await analyzeBug({ testcase: tc }, 'k', say('nope'))).status).toBe(502);

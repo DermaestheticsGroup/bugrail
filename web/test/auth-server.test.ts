@@ -48,11 +48,11 @@ describe('login', () => {
   test('clientIp reads x-forwarded-for only when BUGRAIL_TRUSTED_PROXY=1', () => {
     const h = new Headers({ 'x-forwarded-for': '1.2.3.4, 5.6.7.8' });
     delete process.env.BUGRAIL_TRUSTED_PROXY;
-    expect(clientIp(h)).toBe('unknown');
+    expect(clientIp(h)).toBeNull();
     process.env.BUGRAIL_TRUSTED_PROXY = '1';
     try {
       expect(clientIp(h)).toBe('1.2.3.4');
-      expect(clientIp(new Headers())).toBe('unknown');
+      expect(clientIp(new Headers())).toBeNull();
     } finally { delete process.env.BUGRAIL_TRUSTED_PROXY; }
   });
 });
@@ -80,5 +80,16 @@ describe('userFromSession', () => {
     expect(await userFromSession(db, { userId: 'nope', sessionVersion: 3 })).toBeUndefined();
     expect(await userFromSession(db, {})).toBeUndefined();
     expect(await userFromSession(db, null)).toBeUndefined();
+  });
+});
+
+describe('login rate limit without a trusted proxy', () => {
+  test('unknown IP is not a shared bucket: other emails keep logging in', async () => {
+    for (let i = 0; i < 60; i++) await login(db, null, `x${i}@x.test`, 'bad');
+    expect((await login(db, null, 'ann@x.test', 's3cret')).ok).toBe(true);
+  });
+  test('malformed bodies spend no bucket', async () => {
+    for (let i = 0; i < 60; i++) expect(await login(db, 'ip', undefined, undefined)).toEqual({ ok: false, status: 400 });
+    expect((await login(db, 'ip', 'ann@x.test', 's3cret')).ok).toBe(true);
   });
 });

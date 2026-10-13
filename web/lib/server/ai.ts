@@ -9,7 +9,7 @@ const BUG_PRIORITIES = ['Urgent', 'High', 'Medium', 'Low'];
 const BUG_TC_FIELDS = ['module', 'scenario', 'testCase', 'preconditions', 'steps', 'testData', 'expectedResult', 'actualResult'];
 
 export const askGemini: Ask = async (apiKey, parts) => {
-  const model = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+  const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
@@ -49,6 +49,8 @@ export async function generateTestCases(body: any, apiKey: string | undefined, a
       if (m) parts.push({ inline_data: { mime_type: m[1], data: m[2] } });
     }
   }
+  // Never call the model for a screenshot it would not receive.
+  if (mode === 'screenshot' && parts.length === 1) return fail(400, 'No valid image (expected image data URLs)');
   const raw = await ask(apiKey, parts);
   if (raw === null) return fail(502, 'AI provider error');
   const json = raw.match(/\[[\s\S]*\]/);
@@ -80,7 +82,7 @@ export async function analyzeBug(body: any, apiKey: string | undefined, ask: Ask
   if (raw === null) return fail(502, 'AI provider error');
   let parsed: any;
   try { parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? ''); } catch { parsed = null; }
-  if (!parsed || typeof parsed !== 'object') return fail(502, 'AI response JSON parse failed');
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return fail(502, 'AI response JSON parse failed');
   const str = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
   return {
     status: 200,

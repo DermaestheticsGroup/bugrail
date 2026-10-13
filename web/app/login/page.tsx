@@ -1,6 +1,6 @@
 "use client";
 
-// Minimal login form; the full shell lands in Phase 5.
+// Minimal login form; the full shell lands in Phase 5. Without JavaScript it posts form-encoded and the route redirects.
 export default function Login() {
   return (
     <form method="post" action="/api/auth/login" onSubmit={async (e) => {

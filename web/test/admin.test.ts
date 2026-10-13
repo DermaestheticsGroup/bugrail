@@ -72,6 +72,28 @@ describe('users', () => {
     expect(await A.deleteUser(db, second)).toEqual({ ok: true });
   });
 
+  test('malformed workspaceIds are refused, not silently trimmed', async () => {
+    expect(await A.createUser(db, { email: 'w@x.test', role: 'qa_internal', password: 'longenough', workspaceIds: [ws, 7] })).toMatchObject({ error: 'unknown workspace' });
+    const id = await mk({ email: 'w2@x.test' });
+    expect(await A.updateUser(db, id, { workspaceIds: [ws, null] })).toMatchObject({ ok: false });
+    expect(await A.updateUser(db, id, { workspaceIds: 'ws' })).toMatchObject({ ok: false });
+    expect(JSON.parse((await db.get('SELECT workspace_ids AS w FROM users WHERE id = ?', id)).w)).toEqual([ws]);
+  });
+
+  test('concurrent creates of one email: exactly one wins, the other gets 409', async () => {
+    const mkp = () => A.createUser(db, { email: 'Race@x.test', role: 'qa_internal', password: 'longenough' });
+    const rs = await Promise.all([mkp(), mkp()]);
+    expect(rs.filter((r) => r.ok).length).toBe(1);
+    expect(rs.find((r) => !r.ok)).toMatchObject({ status: 409 });
+  });
+
+  test('two admins deleting each other concurrently cannot remove every admin', async () => {
+    const second = await mk({ email: 'two@x.test', role: 'admin' });
+    const rs = await Promise.all([A.deleteUser(db, admin), A.deleteUser(db, second)]);
+    expect(rs.filter((r) => r.ok).length).toBe(1);
+    expect(Number((await db.get("SELECT count(*) AS n FROM users WHERE role = 'admin'")).n)).toBe(1);
+  });
+
   test('a deleted user has no session', async () => {
     const id = await mk();
     await A.deleteUser(db, id);
@@ -106,6 +128,7 @@ describe('permissions and workspaces', () => {
     expect(await A.deleteWorkspace(db, ws)).toMatchObject({ error: 'workspace still has users' });
     const other = await A.createWorkspace(db, 'Gamma');
     if (!other.ok) throw new Error('x');
+    expect(await A.renameWorkspace(db, other.id, 'ALPHA')).toMatchObject({ status: 409 }); // rename cannot create a duplicate either
     expect(await A.renameWorkspace(db, other.id, 'Delta')).toEqual({ ok: true });
     expect(await A.deleteWorkspace(db, other.id)).toEqual({ ok: true });
     expect(await A.renameWorkspace(db, 'ghost', 'x')).toMatchObject({ status: 404 });

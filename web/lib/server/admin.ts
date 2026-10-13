@@ -9,6 +9,10 @@ const bad = (error: string, status: 400 | 404 | 409 = 400) => ({ ok: false as co
 
 const ROLE_VALUES = new Set(['admin', ...DEFAULT_ROLES.map((r) => r.value)]);
 const MIN_PASSWORD = 8;
+const isUnique = (e: unknown) => /UNIQUE constraint/i.test(String((e as Error)?.message));
+// Every entry must be a string: silently dropping a bad one would save a different assignment than requested.
+const parseWorkspaceIds = (v: unknown): string[] | null =>
+  v === undefined ? [] : Array.isArray(v) && v.every((x) => typeof x === 'string') ? (v as string[]) : null;
 
 async function workspacesExist(db: Pick<Db, 'get'>, ids: string[]): Promise<boolean> {
   for (const id of ids) if (!(await db.get('SELECT 1 FROM workspaces WHERE id = ?', id))) return false;
@@ -28,29 +32,34 @@ export async function createUser(db: Db, u: NewUser): Promise<AdminResult<{ id: 
   if (!isValidEmail(u.email)) return bad('invalid email');
   if (typeof u.role !== 'string' || !ROLE_VALUES.has(u.role)) return bad('invalid role');
   if (typeof u.password !== 'string' || u.password.length < MIN_PASSWORD) return bad(`password needs ${MIN_PASSWORD}+ characters`);
-  const ws = Array.isArray(u.workspaceIds) ? u.workspaceIds.filter((x): x is string => typeof x === 'string') : [];
-  if (!(await workspacesExist(db, ws))) return bad('unknown workspace');
+  const ws = parseWorkspaceIds(u.workspaceIds);
+  if (!ws || !(await workspacesExist(db, ws))) return bad('unknown workspace');
   const email = normalizeEmail(u.email);
   if (await db.get('SELECT 1 FROM users WHERE lower(email) = ?', email)) return bad('email already used', 409);
   const id = IdGen.uid('usr');
-  await db.run(
-    'INSERT INTO users (id, email, name, role, workspace_ids, password_hash, session_version, access_version, created_at) VALUES (?, ?, ?, ?, ?, ?, 0, 0, ?)',
-    id, email, typeof u.name === 'string' ? u.name : '', u.role, JSON.stringify(ws), await hashPassword(u.password), new Date().toISOString(),
-  );
+  const hash = await hashPassword(u.password);
+  try {
+    await db.run(
+      'INSERT INTO users (id, email, name, role, workspace_ids, password_hash, session_version, access_version, created_at) VALUES (?, ?, ?, ?, ?, ?, 0, 0, ?)',
+      id, email, typeof u.name === 'string' ? u.name : '', u.role, JSON.stringify(ws), hash, new Date().toISOString(),
+    );
+  } catch (e) {
+    if (isUnique(e)) return bad('email already used', 409);
+    throw e;
+  }
   return { ok: true, id };
 }
 
 export async function updateUser(db: Db, id: string, patch: NewUser): Promise<AdminResult> {
-  const cur = await db.get('SELECT role FROM users WHERE id = ?', id);
-  if (!cur) return bad('no such user', 404);
   const run = db.transactionAsync(async (tx) => {
+    const cur = await tx.get('SELECT role FROM users WHERE id = ?', id);
+    if (!cur) return bad('no such user', 404);
     // Validate everything before writing: a refusal must leave the row untouched.
     if (patch.role !== undefined) {
       if (typeof patch.role !== 'string' || !ROLE_VALUES.has(patch.role)) return bad('invalid role');
       if (cur.role === 'admin' && patch.role !== 'admin' && (await otherAdmins(tx, id)) === 0) return bad('cannot demote the last admin', 409);
     }
-    const ws = patch.workspaceIds === undefined ? undefined
-      : Array.isArray(patch.workspaceIds) ? patch.workspaceIds.filter((x): x is string => typeof x === 'string') : null;
+    const ws = patch.workspaceIds === undefined ? undefined : parseWorkspaceIds(patch.workspaceIds);
     if (ws === null || (ws && !(await workspacesExist(tx, ws)))) return bad('unknown workspace');
     if (patch.password !== undefined && (typeof patch.password !== 'string' || patch.password.length < MIN_PASSWORD)) return bad(`password needs ${MIN_PASSWORD}+ characters`);
 
@@ -67,11 +76,15 @@ export async function updateUser(db: Db, id: string, patch: NewUser): Promise<Ad
 }
 
 export async function deleteUser(db: Db, id: string): Promise<AdminResult> {
-  const cur = await db.get('SELECT role FROM users WHERE id = ?', id);
-  if (!cur) return bad('no such user', 404);
-  if (cur.role === 'admin' && (await otherAdmins(db, id)) === 0) return bad('cannot delete the last admin', 409);
-  await db.run('DELETE FROM users WHERE id = ?', id); // a deleted row ends its sessions (userFromSession finds no user)
-  return { ok: true };
+  // Lookup, last-admin check and delete in one transaction, so two admins deleting each other cannot both pass the check.
+  const run = db.transactionAsync(async (tx) => {
+    const cur = await tx.get('SELECT role FROM users WHERE id = ?', id);
+    if (!cur) return bad('no such user', 404);
+    if (cur.role === 'admin' && (await otherAdmins(tx, id)) === 0) return bad('cannot delete the last admin', 409);
+    await tx.run('DELETE FROM users WHERE id = ?', id); // a deleted row ends its sessions (userFromSession finds no user)
+    return { ok: true as const };
+  });
+  return run();
 }
 
 export async function getPermissions(db: Db): Promise<RolePermissions | null> {
@@ -101,17 +114,26 @@ export const listWorkspaces = (db: Db) => db.all('SELECT id, name FROM workspace
 export async function createWorkspace(db: Db, name: unknown): Promise<AdminResult<{ id: string }>> {
   const n = typeof name === 'string' ? name.trim() : '';
   if (!n) return bad('name required');
-  if (await db.get('SELECT 1 FROM workspaces WHERE lower(name) = ?', n.toLowerCase())) return bad('name already used', 409);
   const id = IdGen.uid('ws');
-  await db.run('INSERT INTO workspaces (id, name, created_at) VALUES (?, ?, ?)', id, n, new Date().toISOString());
+  try {
+    await db.run('INSERT INTO workspaces (id, name, created_at) VALUES (?, ?, ?)', id, n, new Date().toISOString());
+  } catch (e) {
+    if (isUnique(e)) return bad('name already used', 409);
+    throw e;
+  }
   return { ok: true, id };
 }
 
 export async function renameWorkspace(db: Db, id: string, name: unknown): Promise<AdminResult> {
   const n = typeof name === 'string' ? name.trim() : '';
   if (!n) return bad('name required');
-  const r = await db.run('UPDATE workspaces SET name = ? WHERE id = ?', n, id);
-  return r.changes ? { ok: true } : bad('no such workspace', 404);
+  try {
+    const r = await db.run('UPDATE workspaces SET name = ? WHERE id = ?', n, id);
+    return r.changes ? { ok: true } : bad('no such workspace', 404);
+  } catch (e) {
+    if (isUnique(e)) return bad('name already used', 409);
+    throw e;
+  }
 }
 
 export async function deleteWorkspace(db: Db, id: string): Promise<AdminResult> {

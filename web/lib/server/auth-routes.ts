@@ -10,13 +10,15 @@ export type LoginResult =
   | { ok: true; userId: string; sessionVersion: number }
   | { ok: false; status: 400 | 401 | 429 };
 
-export function clientIp(h: Headers): string {
-  return (process.env.BUGRAIL_TRUSTED_PROXY === '1' && h.get('x-forwarded-for')?.split(',')[0].trim()) || 'unknown';
+// null when no trusted proxy vouches for the header: a shared bucket would let any caller lock everyone out.
+export function clientIp(h: Headers): string | null {
+  return (process.env.BUGRAIL_TRUSTED_PROXY === '1' && h.get('x-forwarded-for')?.split(',')[0].trim()) || null;
 }
 
-export async function login(db: Db, ip: string, email: unknown, password: unknown): Promise<LoginResult> {
-  if (rateLimited(`login-ip:${ip}`, 50)) return { ok: false, status: 429 };
+export async function login(db: Db, ip: string | null, email: unknown, password: unknown): Promise<LoginResult> {
+  // Malformed bodies cost nothing, so they do not spend a bucket.
   if (typeof email !== 'string' || typeof password !== 'string' || !password) return { ok: false, status: 400 };
+  if (ip && rateLimited(`login-ip:${ip}`, 50)) return { ok: false, status: 429 };
   if (rateLimited(`login-email:${normalizeEmail(email)}`)) return { ok: false, status: 429 };
   const u = await db.get('SELECT id, password_hash, session_version FROM users WHERE lower(email) = ?', normalizeEmail(email));
   dummy ??= hashPassword('bugrail-dummy');
