@@ -1,7 +1,7 @@
 'use client';
 // Topbar bell. Built from rows that already exist (status and assignment events, Open test cases): no notification store.
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { seenKey, toDomain, unreadCount, type Rec } from '@/lib/client/analytics';
 import { hrefFor } from '@/lib/client/nav';
 import { can } from '@/lib/domain/auth';
@@ -26,16 +26,19 @@ export default function NotifBell({ ws }: { ws: string }) {
     const perms = app.config.rolePermissions;
     return NotifCalc.build({ bugs: dom.bugs, testcases: dom.tcs, me: me.email, canBug: can({ role: me.role }, 'bugreport_read', perms), canTc: can({ role: me.role }, 'testcase_read', perms) });
   }, [me, files, tcs, bugs, events, app.config]);
-  if (!me) return null;
   const loaded = !!(files && tcs && bugs && events);
+  // Seen advances only once the panel is open and its data has loaded, so events that arrive while it is open are marked too.
+  useEffect(() => {
+    if (!open || !loaded || !me) return;
+    const now = new Date().toISOString();
+    try { localStorage.setItem(seenKey(me.email), now); } catch { /* private mode: the badge just stays */ }
+    setSeen(now);
+  }, [open, loaded, me]);
+  if (!me) return null;
 
   const unread = unreadCount(data.events, seen);
   const fileName = (id: string) => String(files?.find((f) => f.id === id)?.name ?? 'Tanpa File');
-  const toggle = () => {
-    // Opening before the queries answer shows nothing, so it must not mark anything as seen.
-    if (!open && loaded) { const now = new Date().toISOString(); try { localStorage.setItem(seenKey(me.email), now); } catch { /* private mode: the badge just stays */ } setSeen(now); }
-    setOpen(!open);
-  };
+  const toggle = () => setOpen(!open);
   const link = (e: Rec) =>
     hrefFor(ws, e.target.fileId ? `bugs/${encodeURIComponent(e.target.fileId)}/${encodeURIComponent(e.target.id)}` : 'bugs');
 
