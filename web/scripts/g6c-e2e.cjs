@@ -137,7 +137,7 @@ const sync = (p) => until('synced', async () => /up to date/.test(await V(p, '[d
     await V(p2, '[aria-label=Notifikasi]').click();
     const panel = await text(p2, 'notif-panel');
     if (!/di-assign ke Anda oleh qa@x.test/.test(panel) && !/Bug baru/.test(panel)) throw new Error(panel);
-    if ((await V(p2, '[data-testid=notif]').first().locator('[data-testid=notif-badge]').textContent()).trim() !== '') throw new Error('badge not cleared');
+    await until('badge cleared', async () => (await V(p2, '[data-testid=notif]').first().locator('[data-testid=notif-badge]').textContent()).trim() === '', 5000); // cleared by an effect once the panel's data is loaded
     await V(p2, '[data-testid=notif-event] a').first().click();
     await p2.waitForURL(/\/bugs\/.+\/.+/, { timeout: 15000 });
     await V(p2, '[data-testid=timeline]').waitFor({ timeout: 20000 });
