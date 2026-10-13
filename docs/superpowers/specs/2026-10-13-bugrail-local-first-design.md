@@ -34,7 +34,7 @@ Replace `qa-app/` (vanilla JS on localStorage blobs) and `server/` (Express on M
 | D5 | Conflicts resolve by write time (hybrid logical clock), never by arrival order. Status has its own clock (ADR-002). |
 | D6 | Nothing that can conflict is stored as an array. Comments, status history and assignments are insert-only `bug_events` rows; sharing is `file_shares` rows; deletes are tombstones. |
 | D7 | Visibility and write permission are enforced on the server, per row, on every pull and push (ADR-003). |
-| D8 | Bun installs packages and runs scripts and tests. Whether Bun is also the production runtime is decided by G0; Node 24 is the fallback (ADR-004). |
+| D8 | Bun installs packages and runs scripts and tests. Production runs Node 24; Bun is local tooling only (G0.4 p95 107 ms vs 57 ms, ADR-004). |
 | D9 | Parity only. `qa-app/css/style.css` becomes the global stylesheet with the same class names. No Tailwind, no UI kit, no new features. |
 | D10 | Big-bang cutover with a write freeze, and a 48-hour rollback path back to MongoDB. |
 
@@ -179,7 +179,7 @@ The server, in one write transaction:
 2. For each row, run the permission check (below). A failed row goes to `rejected` with a reason and is not applied.
 3. Ignore any client-supplied `server_seq`, and any client `code` on insert.
 4. Apply the guarded upsert (or `DO NOTHING` for insert-only), and set `server_seq = ++seq` if the row changed.
-5. Assign display codes to any row with `code IS NULL AND deleted_at IS NULL`: scope = the owning workspace of the row's file; prefix = `moduleAbbrev(module)` for test cases and `BUG` for bugs; next = `IdGen.nextInScope(prefix, codes of non-tombstoned rows in scope)` (`utils.js:450-462`, same rule as today, so deleting rows frees numbers).
+5. Assign display codes to any row with `code IS NULL AND deleted_at IS NULL`: scope = the owning workspace of the row's file; prefix = `moduleAbbrev(module)` for test cases and `BUG` for bugs; next = `IdGen.nextInScope(prefix, codes of all rows in scope, tombstoned included)` (`utils.js:450-462` minus its tombstone exclusion: today deleting rows frees numbers, but a revived row keeps its code, so reuse could give two live rows one code. Phase 1 ruling: a deleted number is never reused).
 6. Respond `{ accepted: [id], rejected: [{ id, reason }], server: [row] }`, where `server` holds the server's current row for every pushed id whose stored values differ from what was sent (the server won, or a code was assigned).
 7. After commit, `live.broadcast(workspaceIds touched)`.
 
@@ -204,7 +204,7 @@ Admin (`role = 'admin'`) passes every check, as today.
 ### Pull: `GET /api/sync/pull?since=<seq>&av=<access_version>&sv=<schema_version>`
 
 1. `requireUser()`.
-2. If `av` differs from the user's `access_version`, or `sv` is behind, respond `{ reset: true }`. The client wipes its synced tables (keeping the outbox), sets `since = 0`, and pulls again. It then re-pushes the outbox; rows the user can no longer write are rejected as above.
+2. If `av` differs from the user's `access_version`, or `sv` is behind, respond `{ reset: true }`. The client wipes its synced tables (keeping the outbox), sets `since = 0`, and pulls again. It then re-pushes the outbox; rows the user can no longer write are rejected as above. Unpushed rows (any row still in the outbox) and their outbox entries survive the wipe.
 3. Otherwise return `{ rows: [{ tbl, row }], next, more, av }`: visible rows with `server_seq > since`, ordered by `server_seq`, at most 2000 per page. The client loops while `more`.
 
 `access_version` is bumped for every affected user whenever visibility can change: a user's `workspace_ids` change, a `file_shares` row is created or tombstoned (users of that workspace), a file's `workspace_id` changes (users of the old and new workspace), or a backup is restored (everyone). Gaining and losing access both trigger a reset, because newly visible rows may have a `server_seq` below the client's cursor. Losing access also deletes the now-invisible rows from OPFS, which is how revocation reaches the device.
@@ -268,7 +268,7 @@ A vendor account is a normal user whose `workspace_ids` is just the vendor's wor
 
 ## Operations
 
-- **Service.** systemd `bugrail` runs the app from `/opt/qa-monitor/web` on port 3001 (`bun run start` or `node`, per ADR-004). `server.db` lives in `/var/lib/bugrail/`.
+- **Service.** systemd `bugrail` runs the app from `/opt/qa-monitor/web` on port 3001 (`node node_modules/next/dist/bin/next start`, Node 24, per ADR-004). `server.db` lives in `/var/lib/bugrail/`.
 - **Deploy.** `.github/workflows/deploy.yml`: `bun install --frozen-lockfile && bun run build`, then `systemctl restart bugrail`. Clients pick up the new version through the service worker update.
 - **Backup.** systemd timer at 02:00 runs `scripts/backup.sh`: `VACUUM INTO '/var/backups/bugrail/server-YYYYMMDD.db'`, kept 14 days. G0 confirms the engine supports it; otherwise the script briefly stops the service and copies `server.db*`.
 - **Env.** `SESSION_PASSWORD` (32+ chars), `GEMINI_API_KEY`, `GEMINI_MODEL`, `TESTFORGE_ENABLED`, `BUGRAIL_DB_PATH`.
@@ -299,7 +299,7 @@ All tests run with `bun test`.
 
 ## Phases
 
-0 spike and G0 → 1 scaffold and schema → 2 domain ports → 3 server (auth, sync, admin, AI, SSE) → 4 data migration → 5 client shell and offline → 6 feature parity → 7 cutover. Each phase ends in its gate. Rough size, carried from the v2 estimate plus the own-sync work: 32–42 dev days. Implementation plans are written per phase, starting with Phase 0.
+0 spike and G0 (done) → 1 scaffold and schema (done, G1 in `docs/spike-g0/PHASE1-RESULT.md`) → 2 domain ports → 3 server (auth, sync, admin, AI, SSE) → 4 data migration → 5 client shell and offline → 6 feature parity → 7 cutover. Each phase ends in its gate. Rough size, carried from the v2 estimate plus the own-sync work: 32–42 dev days. Implementation plans are written per phase, starting with Phase 0.
 
 **Cutover runbook:** announce a freeze → stop the old `bugrail` → `mongodump` → run the migration → start the new `bugrail` → smoke test with 2 browsers, 1 offline device and 1 vendor account → lift the freeze. Rollback within 48 h: stop, run the export, start the old `server/`. After 2 stable weeks: final `mongodump`, then retire MongoDB, `qa-app/` and `server/`.
 

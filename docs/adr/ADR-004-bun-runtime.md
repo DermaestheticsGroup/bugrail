@@ -31,5 +31,6 @@ The team wants Bun across the project. Bun as package manager, script runner and
 ## Consequences
 
 - `deploy.yml` uses `bun install --frozen-lockfile && bun run build`; only the systemd `ExecStart` differs between outcomes.
-- The systemd `ExecStart` runs `node node_modules/next/dist/bin/next start`; CI keeps `bun install --frozen-lockfile && bun run build`.
+- The systemd `ExecStart` is `node node_modules/next/dist/bin/next start -p 3001`. Reason (measured, G0.4): p95 107 ms under Bun against 57 ms under Node.
+- CI (`.github/workflows/web-ci.yml`) runs install, typecheck and tests under Bun, builds, then runs a Node 24 smoke (`scripts/node-smoke.mjs`: schema, push, pull round trip) so the production runtime is exercised on every change.
 - Revisit if a later Bun release closes the p95 gap: repeat the G0.4 load on production-like hardware.

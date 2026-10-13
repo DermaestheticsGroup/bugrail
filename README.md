@@ -9,6 +9,21 @@ Web app for managing Test Cases and Bug Reports, fully integrated. Two parts:
 
 BugRail is moving to a single Next.js 16 app in `web/`. It will be local-first: each browser keeps a Turso database that syncs with a self-hosted Turso database on the VM. It will work offline, and workspaces will be isolated on the server, so vendor accounts see only their own workspace. `qa-app/` and `server/` stay in production until cutover.
 
+Quick Start (`web/`):
+
+```
+cd web
+bun install
+bun run dev    # http://localhost:3001
+bun test
+```
+
+`bun run dev` and `bun test` set `BUGRAIL_DEV_AUTH=1`, which turns on the dev users and the `x-dev-user` header. Without it, or with `NODE_ENV=production`, the header is ignored and no dev users are seeded. Never set it on a deployed server.
+
+## Runtime
+
+Production runs Node 24 (`node node_modules/next/dist/bin/next start`); Bun is local tooling only (install, scripts, tests). CI (`.github/workflows/web-ci.yml`) installs and tests under Bun, then builds and runs a smoke script under Node 24. Reason: under load Bun's p95 was 107 ms against Node's 57 ms (ADR-004).
+
 - Design: [`docs/superpowers/specs/2026-10-13-bugrail-local-first-design.md`](docs/superpowers/specs/2026-10-13-bugrail-local-first-design.md)
 - Decisions: [`docs/adr/`](docs/adr/)
 
@@ -44,5 +59,6 @@ API runs at `http://localhost:3001`. Frontend reads API URL from `API_BASE` in `
 ```
 qa-app/    frontend (index.html, css/, js/)
 server/    backend Express + MongoDB (server.js, app.js, db.js)
+web/       Next.js 16 local-first app (in progress)
 docs/      specs (superpowers/specs), decisions (adr), plans, reviews
 ```
