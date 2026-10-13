@@ -23,3 +23,4 @@
 - Assignee list comes from the config users of the file's workspace; a user created after the config was cached shows up after the next config refresh.
 - Reopen count counts REOPENED and RETEST status events, as the legacy did for `to === 'Reopened' || 'Retest'`.
 - Chrome only.
+- The note-required half of the transition rule is enforced in the client only; the server does not check it on push. Known gap.
