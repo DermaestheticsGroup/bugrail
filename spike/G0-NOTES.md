@@ -31,3 +31,24 @@
 - Real (30 clients, 10 min, 10 s interval): `{"check":"G0.3/G0.5","clients":30,"cycles":1802,"errors":0,"p50ms":21,"p95ms":38,"bootstrapP95ms":217,"bootstrapMaxms":221}`, exit 0.
 - G0.3 PASS (p95 38 ms < 1000 ms). G0.5 Node half PASS (max cold bootstrap 221 ms < 10 s, all 30 at once). The 1660 ms smoke figure is the first-request cost on a freshly started server.
 - Caveat: placeholder size only; 18 MB DB is likely well under production. Cold bootstrap not yet measured in a real browser (G0.5 browser half).
+
+## Task 8: browser checks (G0.1, G0.2 wasm half, G0.5 browser half)
+
+- `bun run build` passes with `@tursodatabase/database-wasm/turbopack` and the COOP/COEP headers; `/opfs` is static (○).
+- Driven with playwright-core against installed Google Chrome 155.0.8059.40 (headless, fresh persistent profile), server on a fresh 24150-row seed (placeholder sizes, see Task 7). Observed:
+
+| Browser | Version | crossOriginIsolated | boots after 2 reloads | persist | wasmMerge | bootstrapMs (24150 rows) |
+|---|---|---|---|---|---|---|
+| Chrome (headless) | 155.0.8059.40 | true | 3 (loads 1,2,3) | false | PASS | 3432 (< 10000) |
+| Edge | - | NOT YET VERIFIED | | | | |
+| Firefox | - | NOT YET VERIFIED | | | | |
+| Safari | - | NOT YET VERIFIED | | | | |
+
+- Chrome: G0.1 and G0.2 wasm half PASS, G0.5 browser half PASS on this size. `persist: false` recorded as-is for the risk register (headless, not installed/bookmarked). One 404 console error on first load (not investigated, likely favicon).
+- G0.1 overall NOT YET VERIFIED: needs Edge, Firefox, Safari. G0.2 is complete only if those also report `wasmMerge: PASS`. Headless Chrome is not a substitute for those engines.
+- Manual steps (Edge, Firefox, Safari; also worth repeating in headed Chrome):
+  1. `cd spike && bun scripts/seed.ts && bun run build && BUGRAIL_DB_PATH=data/server.db bun run start`
+  2. Open `http://localhost:3100/opfs`. Check `crossOriginIsolated: true`, `wasmMerge (G0.2): PASS`.
+  3. Reload twice. `boots` must read 1, 2, 3.
+  4. Click "Run full bootstrap". Record `bootstrapMs` (< 10000) and `bootstrapRows` (24150 for the default seed).
+  5. Paste the `results` block per browser into the table above. Safari: `localhost` is a secure context so OPFS should be available; if `opfs` shows FAIL, record the message.
