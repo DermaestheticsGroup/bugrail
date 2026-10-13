@@ -18,7 +18,9 @@ bun run dev    # http://localhost:3001
 bun test
 ```
 
-Production runs Node 24; Bun is for local development only.
+## Runtime
+
+Production runs Node 24 (`node node_modules/next/dist/bin/next start`); Bun is local tooling only (install, scripts, tests). CI (`.github/workflows/web-ci.yml`) installs and tests under Bun, then builds and runs a smoke script under Node 24. Reason: under load Bun's p95 was 107 ms against Node's 57 ms (ADR-004).
 
 - Design: [`docs/superpowers/specs/2026-10-13-bugrail-local-first-design.md`](docs/superpowers/specs/2026-10-13-bugrail-local-first-design.md)
 - Decisions: [`docs/adr/`](docs/adr/)

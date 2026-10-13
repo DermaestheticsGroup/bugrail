@@ -34,7 +34,7 @@ Replace `qa-app/` (vanilla JS on localStorage blobs) and `server/` (Express on M
 | D5 | Conflicts resolve by write time (hybrid logical clock), never by arrival order. Status has its own clock (ADR-002). |
 | D6 | Nothing that can conflict is stored as an array. Comments, status history and assignments are insert-only `bug_events` rows; sharing is `file_shares` rows; deletes are tombstones. |
 | D7 | Visibility and write permission are enforced on the server, per row, on every pull and push (ADR-003). |
-| D8 | Bun installs packages and runs scripts and tests. Whether Bun is also the production runtime is decided by G0; Node 24 is the fallback (ADR-004). |
+| D8 | Bun installs packages and runs scripts and tests. Production runs Node 24; Bun is local tooling only (G0.4 p95 107 ms vs 57 ms, ADR-004). |
 | D9 | Parity only. `qa-app/css/style.css` becomes the global stylesheet with the same class names. No Tailwind, no UI kit, no new features. |
 | D10 | Big-bang cutover with a write freeze, and a 48-hour rollback path back to MongoDB. |
 
@@ -268,7 +268,7 @@ A vendor account is a normal user whose `workspace_ids` is just the vendor's wor
 
 ## Operations
 
-- **Service.** systemd `bugrail` runs the app from `/opt/qa-monitor/web` on port 3001 (`bun run start` or `node`, per ADR-004). `server.db` lives in `/var/lib/bugrail/`.
+- **Service.** systemd `bugrail` runs the app from `/opt/qa-monitor/web` on port 3001 (`node node_modules/next/dist/bin/next start`, Node 24, per ADR-004). `server.db` lives in `/var/lib/bugrail/`.
 - **Deploy.** `.github/workflows/deploy.yml`: `bun install --frozen-lockfile && bun run build`, then `systemctl restart bugrail`. Clients pick up the new version through the service worker update.
 - **Backup.** systemd timer at 02:00 runs `scripts/backup.sh`: `VACUUM INTO '/var/backups/bugrail/server-YYYYMMDD.db'`, kept 14 days. G0 confirms the engine supports it; otherwise the script briefly stops the service and copies `server.db*`.
 - **Env.** `SESSION_PASSWORD` (32+ chars), `GEMINI_API_KEY`, `GEMINI_MODEL`, `TESTFORGE_ENABLED`, `BUGRAIL_DB_PATH`.
