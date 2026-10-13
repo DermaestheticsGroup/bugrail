@@ -53,6 +53,18 @@ describe('rejected pushes', () => {
     expect(await v.get("SELECT id FROM bugs WHERE id = 'N9'")).toBeFalsy();
   });
 
+  test('a pull merge never overwrites a parked rejected row, even with a newer server copy', async () => {
+    const v = await device();
+    await pullAll(v, direct('vendor'));
+    await v.run("INSERT INTO bugs (id, file_id, title, status_code, status_hlc, hlc) VALUES ('X', 'fa', 'local', 'OPEN', ?, ?)", h(5), h(5));
+    await v.run("INSERT INTO rejected (row_id, tbl, reason, at) VALUES ('X', 'bugs', 'r', 't')");
+    await push(server, USERS.admin, [{ tbl: 'bugs', row: bugRow({ title: 'theirs', hlc: h(9), status_hlc: h(9) }) }]);
+    await v.run("DELETE FROM meta WHERE key = 'since'");
+    await v.run("INSERT INTO meta (key, value) VALUES ('access_version', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", String((await server.get("SELECT access_version AS a FROM users WHERE id = 'vendor'"))?.a ?? 0));
+    await pullAll(v, direct('alice'));
+    expect((await v.get("SELECT title FROM bugs WHERE id = 'X'"))?.title).toBe('local');
+  });
+
   test('reset pull keeps a queued outbox row intact even when the server holds a newer copy', async () => {
     const a = await device();
     await pullAll(a, direct('alice'));

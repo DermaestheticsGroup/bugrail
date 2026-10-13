@@ -96,8 +96,8 @@ export async function pullAll(db: Db, t: Transport, clock?: Clock): Promise<numb
       for (const { tbl, row } of page.rows) {
         if (!isSyncedTable(tbl)) continue;
         if (clock && typeof row.hlc === 'string') clock.observe(row.hlc);
-        // A queued local edit must reach the server intact; the push settles it by LWW there.
-        if (await tx.get('SELECT 1 FROM outbox WHERE tbl = ? AND row_id = ?', tbl, row.id)) continue;
+        // A queued or parked local edit stays intact: the push settles queued rows by LWW, dismiss settles parked ones.
+        if (await tx.get('SELECT 1 FROM outbox WHERE tbl = ? AND row_id = ? UNION ALL SELECT 1 FROM rejected WHERE tbl = ? AND row_id = ?', tbl, row.id, tbl, row.id)) continue;
         await tx.run(mergeSql(TABLES[tbl]), ...mergeArgs(TABLES[tbl], row));
       }
       await tx.run(
