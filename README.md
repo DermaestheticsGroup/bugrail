@@ -18,6 +18,8 @@ bun run dev    # http://localhost:3001
 bun test
 ```
 
+`bun run dev` and `bun test` set `BUGRAIL_DEV_AUTH=1`, which turns on the dev users and the `x-dev-user` header. Without it, or with `NODE_ENV=production`, the header is ignored and no dev users are seeded. Never set it on a deployed server.
+
 ## Runtime
 
 Production runs Node 24 (`node node_modules/next/dist/bin/next start`); Bun is local tooling only (install, scripts, tests). CI (`.github/workflows/web-ci.yml`) installs and tests under Bun, then builds and runs a smoke script under Node 24. Reason: under load Bun's p95 was 107 ms against Node's 57 ms (ADR-004).

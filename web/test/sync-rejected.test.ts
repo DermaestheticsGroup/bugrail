@@ -35,7 +35,7 @@ describe('rejected pushes', () => {
     const v = await device();
     await localWrite(v, 'bugs', bugRow({ id: 'N1', title: 'sneaky', hlc: h(5), status_hlc: h(5) }));
     const r = await pushOutbox(v, direct('vendor'));
-    expect(r?.rejected).toEqual([{ id: 'N1', reason: 'file not visible' }]);
+    expect(r?.rejected).toEqual([{ id: 'N1', tbl: 'bugs', reason: 'file not visible' }]);
     expect(await outboxCount(v)).toBe(0);
     const parked = await listRejected(v);
     expect(parked.map((p) => [p.row_id, p.tbl, p.reason])).toEqual([['N1', 'bugs', 'file not visible']]);

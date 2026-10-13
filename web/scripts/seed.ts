@@ -21,6 +21,7 @@ const { values } = parseArgs({
 const n = (k: keyof typeof values) => Number(values[k]);
 const db = (await connect(values.db!)) as unknown as Db;
 await applyMigrations(db, 'server');
+process.env.BUGRAIL_DEV_AUTH ??= '1'; // dev users are opt-in; this script only builds dev data
 await seedUsers(db);
 
 const hlc = '000000000000001-00000-migrate';

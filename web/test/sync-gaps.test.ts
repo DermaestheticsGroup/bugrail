@@ -39,9 +39,9 @@ describe('ADR-001 gap b: display codes', () => {
 describe('ADR-001 gap c: file_shares id', () => {
   test('a share whose id is not file_id:workspace_id is rejected', async () => {
     const r = await push(db, USERS.alice, [{ tbl: 'file_shares', row: { id: 'other', file_id: 'fa', workspace_id: 'ws-v', hlc: h(2) } }]);
-    expect(r.rejected).toEqual([{ id: 'other', reason: 'bad share id' }]);
+    expect(r.rejected).toEqual([{ id: 'other', tbl: 'file_shares', reason: 'bad share id' }]);
     const a = await push(db, USERS.admin, [{ tbl: 'file_shares', row: { id: 'x', file_id: 'fa', workspace_id: 'ws-v', hlc: h(2) } }]);
-    expect(a.rejected).toEqual([{ id: 'x', reason: 'bad share id' }]);
+    expect(a.rejected).toEqual([{ id: 'x', tbl: 'file_shares', reason: 'bad share id' }]);
     const ok = await push(db, USERS.alice, [{ tbl: 'file_shares', row: { id: 'fa:ws-v', file_id: 'fa', workspace_id: 'ws-v', hlc: h(2) } }]);
     expect(ok.accepted).toEqual(['fa:ws-v']);
   });
@@ -54,9 +54,17 @@ describe('ADR-001 gap d: activity_log', () => {
       { tbl: 'activity_log', row: log('l2', { actor_email: USERS.bob.email }) },
     ]);
     expect(r.accepted).toEqual(['l1']);
-    expect(r.rejected).toEqual([{ id: 'l2', reason: 'actor is not you' }]);
+    expect(r.rejected).toEqual([{ id: 'l2', tbl: 'activity_log', reason: 'actor is not you' }]);
     const a = await push(db, USERS.admin, [{ tbl: 'activity_log', row: log('l3', { actor_email: USERS.bob.email }) }]);
     expect(a.accepted).toEqual(['l3']);
+  });
+
+  test('a non-admin cannot log into a workspace that is not theirs', async () => {
+    const r = await push(db, USERS.alice, [{ tbl: 'activity_log', row: log('lx', { workspace_id: 'ws-v' }) }]);
+    expect(r.rejected).toEqual([{ id: 'lx', tbl: 'activity_log', reason: 'workspace not yours' }]);
+    const p = await pull(db, USERS.vendor, 0, 0, SCHEMA_VERSION);
+    if ('reset' in p) throw new Error('unexpected reset');
+    expect(p.rows.filter((x) => x.tbl === 'activity_log')).toEqual([]);
   });
 
   test('a non-admin pulls only activity of their workspaces', async () => {

@@ -9,6 +9,7 @@ import type { Db } from '../lib/db-types';
 
 const db = (await connect(':memory:')) as unknown as Db;
 await applyMigrations(db, 'server');
+process.env.BUGRAIL_DEV_AUTH ??= '1'; // dev users are opt-in; this script only builds dev data
 await seedUsers(db);
 const hlc = `${String(1).padStart(15, '0')}-00000-smoke`;
 const res = await push(db, USERS.admin, [{ tbl: 'files', row: { id: 'f1', name: 'smoke', workspace_id: 'ws-a', hlc } }]);

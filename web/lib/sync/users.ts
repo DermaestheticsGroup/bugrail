@@ -10,13 +10,16 @@ export const USERS: Record<string, User> = {
   vendor: { id: 'vendor', email: 'qa@vendor.test', role: 'user', workspaceIds: ['ws-v'] },
 };
 
+// Dev auth is opt-in so a missing NODE_ENV never opens it.
+const devAuth = () => process.env.BUGRAIL_DEV_AUTH === '1' && process.env.NODE_ENV !== 'production';
+
 export function userFromHeader(h: string | null): User | undefined {
-  return process.env.NODE_ENV !== 'production' && h !== null && Object.hasOwn(USERS, h) ? USERS[h] : undefined;
+  return devAuth() && h !== null && Object.hasOwn(USERS, h) ? USERS[h] : undefined;
 }
 
-// Dev users need users rows so access_version exists; non-production only.
+// Dev users need users rows so access_version exists; dev auth only.
 export async function seedUsers(db: Db): Promise<void> {
-  if (process.env.NODE_ENV === 'production') return;
+  if (!devAuth()) return;
   for (const u of Object.values(USERS)) {
     await db.run(
       'INSERT INTO users (id, email, role, workspace_ids, access_version) VALUES (?, ?, ?, ?, 0) ON CONFLICT(id) DO NOTHING',

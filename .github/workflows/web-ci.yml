@@ -17,6 +17,8 @@ jobs:
         with:
           node-version: 24
       - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: web/package.json
       - run: bun install --frozen-lockfile
       - run: bun run typecheck
       - run: bun test

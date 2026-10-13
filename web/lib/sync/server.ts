@@ -5,7 +5,7 @@ import type { Db, Row, Tx } from '../db-types';
 import { USERS, type User } from './users';
 
 export interface PushRow { tbl: SyncedTable; row: Row }
-export interface PushResult { accepted: string[]; rejected: { id: string; reason: string }[]; server: PushRow[] }
+export interface PushResult { accepted: string[]; rejected: { id: string; tbl?: SyncedTable; reason: string }[]; server: PushRow[] }
 export type PullResult = { rows: PushRow[]; next: number; more: boolean } | { reset: true; av: number; sv: number };
 
 export const MAX_PUSH = 500;
@@ -109,7 +109,9 @@ async function denyReason(tx: Tx, u: User, tbl: SyncedTable, row: Row): Promise<
       const b = await tx.get('SELECT file_id FROM bugs WHERE id = ?', row.bug_id);
       return b && (await fileVisible(tx, u, b.file_id)) ? null : 'bug not visible';
     }
-    case 'activity_log': return row.actor_email === u.email ? null : 'actor is not you';
+    case 'activity_log':
+      if (row.actor_email !== u.email) return 'actor is not you';
+      return u.workspaceIds.includes(row.workspace_id as string) ? null : 'workspace not yours';
     default: return 'admin only until Phase 3';
   }
 }
@@ -137,7 +139,7 @@ export async function push(db: Db, user: User, input: unknown[]): Promise<PushRe
       const tbl = item?.tbl;
       if (!isSyncedTable(tbl)) { result.rejected.push({ id, reason: 'unknown table' }); continue; }
       const reason = await denyReason(tx, user, tbl, row);
-      if (reason) { result.rejected.push({ id, reason }); continue; }
+      if (reason) { result.rejected.push({ id, tbl, reason }); continue; }
       if (TABLES[tbl].columns.includes('code')) row.code = null; // the server owns codes
       row.server_seq = seq + 1;
       const before = tbl === 'files' ? await tx.get('SELECT workspace_id FROM files WHERE id = ?', row.id)

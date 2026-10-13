@@ -43,8 +43,8 @@ describe('schema', () => {
       const v2 = await applyMigrations(db, scope);
       expect(v1).toBe(4);
       expect(v2).toBe(v1);
-      const meta = scope === 'server' ? 'sync_meta' : 'meta';
-      expect(Number((await db.get(`SELECT value FROM ${meta} WHERE key = 'schema_version'`)).value)).toBe(v1);
+      const [meta, key] = scope === 'server' ? ['sync_meta', 'schema_version'] : ['meta', 'applied_version'];
+      expect(Number((await db.get(`SELECT value FROM ${meta} WHERE key = '${key}'`)).value)).toBe(v1);
     });
   }
 
