@@ -40,5 +40,5 @@ With offline writes, two devices can edit the same row before either syncs. Orde
 ## Consequences
 
 - Two devices converge to identical rows regardless of sync order (property-tested with 1000 random interleavings).
-- Concurrent edits to the same plain field keep the later one; the earlier is lost, as today.
+- LWW is per row for plain fields: when two devices edit plain fields of the same row concurrently, the later write's whole row wins, even if they touched different fields. Status (own clock) and comments, history and assignments (insert-only rows) are protected from this.
 - The migration converts embedded arrays to `bug_events` and status names to codes; the rollback export converts them back.
