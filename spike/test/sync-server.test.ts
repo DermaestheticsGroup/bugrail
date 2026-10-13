@@ -127,6 +127,42 @@ describe('isolation', () => {
     expect(ids).not.toContain('ba');
   });
 
+  test('share id collision cannot rewrite another workspace share', async () => {
+    await push(db, USERS.admin, [{ tbl: 'file_shares', row: { id: 'sh1', file_id: 'fv', workspace_id: 'ws-a', hlc: h(2) } }]);
+    const r = await push(db, USERS.alice, [{ tbl: 'file_shares', row: { id: 'sh1', file_id: 'fa', workspace_id: 'ws-v', hlc: h(50) } }]);
+    expect(r.accepted).toEqual([]);
+    expect(r.rejected.length).toBe(1);
+    const row = await db.get('SELECT file_id, workspace_id FROM file_shares WHERE id = ?', 'sh1');
+    expect(row).toEqual({ file_id: 'fv', workspace_id: 'ws-a' });
+  });
+
+  test('share cannot change file_id or workspace_id on an owned share', async () => {
+    await push(db, USERS.alice, [{ tbl: 'file_shares', row: { id: 'sh2', file_id: 'fa', workspace_id: 'ws-v', hlc: h(2) } }]);
+    const r = await push(db, USERS.alice, [{ tbl: 'file_shares', row: { id: 'sh2', file_id: 'fa', workspace_id: 'ws-x', hlc: h(3) } }]);
+    expect(r.accepted).toEqual([]);
+  });
+
+  test('vendor cannot move a bug to another visible file', async () => {
+    await push(db, USERS.alice, [{ tbl: 'file_shares', row: { id: 'fa:ws-v', file_id: 'fa', workspace_id: 'ws-v', hlc: h(9) } }]);
+    const r = await push(db, USERS.vendor, [{ tbl: 'bugs', row: bug('bv', 'fa', { hlc: h(20) }) }]);
+    expect(r.accepted).toEqual([]);
+    expect((await db.get('SELECT file_id FROM bugs WHERE id = ?', 'bv')).file_id).toBe('fv');
+  });
+
+  test('rows beyond MAX_PUSH are rejected, malformed rows rejected', async () => {
+    const many = Array.from({ length: 502 }, (_, i) => ({ tbl: 'bugs', row: bug(`m${i}`, 'fa', { hlc: h(30) }) }));
+    const r = await push(db, USERS.alice, many);
+    expect(r.accepted.length + r.rejected.length).toBe(502);
+    expect(r.rejected.length).toBe(2);
+    const bad = await push(db, USERS.alice, [null, { tbl: 'bugs', row: bug('z', 'fa', { file_id: { x: 1 } }) }]);
+    expect(bad.rejected.length).toBe(2);
+  });
+
+  test('pull limit below 1 is clamped', async () => {
+    const r = await pull(db, USERS.admin, 0, 0);
+    expect(r.rows.length).toBe(1);
+  });
+
   test('vendor can write inside a file shared into ws-v', async () => {
     await push(db, USERS.alice, [{ tbl: 'file_shares', row: { id: 'fa:ws-v', file_id: 'fa', workspace_id: 'ws-v', hlc: h(9) } }]);
     const r = await push(db, USERS.vendor, [{ tbl: 'bugs', row: bug('bnew', 'fa', { hlc: h(12) }) }]);

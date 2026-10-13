@@ -71,14 +71,24 @@ async function denyReason(tx: Tx, u: User, tbl: SyncedTable, row: Row): Promise<
       }
       return u.workspaceIds.includes(row.workspace_id as string) ? null : 'cannot create a file in another workspace';
     }
-    case 'file_shares':
+    case 'file_shares': {
+      if (typeof row.file_id !== 'string' || typeof row.workspace_id !== 'string') return 'bad share';
+      const existing = await tx.get('SELECT file_id, workspace_id FROM file_shares WHERE id = ?', row.id);
+      if (existing) {
+        if (row.file_id !== existing.file_id || row.workspace_id !== existing.workspace_id) return 'share file or workspace cannot change';
+        return (await ownsFile(tx, u, existing.file_id)) ? null : 'only the owning workspace can share a file';
+      }
       return (await ownsFile(tx, u, row.file_id)) ? null : 'only the owning workspace can share a file';
+    }
     case 'bugs': {
+      if (typeof row.file_id !== 'string') return 'bad file_id';
       const existing = await tx.get('SELECT file_id FROM bugs WHERE id = ?', row.id);
       if (existing && !(await fileVisible(tx, u, existing.file_id))) return 'bug not visible';
+      if (existing && existing.file_id !== row.file_id) return 'only admin can move a bug';
       return (await fileVisible(tx, u, row.file_id)) ? null : 'file not visible';
     }
     case 'bug_events': {
+      if (typeof row.bug_id !== 'string') return 'bad bug_id';
       const b = await tx.get('SELECT file_id FROM bugs WHERE id = ?', row.bug_id);
       return b && (await fileVisible(tx, u, b.file_id)) ? null : 'bug not visible';
     }
@@ -90,13 +100,19 @@ const comparable = (tbl: SyncedTable, row: Row) =>
 
 export async function push(db: Db, user: User, input: unknown[]): Promise<PushResult> {
   const rows = input.slice(0, MAX_PUSH);
+  const overflow = input.slice(MAX_PUSH);
   const run = db.transactionAsync(async (tx: Tx) => {
     let seq = Number((await tx.get("SELECT value FROM sync_meta WHERE key = 'seq'")).value);
     const result: PushResult = { accepted: [], rejected: [], server: [] };
     const sent = new Map<string, PushRow>();
+    for (const item of overflow as { row?: Row }[]) result.rejected.push({ id: String(item?.row?.id ?? ''), reason: 'too many rows' });
 
     for (const item of rows as { tbl?: unknown; row?: Row }[]) {
-      const row = { ...(item?.row ?? {}) };
+      if (!item || typeof item.row !== 'object' || item.row === null || Array.isArray(item.row)) {
+        result.rejected.push({ id: '', reason: 'bad row' });
+        continue;
+      }
+      const row = { ...item.row };
       const id = String(row.id ?? '');
       const tbl = item?.tbl;
       if (!isSyncedTable(tbl)) { result.rejected.push({ id, reason: 'unknown table' }); continue; }
@@ -138,7 +154,7 @@ export async function push(db: Db, user: User, input: unknown[]): Promise<PushRe
 }
 
 export async function pull(db: Db, user: User, since: number, limit = MAX_PULL): Promise<PullResult> {
-  const pageSize = Math.min(limit, MAX_PULL);
+  const pageSize = Math.max(1, Math.min(Math.floor(limit) || 1, MAX_PULL));
   const all: (PushRow & { seq: number })[] = [];
   for (const tbl of SYNCED_TABLES) {
     const f = visibilityFilter(tbl, user);
