@@ -9,5 +9,5 @@ export const USERS: Record<string, User> = {
 };
 
 export function userFromHeader(h: string | null): User | undefined {
-  return h !== null && Object.hasOwn(USERS, h) ? USERS[h] : undefined;
+  return process.env.NODE_ENV !== 'production' && h !== null && Object.hasOwn(USERS, h) ? USERS[h] : undefined;
 }

@@ -64,8 +64,8 @@ export async function pullAll(db: Db, t: Transport, clock?: Clock): Promise<numb
 }
 
 export function httpTransport(base: string, user: string): Transport {
-  // shortcut: x-spike-user stands in for the session cookie in the spike only.
-  const headers = { 'content-type': 'application/json', 'x-spike-user': user };
+  // shortcut: x-dev-user stands in for the session cookie in the spike only.
+  const headers = { 'content-type': 'application/json', 'x-dev-user': user };
   return {
     async push(rows) {
       const res = await fetch(`${base}/api/sync/push`, { method: 'POST', headers, body: JSON.stringify({ rows }) });

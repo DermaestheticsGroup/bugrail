@@ -9,6 +9,17 @@ Web app for managing Test Cases and Bug Reports, fully integrated. Two parts:
 
 BugRail is moving to a single Next.js 16 app in `web/`. It will be local-first: each browser keeps a Turso database that syncs with a self-hosted Turso database on the VM. It will work offline, and workspaces will be isolated on the server, so vendor accounts see only their own workspace. `qa-app/` and `server/` stay in production until cutover.
 
+Quick Start (`web/`):
+
+```
+cd web
+bun install
+bun run dev    # http://localhost:3001
+bun test
+```
+
+Production runs Node 24; Bun is for local development only.
+
 - Design: [`docs/superpowers/specs/2026-10-13-bugrail-local-first-design.md`](docs/superpowers/specs/2026-10-13-bugrail-local-first-design.md)
 - Decisions: [`docs/adr/`](docs/adr/)
 
@@ -44,5 +55,6 @@ API runs at `http://localhost:3001`. Frontend reads API URL from `API_BASE` in `
 ```
 qa-app/    frontend (index.html, css/, js/)
 server/    backend Express + MongoDB (server.js, app.js, db.js)
+web/       Next.js 16 local-first app (in progress)
 docs/      specs (superpowers/specs), decisions (adr), plans, reviews
 ```

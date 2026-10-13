@@ -7,3 +7,13 @@ test('userFromHeader rejects inherited property names and empty', () => {
 test('userFromHeader returns a known user', () => {
   expect(userFromHeader('alice')).toBe(USERS.alice);
 });
+test('userFromHeader returns undefined in production', () => {
+  const env = process.env as Record<string, string | undefined>;
+  const prev = env.NODE_ENV;
+  env.NODE_ENV = 'production';
+  try {
+    expect(userFromHeader('admin')).toBeUndefined();
+  } finally {
+    env.NODE_ENV = prev;
+  }
+});
