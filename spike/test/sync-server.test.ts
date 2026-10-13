@@ -183,3 +183,33 @@ describe('pull', () => {
     expect(seen.sort()).toEqual(['ba', 'bv', 'ea', 'fa', 'fv']);
   });
 });
+
+describe('trust boundary', () => {
+  test('bug_events id owned by another workspace is rejected and never echoed', async () => {
+    await push(db, USERS.admin, [{ tbl: 'bug_events', row: { id: 'ev-v', bug_id: 'bv', kind: 'comment', text: 'vsecret' } }]);
+    const r = await push(db, USERS.alice, [{ tbl: 'bug_events', row: { id: 'ev-v', bug_id: 'ba', kind: 'comment', text: 'mine' } }]);
+    expect(r.accepted).toEqual([]);
+    expect(r.rejected.map((x) => x.id)).toEqual(['ev-v']);
+    expect(r.server.find((s) => s.row.id === 'ev-v')).toBeUndefined();
+    expect((await db.get('SELECT bug_id FROM bug_events WHERE id = ?', 'ev-v')).bug_id).toBe('bv');
+  });
+
+  test('own idempotent re-push of a bug_event is still accepted', async () => {
+    const row = { id: 'ea', bug_id: 'ba', kind: 'comment', text: 'secret' };
+    const r = await push(db, USERS.alice, [{ tbl: 'bug_events', row }]);
+    expect(r.accepted).toEqual(['ea']);
+    expect(r.rejected).toEqual([]);
+  });
+
+  test('malformed or far-future hlc is rejected, normal hlc accepted', async () => {
+    const far = h(Date.now() + 48 * 3600_000);
+    const r = await push(db, USERS.alice, [
+      { tbl: 'bugs', row: bug('h1', 'fa', { hlc: 'zzz' }) },
+      { tbl: 'bugs', row: bug('h2', 'fa', { hlc: far }) },
+      { tbl: 'bugs', row: bug('h3', 'fa', { status_hlc: 'zzz' }) },
+      { tbl: 'bugs', row: bug('h4', 'fa', { hlc: h(Date.now()) }) },
+    ]);
+    expect(r.rejected.map((x) => x.id)).toEqual(['h1', 'h2', 'h3']);
+    expect(r.accepted).toEqual(['h4']);
+  });
+});

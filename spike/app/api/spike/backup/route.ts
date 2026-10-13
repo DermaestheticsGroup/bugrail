@@ -1,9 +1,11 @@
 import { getServerDb } from '@/lib/server-db';
 
 // shortcut: unauthenticated spike-only endpoint; production runs backups from a systemd timer through an admin-only path.
+// Disabled (404) unless BUGRAIL_SPIKE=1, and targets containing '..' are refused.
 export async function POST(req: Request) {
+  if (process.env.BUGRAIL_SPIKE !== '1') return new Response('not found', { status: 404 });
   const target = new URL(req.url).searchParams.get('to');
-  if (!target || !/^[\w./-]+\.db$/.test(target)) return new Response('bad target', { status: 400 });
+  if (!target || !/^[\w./-]+\.db$/.test(target) || target.includes('..')) return new Response('bad target', { status: 400 });
   const db = await getServerDb();
   const t0 = performance.now();
   try {

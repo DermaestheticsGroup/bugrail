@@ -11,6 +11,13 @@ export interface PullResult { rows: PushRow[]; next: number; more: boolean }
 export const MAX_PUSH = 500;
 export const MAX_PULL = 2000;
 
+const HLC_RE = /^(\d{15})-\d{5}-[\w-]+$/;
+const MAX_DRIFT_MS = 24 * 3600_000;
+const badHlc = (v: unknown) => {
+  const m = typeof v === 'string' ? HLC_RE.exec(v) : null;
+  return !m || Number(m[1]) > Date.now() + MAX_DRIFT_MS;
+};
+
 const isAdmin = (u: User) => u.role === 'admin';
 const inList = (n: number) => Array(n).fill('?').join(', ');
 
@@ -60,6 +67,12 @@ async function denyReason(tx: Tx, u: User, tbl: SyncedTable, row: Row): Promise<
   if (typeof row.id !== 'string' || !row.id) return 'missing id';
   if (TABLES[tbl].kind !== 'insert-only' && typeof row.hlc !== 'string') return 'missing hlc';
   if (TABLES[tbl].kind === 'lww+status' && typeof row.status_hlc !== 'string') return 'missing status_hlc';
+  if (row.hlc !== undefined && badHlc(row.hlc)) return 'bad hlc';
+  if (row.status_hlc !== undefined && badHlc(row.status_hlc)) return 'bad status_hlc';
+  if (TABLES[tbl].kind === 'insert-only' && typeof row.bug_id === 'string') {
+    const ev = await tx.get(`SELECT bug_id FROM ${tbl} WHERE id = ?`, row.id);
+    if (ev && ev.bug_id !== row.bug_id) return 'id belongs to another bug';
+  }
   if (isAdmin(u)) return null;
   switch (tbl) {
     case 'files': {
@@ -145,7 +158,8 @@ export async function push(db: Db, user: User, input: unknown[]): Promise<PushRe
     await tx.run("UPDATE sync_meta SET value = ? WHERE key = 'seq'", seq);
 
     for (const [, s] of sent) {
-      const current = await tx.get(`SELECT * FROM ${s.tbl} WHERE id = ?`, s.row.id);
+      const f = visibilityFilter(s.tbl, user);
+      const current = await tx.get(`SELECT * FROM ${s.tbl} WHERE id = ? AND (${f.sql})`, s.row.id, ...f.params);
       if (current && comparable(s.tbl, current) !== comparable(s.tbl, s.row)) result.server.push({ tbl: s.tbl, row: current });
     }
     return result;
