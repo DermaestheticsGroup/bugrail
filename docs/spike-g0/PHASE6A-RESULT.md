@@ -8,7 +8,7 @@
 - Activity rows are logged under a workspace the author belongs to (a vendor editing a shared file logs under its own workspace); before this the server refused them.
 
 ## Evidence
-- `bun test`: 256 pass; `tsc` clean; `next build` passes.
+- `bun test` passes (includes `effectiveSelection` cases); `tsc` clean; `next build` passes.
 - `scripts/g6a-e2e.cjs` (headless Chrome 155, three users plus an admin): create, rename, share and unshare a file; create test cases with codes within 15 s; search and reset; execute and filter by status; duplicate gets its own code; bulk status; vendor sees nothing before sharing, sees the file within 15 s of sharing and loses it within 15 s of unsharing; a write the server refuses after an admin removes a permission shows its reason and is discarded and reverts; an admin deleting a file removes it for the vendor and for QA.
 
 ## Not done or not checked
