@@ -3,9 +3,10 @@
 // --original is the untouched legacy dump (or the live kv_store): cutover users get their old plaintext password back from it.
 // Users created after cutover get a temporary password. The export file is written 0600 and the passwords print only with --print-temp-passwords.
 import { connect } from '@tursodatabase/database';
-import { chmodSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { exportKv } from '../lib/migrate/kv';
+import { writePrivateFileAtomic } from '../lib/migrate/private-file';
 import type { Db } from '../lib/db-types';
 
 const { values: a } = parseArgs({ options: { db: { type: 'string' }, original: { type: 'string' }, out: { type: 'string' }, 'to-mongo': { type: 'boolean' }, 'print-temp-passwords': { type: 'boolean' }, yes: { type: 'boolean' } } });
@@ -16,19 +17,8 @@ const originalSettings = Array.isArray(original) ? original.find((d: { _id: stri
 const db = (await connect(a.db)) as unknown as Db;
 const { blobs, tempPasswords } = await exportKv(db, { originalSettings });
 
-if (a.out) {
-  // The export holds plaintext passwords and is the rollback path, so: owner-only from the first byte, and replaced atomically
-  // (a crash mid-write must not truncate an earlier good export).
-  const tmp = `${a.out}.${process.pid}.tmp`;
-  try {
-    writeFileSync(tmp, JSON.stringify(blobs, null, 2), { mode: 0o600 });
-    chmodSync(tmp, 0o600);
-    renameSync(tmp, a.out);
-  } catch (e) {
-    rmSync(tmp, { force: true });
-    throw e;
-  }
-}
+// The export holds plaintext passwords and is the rollback path: owner-only, swapped in atomically.
+if (a.out) writePrivateFileAtomic(a.out, JSON.stringify(blobs, null, 2));
 const temps = Object.keys(tempPasswords);
 if (temps.length) {
   if (a['print-temp-passwords']) console.log('temporary passwords (give to each user, then they reset):\n' + JSON.stringify(tempPasswords, null, 2));
