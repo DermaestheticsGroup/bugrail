@@ -98,3 +98,21 @@ Node: {"check":"G0.3/G0.5","clients":30,"cycles":1798,"errors":0,"p50ms":35,"p95
 - p95 ratio Bun/Node = 107/57 = 1.88 (limit 1.20). p50 equal (35 ms). Bootstrap p95 about equal (~20-22 s for both; both exceed the 10 s G0.5 target at 30 concurrent cold bootstraps, separate issue).
 - One Node load attempt was discarded (the output file stayed empty, the process was lost to a tool timeout) and rerun in full; only the complete run is recorded.
 - **Decision: Node 24 as production runtime** (G0.4 passes, but Bun p95 is 88% worse than Node). Single run per runtime, no repeats, so the p95 variance is unmeasured.
+
+## Task 11: Backup while writing (G0.7)
+
+- Setup: scratch live DB from `bun scripts/seed.ts --db <scratch>/live.db` (defaults, 24150 rows, 18419712 bytes). Server: `npx next build`, then `BUGRAIL_DB_PATH=<scratch>/live.db node node_modules/next/dist/bin/next start -p 3100` (Node 24 per Task 10). Not committed.
+- Load: `CLIENTS=10 DURATION_MS=60000 INTERVAL_MS=2000 bun scripts/load.ts`, started, then backup fired 30 s in (load still writing). Load finished: 293 cycles, 0 errors, p95 182 ms.
+- Backup: `curl -s -X POST "http://localhost:3100/api/spike/backup?to=<scratch>/backup.db"` returned `{"ok":true,"ms":379}`. `VACUUM INTO` is supported, so the Step 3 cp fallback was not needed or tested.
+- Counts (live DB read-only from a second process, just before / just after the POST; backup via `bun scripts/backup-check.ts`):
+
+```
+before: {"files":150,"bugs":6116,"bug_events":18000}
+backup: {"files":150,"bugs":6117,"bug_events":18000}  integrity {"integrity_check":"ok"}
+after : {"files":150,"bugs":6118,"bug_events":18000}
+```
+
+- Backup bugs count (6117) falls inside the live range [6116, 6118]; the load wrote 2 rows during the window, so the copy is a consistent point-in-time snapshot, not a torn read.
+- `PRAGMA integrity_check` is supported by this driver and returned `ok`.
+- Not tested: backup under the 30-client load, larger DB, concurrent backup requests. The route is unauthenticated and interpolates `target` into SQL behind the `/^[\w./-]+\.db$/` regex (spike only; the shortcut comment says so).
+- **G0.7 PASS**: backup opened, has rows, counts in range, integrity ok, 379 ms for an 18 MB DB while writes continued.
