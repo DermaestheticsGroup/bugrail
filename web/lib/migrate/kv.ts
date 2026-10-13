@@ -2,6 +2,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { TABLES, type SyncedTable } from '../../db/tables';
 import { DEFAULT_ROLES, DEFAULT_ROLE_PERMISSIONS } from '../domain/auth';
+import { DEFAULT_STATUS_MASTER } from '../domain/status';
 import type { Db, Row, Tx } from '../db-types';
 
 export type Rec = Record<string, any>;
@@ -22,15 +23,7 @@ export function blobsFromJson(text: string): KvBlobs {
 export const DEFAULT_FILE_ID = 'FILE-DEFAULT';
 export const INTERNAL_WS_ID = 'ws-internal';
 export const MIGRATE_DEVICE = 'migrate';
-// Mirrors BugReportModule.DEFAULT_STATUS_MASTER, used when settings carry no master list.
-export const DEFAULT_STATUS_MASTER = [
-  { code: 'OPEN', name: 'Open', color: '#2563EB', order: 1 },
-  { code: 'IN_PROGRESS', name: 'In Progress', color: '#F59E0B', order: 2 },
-  { code: 'RETEST', name: 'Retest', color: '#06B6D4', order: 3 },
-  { code: 'RESOLVED', name: 'Resolved', color: '#22C55E', order: 4 },
-  { code: 'CLOSED', name: 'Closed', color: '#6B7280', order: 5 },
-  { code: 'REJECTED', name: 'Rejected', color: '#EF4444', order: 6 },
-];
+export { DEFAULT_STATUS_MASTER } from '../domain/status';
 
 // Order matters: it is the server_seq order.
 export const TABLE_ORDER: SyncedTable[] = ['files', 'file_shares', 'bug_status_master', 'custom_field_defs', 'testcases', 'bugs', 'bug_events', 'activity_log'];

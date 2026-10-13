@@ -41,8 +41,9 @@ export async function upsertRow(ctx: Ctx, tbl: SyncedTable, id: string, patch: R
 export const softDelete = (ctx: Ctx, tbl: SyncedTable, id: string) => upsertRow(ctx, tbl, id, { deleted_at: new Date().toISOString() });
 
 // bug_events are insert-only: a new comment, assignment or status entry is a new row.
+// The id is the device's monotonic HLC, so events written in the same millisecond still sort in the order they were written.
 export const addEvent = (ctx: Ctx, bugId: string, kind: 'comment' | 'status' | 'assignment', fields: Row) =>
-  upsertRow(ctx, 'bug_events', newId('ev'), { bug_id: bugId, kind, at: new Date().toISOString(), email: ctx.email, ...fields });
+  upsertRow(ctx, 'bug_events', `ev-${ctx.clock.now()}`, { bug_id: bugId, kind, at: new Date().toISOString(), email: ctx.email, ...fields });
 
 export const createFile = (ctx: Ctx, workspaceId: string | null, name: string) =>
   upsertRow(ctx, 'files', newId('file'), { name, workspace_id: workspaceId, created_by: ctx.email, created_at: new Date().toISOString() });
