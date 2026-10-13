@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Architecture review for bugrail: Next.js 16 + MongoDB (v2)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+    </script>
+    <style>
+      .seam { stroke-dasharray: 4 4; }
+      .leak { stroke: #dc2626; }
+      .deep { background: linear-gradient(135deg, #0f172a, #1e293b); }
+    </style>
+  </head>
+  <body class="bg-stone-50 text-slate-900 font-sans">
+    <main class="max-w-5xl mx-auto px-6 py-12 space-y-12">
+      <header class="space-y-3">
+        <p class="text-xs uppercase tracking-wider text-slate-500">bugrail · 2026-10-13 · plan 1 of 2 · v2, cross-checked against commit 33e1e49</p>
+        <h1 class="font-serif text-4xl">Next.js 16 migration, MongoDB kept</h1>
+        <div class="flex flex-wrap gap-5 text-xs text-slate-600">
+          <span class="flex items-center gap-2"><span class="inline-block w-4 h-4 border border-slate-500 bg-white"></span>module</span>
+          <span class="flex items-center gap-2"><svg width="28" height="6"><line x1="0" y1="3" x2="28" y2="3" stroke="#64748b" stroke-width="2" class="seam"/></svg>seam</span>
+          <span class="flex items-center gap-2"><svg width="28" height="6"><line x1="0" y1="3" x2="28" y2="3" stroke-width="2" class="leak"/></svg>leakage</span>
+          <span class="flex items-center gap-2"><span class="inline-block w-4 h-4 deep border-2 border-slate-900"></span>deep module</span>
+        </div>
+        <p class="font-mono text-sm text-slate-500">plan: docs/superpowers/plans/2026-10-13-nextjs-mongodb-v2.md</p>
+      </header>
+
+      <section id="candidates" class="space-y-10">
+
+        <!-- 1 -->
+        <article id="c1" class="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+          <h2 class="font-serif text-2xl">Replace the kv blobs with per-collection repo modules</h2>
+          <div class="flex gap-2 text-xs"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Strong</span><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700">ports &amp; adapters</span></div>
+          <ul class="font-mono text-sm text-slate-600"><li>server/app.js:186 (PUT /api/kv/:key, rev lock)</li><li>qa-app/js/utils.js:37-279 (Storage, KvMerge, qa_unsynced_v2)</li><li>→ web/lib/repo/*.ts · web/lib/db.ts · web/scripts/migrate-kv.ts</li><li class="text-slate-400">plan steps M3.1–M3.4</li></ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4"><p class="text-xs uppercase tracking-wider text-slate-500 mb-2">Before</p>
+              <pre class="mermaid">
+flowchart TB
+  UI[17 global modules] --> S[Storage cache]
+  S --> M[KvMerge 3-way]
+  S -->|whole array PUT + rev| API["PUT /api/kv/:key"]
+  API --> KV[("kv_store: 6 blobs")]
+  API -.409 stale.-> M
+  classDef leak stroke:#dc2626,stroke-width:2px;
+  class M,API leak
+              </pre></div>
+            <div class="rounded-lg border border-slate-200 p-4"><p class="text-xs uppercase tracking-wider text-slate-500 mb-2">After</p>
+              <pre class="mermaid">
+flowchart TB
+  UI[routed pages] --> A[Server Actions]
+  A --> R[lib/repo]
+  R -->|"$set / $push per doc"| C[("users · workspaces · roles · config · secrets · files · testcases · bugs · activity_log")]
+  classDef deep fill:#0f172a,color:#fff,stroke:#0f172a,stroke-width:3px;
+  class R deep
+              </pre></div>
+          </div>
+          <p><b>Problem:</b> every edit rewrites a whole collection blob, so a rev lock and a client 3-way merge exist only to survive it.</p>
+          <p><b>Solution:</b> nine collections behind one repo module per collection. Existing ids become <code>_id</code>.</p>
+          <ul class="list-disc pl-5 text-sm"><li>Delete KvMerge, rev, unsynced queue</li><li>Interface shrinks to per-record calls</li><li>Locality: all db access in repo</li><li>Deep links keep working</li></ul>
+          <div class="rounded bg-amber-50 border border-amber-200 px-3 py-2 text-sm">ADR: kv_store stays untouched until M7.5. export-to-kv.ts is the rollback adapter.</div>
+        </article>
+
+        <!-- 2 -->
+        <article id="c2" class="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+          <h2 class="font-serif text-2xl">Move display codes into one server module, keeping today's rule</h2>
+          <div class="flex gap-2 text-xs"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Strong</span><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700">in-process</span></div>
+          <ul class="font-mono text-sm text-slate-600"><li>qa-app/js/utils.js:450-462 (IdGen.nextInScope)</li><li>qa-app/js/testcase.js:40-45 · bugreport.js:48-52 (nextCode per workspace)</li><li>→ web/lib/repo/codes.ts (transaction + code_locks)</li><li class="text-slate-400">plan steps M5.2–M5.3</li></ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4"><p class="text-xs uppercase tracking-wider text-slate-500 mb-2">Before</p>
+              <pre class="mermaid">
+sequenceDiagram
+  participant A as Tab A
+  participant B as Tab B
+  participant S as kv_store
+  A->>A: max in cache = 4, so BUG-0005
+  B->>B: max in cache = 4, so BUG-0005
+  A->>S: PUT qa_bugs
+  B->>S: PUT qa_bugs, 409, KvMerge keeps both
+  Note over S: two BUG-0005
+              </pre></div>
+            <div class="rounded-lg border border-slate-200 p-4"><p class="text-xs uppercase tracking-wider text-slate-500 mb-2">After</p>
+              <pre class="mermaid">
+sequenceDiagram
+  participant A as Tab A
+  participant B as Tab B
+  participant N as codes module
+  A->>N: createBug
+  B->>N: createBug
+  N->>N: txn A locks scope, max+1 = BUG-0005
+  N->>N: txn B write conflict, retry, BUG-0006
+              </pre></div>
+          </div>
+          <p><b>Problem:</b> each tab computes the next code from its own cache, so concurrent creates produce duplicate codes.</p>
+          <p><b>Solution:</b> the same max-in-use + 1 rule per workspace runs on the server, serialized by a lock document inside a transaction.</p>
+          <ul class="list-disc pl-5 text-sm"><li>Freed numbers still reused</li><li>No new duplicates</li><li>Legacy duplicates reported, not renumbered</li><li>Bulk import: one transaction</li></ul>
+        </article>
+
+        <!-- 3 -->
+        <article id="c3" class="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+          <h2 class="font-serif text-2xl">Append comments, history and assignments; never replace them</h2>
+          <div class="flex gap-2 text-xs"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Strong</span><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700">in-process</span></div>
+          <ul class="font-mono text-sm text-slate-600"><li>qa-app/js/bugreport.js:331 (activity.push) · :557 (comments.push)</li><li>qa-app/js/auth.js:207 (assignments.push)</li><li>→ web/actions/bugs.ts ($push, from-status guard)</li><li class="text-slate-400">plan step M5.5</li></ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4 h-80 flex flex-col justify-center gap-2"><p class="text-xs uppercase tracking-wider text-slate-500">Before: two users comment on one bug</p>
+              <div class="h-10 border-l-4 border-slate-300 bg-slate-50 px-3 flex items-center text-xs uppercase tracking-wider">A pushes comment into bug row</div>
+              <div class="h-10 border-l-4 border-slate-300 bg-slate-50 px-3 flex items-center text-xs uppercase tracking-wider">B pushes comment into same row</div>
+              <div class="h-10 border-l-4 border-slate-300 bg-slate-50 px-3 flex items-center text-xs uppercase tracking-wider">whole qa_bugs PUT, 409</div>
+              <div class="h-10 border-l-4 border-red-500 bg-red-50 px-3 flex items-center text-xs uppercase tracking-wider">KvMerge: same row, mine wins</div>
+              <div class="h-10 border-l-4 border-red-500 bg-red-50 px-3 flex items-center text-xs uppercase tracking-wider">A's comment lost</div>
+            </div>
+            <div class="rounded-lg border border-slate-200 p-4 h-80 flex flex-col justify-center gap-2"><p class="text-xs uppercase tracking-wider text-slate-500">After</p>
+              <div class="h-44 deep text-white border-l-4 border-emerald-400 px-3 flex flex-col justify-center gap-2">
+                <span class="text-xs uppercase tracking-wider">updateOne({_id}, {$push: {comments}})</span>
+                <span class="text-[11px] text-slate-400 font-mono">status move: {_id, status: from} guard + $push activity</span>
+              </div>
+              <p class="text-xs text-slate-500">Mongo applies each $push atomically per document.</p>
+            </div>
+          </div>
+          <p><b>Problem:</b> logs live inside the bug row, and a row-level merge drops one side's append.</p>
+          <p><b>Solution:</b> logs stay embedded but change only through atomic <code>$push</code>. A board move fails loudly if the status already changed.</p>
+          <ul class="list-disc pl-5 text-sm"><li>Concurrent comments both land</li><li>Stale board moves rejected</li><li>Timeline shape unchanged</li></ul>
+        </article>
+
+        <!-- 4 -->
+        <article id="c4" class="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+          <h2 class="font-serif text-2xl">Put identity behind one session module</h2>
+          <div class="flex gap-2 text-xs"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Strong</span><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700">in-process</span></div>
+          <ul class="font-mono text-sm text-slate-600"><li>qa-app/js/auth.js:17-19, 218-221 (plaintext passwords)</li><li>server/app.js:44-167 (readClientAuth, validate*Write)</li><li>→ web/lib/auth.ts · web/proxy.ts</li><li class="text-slate-400">plan steps M4.1–M4.3</li></ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4 h-80 flex flex-col justify-center gap-2"><p class="text-xs uppercase tracking-wider text-slate-500">Before: a write passes through</p>
+              <div class="h-12 border-l-4 border-slate-300 bg-slate-50 px-3 flex items-center text-xs uppercase tracking-wider">client Auth.can()</div>
+              <div class="h-12 border-l-4 border-red-500 bg-red-50 px-3 flex items-center text-xs uppercase tracking-wider">x-role / x-workspace headers (spoofable)</div>
+              <div class="h-12 border-l-4 border-slate-300 bg-slate-50 px-3 flex items-center text-xs uppercase tracking-wider">diff old blob vs new blob</div>
+              <div class="h-12 border-l-4 border-red-500 bg-red-50 px-3 flex items-center text-xs uppercase tracking-wider">AI routes: no check at all</div>
+            </div>
+            <div class="rounded-lg border border-slate-200 p-4 h-80 flex flex-col justify-center gap-2"><p class="text-xs uppercase tracking-wider text-slate-500">After</p>
+              <div class="h-12 border-l-4 border-slate-300 bg-slate-50 px-3 flex items-center text-xs uppercase tracking-wider">proxy.ts: redirect anonymous pages only</div>
+              <div class="h-40 deep text-white border-l-4 border-emerald-400 px-3 flex flex-col justify-center text-xs uppercase tracking-wider gap-1"><span>requireUser · requirePermission · requireFileAccess</span><span class="text-slate-400 normal-case tracking-normal">iron-session cookie · scrypt · sessionVersion · called in every action and route</span></div>
+            </div>
+          </div>
+          <p><b>Problem:</b> role and workspace come from client headers, passwords are plaintext, and the AI routes are open.</p>
+          <p><b>Solution:</b> a session cookie, hashed passwords, and one auth module that every Server Action and route handler calls itself.</p>
+          <ul class="list-disc pl-5 text-sm"><li>Leverage: one interface, every action</li><li>Header spoofing closed</li><li>Password reset revokes sessions</li></ul>
+          <div class="rounded bg-amber-50 border border-amber-200 px-3 py-2 text-sm">ADR: Next 16 proxy.ts is not the auth check; the auth module is.</div>
+        </article>
+
+        <!-- 5 -->
+        <article id="c5" class="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+          <h2 class="font-serif text-2xl">Split the shared settings blob; keep secrets server-side</h2>
+          <div class="flex gap-2 text-xs"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Strong</span><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700">in-process</span></div>
+          <ul class="font-mono text-sm text-slate-600"><li>qa-app/js/settings.js:25 · testforge.js:191 (geminiApiKey round-trips via browser)</li><li>qa-app/js/app.js:280 (theme shared by all users) · export.js:30-35 (backup carries secrets)</li><li>→ users · workspaces · roles · config · secrets</li><li class="text-slate-400">plan steps M3.2, M5.9</li></ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4 h-80 relative"><p class="text-xs uppercase tracking-wider text-slate-500 mb-2">Before</p>
+              <div class="border-2 border-red-400 bg-red-50 rounded p-3 h-44 grid grid-cols-2 gap-1 text-[10px] uppercase tracking-wider">
+                <div class="border border-red-300 p-1">users + plaintext pw</div><div class="border border-red-300 p-1">geminiApiKey</div>
+                <div class="border border-slate-300 bg-white p-1">workspaces</div><div class="border border-slate-300 bg-white p-1">roles</div>
+                <div class="border border-slate-300 bg-white p-1">rolePermissions</div><div class="border border-slate-300 bg-white p-1">bugStatusMaster</div>
+                <div class="border border-slate-300 bg-white p-1">customFieldDefs</div><div class="border border-slate-300 bg-white p-1">theme (everyone)</div>
+              </div>
+              <div class="mt-4 text-xs uppercase tracking-wider text-center">every browser · every backup file</div>
+              <svg class="absolute left-0 top-0 w-full h-full pointer-events-none"><line x1="50%" y1="64%" x2="50%" y2="76%" class="leak" stroke-width="2"/></svg>
+            </div>
+            <div class="rounded-lg border border-slate-200 p-4 h-80"><p class="text-xs uppercase tracking-wider text-slate-500 mb-2">After</p>
+              <div class="grid grid-cols-2 gap-2 text-[10px] uppercase tracking-wider">
+                <div class="border border-slate-400 p-2">users (scrypt hash)</div><div class="border border-slate-400 p-2">workspaces</div>
+                <div class="border border-slate-400 p-2">roles (+ permissions)</div><div class="border border-slate-400 p-2">config (status master, custom fields)</div>
+              </div>
+              <div class="deep text-white border-2 border-slate-900 rounded p-3 mt-3 text-xs uppercase tracking-wider">secrets · read only inside route handlers</div>
+              <div class="mt-3 border border-dashed border-slate-400 p-2 text-[10px] uppercase tracking-wider text-slate-500">theme · per-browser cookie</div>
+            </div>
+          </div>
+          <p><b>Problem:</b> one settings blob carries plaintext passwords and the API key to every browser and every backup.</p>
+          <p><b>Solution:</b> split it by owner. Secrets never leave the server, and theme becomes a per-browser preference.</p>
+          <ul class="list-disc pl-5 text-sm"><li>Key out of the client bundle</li><li>Backups hold no secrets</li><li>No settings-wipe 409 guard needed</li></ul>
+        </article>
+
+        <!-- 6 -->
+        <article id="c6" class="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+          <h2 class="font-serif text-2xl">Port domain rules as pure modules first</h2>
+          <div class="flex gap-2 text-xs"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Strong</span><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700">in-process</span></div>
+          <ul class="font-mono text-sm text-slate-600"><li>qa-app/js/utils.js (BUG_FORM, TC_IMPORT, statusTransitionRule, IdGen, moduleAbbrev)</li><li>report.js (ReportCalc) · notifications.js (NotifCalc) · workspace.js (WorkspaceCalc)</li><li>qa-app/test/*.check.js (vm + regex loaders)</li><li>→ web/lib/domain/*.ts + Vitest</li><li class="text-slate-400">plan steps M2.1–M2.2</li></ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4 h-80"><p class="text-xs uppercase tracking-wider text-slate-500 mb-3">Before: mass</p>
+              <div class="flex items-end gap-6 h-56">
+                <div class="flex flex-col items-center gap-1"><div class="w-16 bg-red-200 border border-red-400" style="height:190px"></div><span class="text-xs uppercase tracking-wider">interface</span></div>
+                <div class="flex flex-col items-center gap-1"><div class="w-16 bg-slate-200 border border-slate-400" style="height:210px"></div><span class="text-xs uppercase tracking-wider">impl</span></div>
+              </div><p class="text-xs text-slate-500">globals read App.state; tests regex-extract source</p></div>
+            <div class="rounded-lg border border-slate-200 p-4 h-80"><p class="text-xs uppercase tracking-wider text-slate-500 mb-3">After: mass</p>
+              <div class="flex items-end gap-6 h-56">
+                <div class="flex flex-col items-center gap-1"><div class="w-16 bg-emerald-200 border border-emerald-500" style="height:40px"></div><span class="text-xs uppercase tracking-wider">interface</span></div>
+                <div class="flex flex-col items-center gap-1"><div class="w-16 deep border-2 border-slate-900" style="height:210px"></div><span class="text-xs uppercase tracking-wider">impl</span></div>
+              </div><p class="text-xs text-slate-500">pure functions: data in, data out</p></div>
+          </div>
+          <p><b>Problem:</b> the rules read global state, and the tests load source through regex and <code>vm</code>.</p>
+          <p><b>Solution:</b> copy the rules into typed pure functions before any UI work. Server Actions and pages share them.</p>
+          <ul class="list-disc pl-5 text-sm"><li>8 checks become Vitest</li><li>Same rules client and server</li><li>Deep: small interface, rich rules</li></ul>
+        </article>
+
+        <!-- 7 -->
+        <article id="c7" class="rounded-xl border border-slate-200 bg-white p-6 space-y-4">
+          <h2 class="font-serif text-2xl">Feed live refresh from a change stream</h2>
+          <div class="flex gap-2 text-xs"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Strong</span><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700">local-substitutable</span></div>
+          <ul class="font-mono text-sm text-slate-600"><li>server/app.js:172-184 (in-memory listeners, broadcast)</li><li>qa-app/js/app.js:170-210 (startLive, pullLive, isUserBusy)</li><li>→ web/lib/live.ts · web/app/api/events/route.ts · useLiveRefresh()</li><li class="text-slate-400">plan steps M0.3, M6.1–M6.3</li></ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4"><p class="text-xs uppercase tracking-wider text-slate-500 mb-2">Before</p>
+              <pre class="mermaid">
+sequenceDiagram
+  participant A as Tab A
+  participant S as Express
+  participant B as Tab B
+  A->>S: PUT qa_bugs (whole)
+  S-->>B: SSE key, rev
+  B->>S: GET /api/kv/qa_bugs (whole)
+  B->>B: reload all state, redraw when idle
+              </pre></div>
+            <div class="rounded-lg border border-slate-200 p-4"><p class="text-xs uppercase tracking-wider text-slate-500 mb-2">After</p>
+              <pre class="mermaid">
+sequenceDiagram
+  participant A as Tab A
+  participant N as Next.js
+  participant DB as Atlas
+  participant B as Tab B
+  A->>N: Server Action
+  N->>DB: updateOne
+  DB-->>N: change stream
+  N-->>B: SSE coll, id
+  B->>N: router.refresh when idle
+              </pre></div>
+          </div>
+          <p><b>Problem:</b> refresh re-reads a whole blob, and broadcasts fire only from the one Express process that saved.</p>
+          <p><b>Solution:</b> one change stream per process feeds SSE, and an idle client refreshes only its current route.</p>
+          <ul class="list-disc pl-5 text-sm"><li>Two adapters: change stream, emitter</li><li>Busy guard ported as-is</li><li>Refresh one route, not all data</li></ul>
+          <div class="rounded bg-amber-50 border border-amber-200 px-3 py-2 text-sm">ADR: production looks like Atlas (replica set). M0.3 confirms, or the in-process emitter adapter ships instead.</div>
+        </article>
+      </section>
+
+      <section id="top-recommendation">
+        <a href="#c1" class="block rounded-xl deep text-white p-8 space-y-2">
+          <p class="text-xs uppercase tracking-wider text-emerald-300">Top recommendation</p>
+          <h2 class="font-serif text-3xl">Replace the kv blobs with per-collection repo modules</h2>
+          <p class="text-slate-300">Codes, $push logs, the auth checks and live refresh all assume one document per record, so build it first, together with its migration and rollback scripts.</p>
+        </a>
+      </section>
+    </main>
+  </body>
+</html>
