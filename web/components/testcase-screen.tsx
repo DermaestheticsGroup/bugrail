@@ -8,7 +8,7 @@ import {
   bulkTestcaseDelete, bulkTestcaseStatus, countInFile, deleteFileCascade, duplicateTestcase, executeTestcase,
   renameFile, saveTestcase, setFileShares, type TcForm,
 } from '@/lib/client/files-testcase';
-import { TC_STATUSES, TC_TYPES, defaultTcUi, filterTestcases, paginate, tcCodeOf, uniqueValues } from '@/lib/client/testcase-model';
+import { TC_STATUSES, TC_TYPES, defaultTcUi, effectiveSelection, filterTestcases, paginate, tcCodeOf, uniqueValues } from '@/lib/client/testcase-model';
 import type { Row } from '@/lib/db-types';
 import { useApp } from './app-provider';
 import { useLive } from './use-live';
@@ -122,6 +122,7 @@ function FileView({ ws, fileId }: { ws: string; fileId: string }) {
   const defs = useLive("SELECT label FROM custom_field_defs WHERE deleted_at IS NULL ORDER BY server_seq, rowid", [], n);
   const rows = useMemo(() => filterTestcases(all ?? [], ui), [all, ui]);
   const pg = paginate(rows, ui.page, ui.pageSize);
+  const sel = effectiveSelection(selected, rows);
   const run = async (fn: () => Promise<unknown>) => { setErr(null); try { await fn(); setN((x) => x + 1); } catch (e) { setErr((e as Error).message); } };
   const set = (p: Partial<typeof ui>) => setUi((u) => ({ ...u, ...p, page: 'page' in p ? p.page! : 1 }));
   if (file && file.length === 0) return <p data-testid="file-gone">This file no longer exists. <Link href={hrefFor(ws, 'testcases')}>Back to files</Link></p>;
@@ -143,11 +144,11 @@ function FileView({ ws, fileId }: { ws: string; fileId: string }) {
         </select>
       </div>
       {c.can('testcase_create') ? <button type="button" onClick={() => setMode({ kind: 'form', id: null })}>New test case</button> : null}
-      {selected.size > 0 ? (
+      {sel.length > 0 ? (
         <div data-testid="bulk-bar">
-          {selected.size} selected{' '}
-          {c.can('testcase_update') ? <select aria-label="Bulk status" value="" onChange={(e) => { const v = e.target.value; if (v) void run(async () => { await bulkTestcaseStatus(app.ctx!, [...selected], v); }); }}><option value="">Set status…</option>{TC_STATUSES.map((m) => <option key={m}>{m}</option>)}</select> : null}
-          {c.can('testcase_delete') ? <button type="button" onClick={() => void run(async () => { if (confirm(`Delete ${selected.size} test cases?`)) { await bulkTestcaseDelete(app.ctx!, [...selected]); setSelected(new Set()); } })}>Delete selected</button> : null}
+          {sel.length} selected{' '}
+          {c.can('testcase_update') ? <select aria-label="Bulk status" value="" onChange={(e) => { const v = e.target.value; if (v) void run(async () => { await bulkTestcaseStatus(app.ctx!, sel, v); setSelected(new Set()); }); }}><option value="">Set status…</option>{TC_STATUSES.map((m) => <option key={m}>{m}</option>)}</select> : null}
+          {c.can('testcase_delete') ? <button type="button" onClick={() => void run(async () => { if (confirm(`Delete ${sel.length} test cases?`)) { await bulkTestcaseDelete(app.ctx!, sel); setSelected(new Set()); } })}>Delete selected</button> : null}
         </div>
       ) : null}
       <table data-testid="tc-table">

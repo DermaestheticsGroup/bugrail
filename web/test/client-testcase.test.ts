@@ -4,7 +4,7 @@ import { applyMigrations } from '../db/migrate';
 import { createClock } from '../lib/hlc';
 import { createBug, createFile, createTestcase, type Ctx } from '../lib/client/repo';
 import { bulkTestcaseDelete, bulkTestcaseStatus, countInFile, deleteFileCascade, duplicateTestcase, executeTestcase, fileShares, renameFile, saveTestcase, setFileShares, todayISO } from '../lib/client/files-testcase';
-import { defaultTcUi, filterTestcases, paginate, sortColumn, uniqueValues } from '../lib/client/testcase-model';
+import { defaultTcUi, effectiveSelection, filterTestcases, paginate, sortColumn, uniqueValues } from '../lib/client/testcase-model';
 import { pullAll, pushOutbox, type Transport } from '../lib/sync/client';
 import { pull, push } from '../lib/sync/server';
 import { USERS, seedUsers } from '../lib/sync/users';
@@ -198,5 +198,19 @@ describe('list model', () => {
     expect(uniqueValues(rows, 'module')).toEqual(['Login', 'Pay']);
     expect(sortColumn('testCase')).toBe('test_case');
     expect(sortColumn('module')).toBe('module');
+  });
+});
+
+describe('effectiveSelection', () => {
+  const rows: Row[] = [{ id: 'a', status: 'Open' }, { id: 'b', status: 'Passed' }];
+  test('excludes rows hidden by a filter', () => {
+    const visible = filterTestcases(rows, { ...defaultTcUi(), status: 'Open' });
+    expect(effectiveSelection(new Set(['a', 'b']), visible)).toEqual(['a']);
+  });
+  test('excludes deleted rows', () => {
+    expect(effectiveSelection(new Set(['a', 'gone']), rows)).toEqual(['a']);
+  });
+  test('empty result when nothing visible is selected', () => {
+    expect(effectiveSelection(new Set(['b']), [rows[0]])).toEqual([]);
   });
 });

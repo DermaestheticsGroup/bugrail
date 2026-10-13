@@ -39,3 +39,5 @@ export const uniqueValues = (rows: Row[], col: string): string[] => [...new Set(
 
 export const TC_STATUSES = ['Open', 'Passed', 'Failed', 'Blocked', 'Retest'];
 export const TC_TYPES = ['Positive', 'Negative'];
+
+export const effectiveSelection = (selected: Set<string>, visibleRows: Row[]): string[] => visibleRows.map((r) => String(r.id)).filter((id) => selected.has(id));
