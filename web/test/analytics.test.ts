@@ -129,6 +129,9 @@ describe('notifications over local rows', () => {
     const ev3 = [{ at: '2026-03-01' }, { at: '2026-03-05' }, { at: '2026-03-09' }];
     expect(unreadCount(ev3, '2026-03-05')).toBe(1);
     expect(unreadCount(ev3, '')).toBe(3);
+    // same instant in different notations is not unread
+    expect(unreadCount([{ at: '2026-03-05T00:00:00.000Z' }], '2026-03-05T07:00:00+07:00')).toBe(0);
+    expect(unreadCount([{ at: 'garbage' }], '2026-03-05')).toBe(1);
   });
 });
 

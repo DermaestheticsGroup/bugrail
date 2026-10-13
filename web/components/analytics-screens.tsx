@@ -12,7 +12,7 @@ import { ReportCalc } from '@/lib/domain/report';
 import { useApp } from './app-provider';
 import { useLive } from './use-live';
 
-const scope = (ws: string) => (ws === ALL_WS ? { sql: '1', params: [] as string[] } : { sql: FILE_SCOPE_SQL, params: [ws, ws] });
+const scope = (ws: string) => (ws === ALL_WS ? { sql: 'file_id IN (SELECT id FROM files WHERE deleted_at IS NULL)', params: [] as string[] } : { sql: FILE_SCOPE_SQL, params: [ws, ws] });
 
 function useDomain(ws: string): Dom | null {
   const s = scope(ws);
@@ -98,7 +98,7 @@ function Rollup({ tcs, bugs }: { tcs: Rec[]; bugs: Rec[] }) {
       <h3>Progress Testing per Module</h3>
       <div data-testid="module-bars">
         {bars.length ? bars.map((b) => (
-          <div key={b.module}>{b.module}: <span style={{ color: COLORS.passed }}>Passed {b.passed}</span>, <span style={{ color: COLORS.failed }}>Failed {b.failed}</span>, Open {b.other}</div>
+          <div key={b.module}>{b.module}: <span style={{ color: COLORS.passed }}>Passed {b.passed}</span>, <span style={{ color: COLORS.failed }}>Failed {b.failed}</span>, Lainnya (Open/Blocked/Retest) {b.other}</div>
         )) : <p>Belum ada data</p>}
       </div>
     </div>
@@ -230,7 +230,7 @@ export function Activity({ ws }: { ws: string }) {
         <table data-testid="activity-table">
           <thead><tr><th>Waktu</th><th>User</th><th>Role</th><th>Workspace</th><th>Aksi</th><th>Keterangan</th></tr></thead>
           <tbody>{shown.map((e) => (
-            <tr key={String(e.id)} onClick={() => setOpen(String(e.id))} style={{ cursor: 'pointer' }}>
+            <tr key={String(e.id)} tabIndex={0} onClick={() => setOpen(String(e.id))} onKeyDown={(k) => { if (k.key === 'Enter' || k.key === ' ') { k.preventDefault(); setOpen(String(e.id)); } }} style={{ cursor: 'pointer' }}>
               <td>{new Date(String(e.ts)).toLocaleString()}</td><td>{String(e.actor_email ?? '-')}</td><td>{String(e.actor_role ?? '-')}</td><td>{wsName(e.workspace_id)}</td><td>{String(e.action)}</td><td>{String(e.label)}</td>
             </tr>
           ))}</tbody>

@@ -27,11 +27,13 @@ export default function NotifBell({ ws }: { ws: string }) {
     return NotifCalc.build({ bugs: dom.bugs, testcases: dom.tcs, me: me.email, canBug: can({ role: me.role }, 'bugreport_read', perms), canTc: can({ role: me.role }, 'testcase_read', perms) });
   }, [me, files, tcs, bugs, events, app.config]);
   if (!me) return null;
+  const loaded = !!(files && tcs && bugs && events);
 
   const unread = unreadCount(data.events, seen);
   const fileName = (id: string) => String(files?.find((f) => f.id === id)?.name ?? 'Tanpa File');
   const toggle = () => {
-    if (!open) { const now = new Date().toISOString(); try { localStorage.setItem(seenKey(me.email), now); } catch { /* private mode: the badge just stays */ } setSeen(now); }
+    // Opening before the queries answer shows nothing, so it must not mark anything as seen.
+    if (!open && loaded) { const now = new Date().toISOString(); try { localStorage.setItem(seenKey(me.email), now); } catch { /* private mode: the badge just stays */ } setSeen(now); }
     setOpen(!open);
   };
   const link = (e: Rec) =>

@@ -178,4 +178,10 @@ export function filterActivity(rows: Row[], ui: ActivityUi, wsName: (id: unknown
 
 // Notifications: the bell's unread count compares event time against the last time the panel was opened on this device.
 export const seenKey = (email: string) => `qa_notif_seen_${email.toLowerCase()}`;
-export const unreadCount = (events: Rec[], seen: string) => events.filter((e) => !seen || e.at > seen).length;
+// Compared as instants; if either side does not parse (an odd imported value) the string order is the fallback.
+export function isNewer(at: string, seen: string): boolean {
+  if (!seen) return true;
+  const a = Date.parse(at), s = Date.parse(seen);
+  return Number.isNaN(a) || Number.isNaN(s) ? at > seen : a > s;
+}
+export const unreadCount = (events: Rec[], seen: string) => events.filter((e) => isNewer(e.at, seen)).length;
