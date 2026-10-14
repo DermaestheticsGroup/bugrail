@@ -14,7 +14,7 @@ Phase 7 puts `web/` on the existing VM in place of `server/`. `.github/workflows
 
 ## Decision
 
-- **Manual web deploy.** `.github/workflows/deploy-web.yml` runs only by `workflow_dispatch`, and only when the input says `cutover`. The old `deploy.yml` stays until the old stack is retired, so merging this change does not touch production.
+- **Manual web deploy.** `.github/workflows/deploy-web.yml` runs only by `workflow_dispatch`, and only when the input says `cutover`. The old `deploy.yml` stays in the repo, is disabled in GitHub at cutover (runbook), and is deleted when the old stack is retired, so merging this change does not touch production.
 - **Service.** systemd `bugrail` runs `node node_modules/next/dist/bin/next start -p 3001` (Node 24, ADR-004) with secrets in `/etc/bugrail/bugrail.env` (mode 600, outside the repo). `server.db` lives in `/var/lib/bugrail/` via `StateDirectory`.
 - **Backup.** A systemd timer at 02:00 runs `web/scripts/backup.mjs` under plain Node: `VACUUM INTO` a `.partial` file, open the copy, check `PRAGMA integrity_check` and row counts, then rename to `server-YYYYMMDD.db` and prune copies older than 14 days. A copy that fails the check is deleted and the job exits 1, so systemd marks the unit failed.
 - **Single instance.** The login rate limit is in memory; the service runs once.

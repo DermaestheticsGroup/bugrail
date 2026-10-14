@@ -20,20 +20,21 @@ Do not start before gate G6 (`docs/parity-checklist.md`, ticked by a QA lead) an
 2. Stop the old service: `sudo systemctl stop bugrail`.
 3. `mongodump` (keep it: it is the rollback source). Export `kv_store` as JSON.
 4. Replace the unit: `sudo cp deploy/bugrail.service /etc/systemd/system/ && sudo systemctl daemon-reload`.
-5. Update the checkout and build as `itdev1`: `cd /opt/qa-monitor && git fetch origin main && git reset --hard origin/main && cd web && bun install --frozen-lockfile && bun run build`.
-6. Migrate into an empty DB (read the printed report: counts, duplicate codes, files moved to Internal, users hashed):
+5. Disable the old auto-deploy so a push to `main` cannot restart the new unit against an unbuilt `.next`: `gh workflow disable deploy.yml` (or Actions > Deploy BugRail > Disable workflow).
+6. Update the checkout and build as `itdev1`: `cd /opt/qa-monitor && git fetch origin main && git reset --hard origin/main && cd web && bun install --frozen-lockfile && bun run build`.
+7. Migrate into an empty DB (read the printed report: counts, duplicate codes, files moved to Internal, users hashed):
    `cd /opt/qa-monitor/web && bun scripts/migrate-kv-to-turso.ts --from-json /path/kv.json --db /var/lib/bugrail/server.db --dry-run`
    then again without `--dry-run`. It refuses a non-empty target.
-7. `sudo systemctl enable --now bugrail && sudo systemctl enable --now bugrail-backup.timer`.
-8. Smoke test: 2 browsers, 1 device that goes offline mid-session and syncs after, 1 vendor account that sees only its own workspace. Log in as a migrated user with the old password.
-9. Run one backup by hand: `sudo systemctl start bugrail-backup.service`, then `journalctl -u bugrail-backup -n 5`. The line shows the file and row counts.
-10. Lift the freeze. From now on `Deploy BugRail web (manual)` in GitHub Actions deploys web/ (type `cutover`).
+8. `sudo systemctl enable --now bugrail && sudo systemctl enable --now bugrail-backup.timer`.
+9. Smoke test: 2 browsers, 1 device that goes offline mid-session and syncs after, 1 vendor account that sees only its own workspace. Log in as a migrated user with the old password.
+10. Run one backup by hand: `sudo systemctl start bugrail-backup.service`, then `journalctl -u bugrail-backup -n 5`. The line shows the file and row counts.
+11. Lift the freeze. From now on `Deploy BugRail web (manual)` in GitHub Actions deploys web/ (type `cutover`).
 
 ## Rollback (within 48 hours)
 
 1. Announce a freeze, `sudo systemctl stop bugrail`.
 2. `cd /opt/qa-monitor/web && bun scripts/export-turso-to-kv.ts --db /var/lib/bugrail/server.db --original /path/kv.json --out /path/kv-back.json --print-temp-passwords`. `--original` is the step 3 export: users who existed at cutover get their old password back from it; users created after cutover get a temporary password for the admin. Import the result into MongoDB.
-3. Check out the last commit before the cutover into `/opt/qa-monitor`, restore the old unit from `server/`, `sudo systemctl start bugrail`.
+3. Check out the last commit before the cutover into `/opt/qa-monitor`, restore the old unit from `server/`, `sudo systemctl start bugrail`. Re-enable the old auto-deploy: `gh workflow enable deploy.yml`.
 4. Browsers keep their local database. Clear site data in each browser, or the old app and the new local DB will disagree.
 
 ## Restore a backup
@@ -48,7 +49,7 @@ Backups are `/var/backups/bugrail/server-YYYYMMDD.db`, kept 14 days, verified wi
 
 ## Retire (after 2 stable weeks)
 
-Final `mongodump`, then stop MongoDB, delete `qa-app/` and `server/`, and remove `.github/workflows/deploy.yml` (the old deploy).
+Final `mongodump`, then stop MongoDB, delete `qa-app/` and `server/`, and delete `.github/workflows/deploy.yml` (the old deploy, disabled since cutover).
 
 ## Operating notes
 
