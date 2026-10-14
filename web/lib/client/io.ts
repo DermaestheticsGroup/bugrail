@@ -132,8 +132,9 @@ export async function importTestcases(ctx: Ctx, fileId: string, parsed: ParsedIm
       created.push(String(row.id));
     }
   } catch (e) {
-    for (const id of created) await softDelete({ ...ctx, writeBlock: undefined }, 'testcases', id).catch(() => {}); // the block that stopped the import must not stop its undo
-    throw e;
+    const stuck: string[] = [];
+    for (const id of created) await softDelete({ ...ctx, writeBlock: undefined }, 'testcases', id).catch(() => { stuck.push(id); }); // the block that stopped the import must not stop its undo
+    throw stuck.length ? new Error(`${(e as Error).message} (gagal membatalkan ${stuck.length} baris yang sudah tertulis: ${stuck.join(', ')})`) : e;
   }
   await logActivity(ctx, ws, 'testcase_create', `${parsed.rows.length} test case di-import dari ${parsed.sheetsUsed} sheet`);
   return parsed.rows.length;
