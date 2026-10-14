@@ -1,0 +1,20 @@
+[Unit]
+Description=BugRail (Next.js, local-first sync server)
+After=network.target
+
+[Service]
+Type=simple
+User=itdev1
+WorkingDirectory=/opt/qa-monitor/web
+EnvironmentFile=/etc/bugrail/bugrail.env
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node node_modules/next/dist/bin/next start -p 3001
+Restart=on-failure
+RestartSec=3
+# server.db is written under /var/lib/bugrail; the rest of the filesystem is read-only to the app.
+StateDirectory=bugrail
+ProtectSystem=full
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
