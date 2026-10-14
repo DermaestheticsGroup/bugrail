@@ -22,8 +22,8 @@ Slice = which Phase 6 PR delivers it. Status in this file is the AUTHOR's claim;
 | T6 | Delete one, bulk delete, bulk status update | 6a | bulk status: yes (Chrome); delete one and bulk delete: unit tests only (only admin holds testcase_delete by default) | |
 | T7 | Display codes arrive from the server (`LOG-0001`) | done in Phase 5 | yes | |
 | T8 | Create bug from a failed test case (prefill) | 6b | yes (Chrome) | |
-| T9 | Import from Excel (`TC_IMPORT`), template | 6d | | |
-| T10 | Export Excel / CSV, print | 6d | | |
+| T9 | Import from Excel (`TC_IMPORT`), template | 6d | yes (Chrome); .xlsx and .csv, all-or-nothing; template is plain (no header styling or dropdowns) | |
+| T10 | Export Excel / CSV, print | 6d | partial (Chrome): Excel (one sheet per module) and CSV; no styled sheets; print is the browser print of the page | |
 | T11 | Translate active file (`translateActiveFile`) | 6d | | |
 | T12 | Generate test cases with AI (TestForge), online only | 6d | | |
 | **Bug Report (`bugreport.js`)** | | | | |
@@ -33,7 +33,7 @@ Slice = which Phase 6 PR delivers it. Status in this file is the AUTHOR's claim;
 | B4 | Detail with timeline, comments, assignments, reopen count | 6b | yes (Chrome) | |
 | B5 | Bulk delete, bulk status update | 6b | yes (Chrome), admin | |
 | B6 | AI analyze a failed test case (online only) | 6b | button and graceful failure without a key: yes (Chrome); a real Gemini answer: not tested | |
-| B7 | Import / export / template / print | 6d | | |
+| B7 | Import / export / template / print | 6d | partial (Chrome): Excel and CSV export only. Bug import, bug template and the single-bug print layout are NOT ported | |
 | **Read-only screens** | | | | |
 | R1 | Dashboard (`dashboard.js`) | 6c | yes (Chrome); module and tester filters only, SVG charts, PDF export is browser print | |
 | R2 | Summary (`summary.js`) | 6c | yes (Chrome); analysis text and filters, no Excel export yet (6d) | |
@@ -47,7 +47,7 @@ Slice = which Phase 6 PR delivers it. Status in this file is the AUTHOR's claim;
 | A4 | Role permission matrix, online only | 6d | yes (Chrome) | |
 | A5 | Workspaces, online only | 6d | yes (Chrome); add, rename, delete | |
 | A6 | Settings: Gemini key, theme (per browser) | 6d | yes (Chrome); key stored server-side, theme stored but only sets `data-theme`, no dark stylesheet exists yet | |
-| A7 | Import / export of whole data, backup and restore (online only) | 6d | | |
+| A7 | Import / export of whole data, backup and restore (online only) | 6d | partial (Chrome): JSON backup and restore of this device's synced data (works offline, merges by id). Not the legacy blob format, not a server backup (Phase 7) | |
 | **Offline and safety (new behavior to confirm)** | | | | |
 | O1 | Create bugs offline, reload offline, go online: codes appear within one push | 5 | yes (Chrome) | |
 | O2 | A write the server refuses shows up for the user (rejected writes UI) | 6a | yes (Chrome) | |
