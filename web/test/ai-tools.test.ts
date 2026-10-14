@@ -3,7 +3,7 @@ import { connect } from '@tursodatabase/database';
 import { applyMigrations } from '../db/migrate';
 import { createClock } from '../lib/hlc';
 import { createFile, type Ctx } from '../lib/client/repo';
-import { generate, saveStaged, translateFile, validateGenerate, type Translate } from '../lib/client/ai-tools';
+import { chunkText, generate, makeMyMemory, saveStaged, translateFile, validateGenerate, type Translate } from '../lib/client/ai-tools';
 import type { Db, Row } from '../lib/db-types';
 
 let db: Db, ctx: Ctx, fid: string;
@@ -95,7 +95,46 @@ describe('translateFile', () => {
     expect(await translateFile(ctx, fid, flaky).catch((e) => e.message)).toBe('Translate API error');
     expect((await live())[0].scenario).toBe('Login dengan password yang salah');
   });
+  test('write block set before writing: nothing changes', async () => {
+    await seed();
+    ctx.writeBlock = () => 'Read only';
+    expect(await translateFile(ctx, fid, fake).catch((e) => e.message)).toBe('Read only');
+    ctx.writeBlock = undefined;
+    expect((await live())[0].scenario).toBe('Login dengan password yang salah');
+  });
+  test('a write failing part-way restores rows already written', async () => {
+    await seed();
+    let calls = 0;
+    ctx.afterWrite = () => { if (++calls === 2) throw new Error('disk full'); };
+    expect(await translateFile(ctx, fid, fake).catch((e) => e.message)).toBe('disk full');
+    const [a, b] = await live();
+    expect([a.scenario, a.steps, b.scenario]).toEqual(['Login dengan password yang salah', '<ol><li>buka halaman</li></ol>', 'The user adds an item to the cart']);
+  });
   test('an empty file is reported', async () => {
     expect(await translateFile(ctx, fid, fake).catch((e) => e.message)).toBe('File ini belum punya test case.');
+  });
+});
+
+describe('myMemory', () => {
+  const reply = (body: unknown, ok = true) => (async () => ({ ok, json: async () => body })) as unknown as typeof fetch;
+  test('quota and length errors served as HTTP 200 are failures, not translations', async () => {
+    const quota = reply({ responseStatus: 429, responseDetails: 'YOU USED ALL AVAILABLE FREE TRANSLATIONS', responseData: { translatedText: 'MYMEMORY WARNING: YOU USED ALL AVAILABLE FREE TRANSLATIONS' } });
+    expect(await makeMyMemory(quota)('halo', 'id|en').catch((e) => e.message)).toContain('Translate API error: YOU USED ALL');
+    const len = reply({ responseStatus: 200, responseData: { translatedText: 'QUERY LENGTH LIMIT EXCEEDED. MAX ALLOWED QUERY : 500 CHARS' } });
+    expect(await makeMyMemory(len)('halo', 'id|en').catch((e) => e.message)).toContain('Translate API error');
+  });
+  test('long text is sent in chunks of at most 450 chars and rejoined', async () => {
+    const qs: string[] = [];
+    const f = (async (url: string) => {
+      const q = decodeURIComponent(new URL(url).searchParams.get('q')!);
+      qs.push(q);
+      return { ok: true, json: async () => ({ responseStatus: 200, responseData: { translatedText: q.toUpperCase() } }) };
+    }) as unknown as typeof fetch;
+    const text = Array.from({ length: 30 }, (_, i) => `langkah nomor ${i} dilakukan.`).join('\n');
+    const out = await makeMyMemory(f)(text, 'id|en');
+    expect(qs.length).toBeGreaterThan(1);
+    expect(qs.every((q) => q.length <= 450)).toBe(true);
+    expect(out).toBe(text.toUpperCase());
+    expect(chunkText('x'.repeat(1000)).every((c) => c.length <= 450)).toBe(true);
   });
 });
