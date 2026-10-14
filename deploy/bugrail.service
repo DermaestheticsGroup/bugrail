@@ -11,9 +11,11 @@ Environment=NODE_ENV=production
 ExecStart=/usr/bin/node node_modules/next/dist/bin/next start -p 3001
 Restart=on-failure
 RestartSec=3
-# server.db is written under /var/lib/bugrail; the rest of the filesystem is read-only to the app.
+# server.db is written under /var/lib/bugrail (StateDirectory).
 StateDirectory=bugrail
-ProtectSystem=full
+ProtectSystem=strict
+# next start writes its cache here; the rest of /opt (the deployed code) is read-only to the service.
+ReadWritePaths=/opt/qa-monitor/web/.next/cache
 NoNewPrivileges=true
 
 [Install]

@@ -19,8 +19,8 @@ Do not start before gate G6 (`docs/parity-checklist.md`, ticked by a QA lead) an
 1. Announce the write freeze.
 2. Stop the old service: `sudo systemctl stop bugrail`.
 3. `mongodump` (keep it: it is the rollback source). Export `kv_store` as JSON.
-4. Replace the unit: `sudo cp deploy/bugrail.service /etc/systemd/system/ && sudo systemctl daemon-reload`.
-5. Disable the old auto-deploy so a push to `main` cannot restart the new unit against an unbuilt `.next`: `gh workflow disable deploy.yml` (or Actions > Deploy BugRail > Disable workflow).
+4. Disable the old auto-deploy first, so a push to `main` cannot restart the new unit against an unbuilt `.next`: `gh workflow disable deploy.yml` (or Actions > Deploy BugRail > Disable workflow). Confirm no deploy run is in progress (`gh run list --workflow deploy.yml --limit 3`).
+5. Replace the unit: `sudo cp deploy/bugrail.service /etc/systemd/system/ && sudo systemctl daemon-reload`. Create the data directory the migration needs (the service creates it only when it starts): `sudo install -d -o itdev1 -m 750 /var/lib/bugrail`.
 6. Update the checkout and build as `itdev1`: `cd /opt/qa-monitor && git fetch origin main && git reset --hard origin/main && cd web && bun install --frozen-lockfile && bun run build`.
 7. Migrate into an empty DB (read the printed report: counts, duplicate codes, files moved to Internal, users hashed):
    `cd /opt/qa-monitor/web && bun scripts/migrate-kv-to-turso.ts --from-json /path/kv.json --db /var/lib/bugrail/server.db --dry-run`
@@ -33,7 +33,7 @@ Do not start before gate G6 (`docs/parity-checklist.md`, ticked by a QA lead) an
 ## Rollback (within 48 hours)
 
 1. Announce a freeze, `sudo systemctl stop bugrail`.
-2. `cd /opt/qa-monitor/web && bun scripts/export-turso-to-kv.ts --db /var/lib/bugrail/server.db --original /path/kv.json --out /path/kv-back.json --print-temp-passwords`. `--original` is the step 3 export: users who existed at cutover get their old password back from it; users created after cutover get a temporary password for the admin. Import the result into MongoDB.
+2. `cd /opt/qa-monitor/web && MONGO_URI=... DB_NAME=... bun scripts/export-turso-to-kv.ts --db /var/lib/bugrail/server.db --original /path/kv.json --out /path/kv-back.json --print-temp-passwords --to-mongo --yes`. `--to-mongo --yes` overwrites `kv_store` in MongoDB with the exported blobs (the `mongodump` from cutover step 3 is the way back from that); without it nothing reaches MongoDB and the old app would start on pre-cutover data. (`--to-mongo` needs the `mongodb` driver on the machine and has not been run against a real MongoDB.) `--original` is the step 3 export: users who existed at cutover get their old password back from it; users created after cutover get a temporary password for the admin.
 3. Check out the last commit before the cutover into `/opt/qa-monitor`, restore the old unit from `server/`, `sudo systemctl start bugrail`. Re-enable the old auto-deploy: `gh workflow enable deploy.yml`.
 4. Browsers keep their local database. Clear site data in each browser, or the old app and the new local DB will disagree.
 
@@ -45,7 +45,9 @@ Backups are `/var/backups/bugrail/server-YYYYMMDD.db`, kept 14 days, verified wi
 2. Keep the damaged file: `mv /var/lib/bugrail/server.db /var/lib/bugrail/server.db.bad` (also move `server.db-wal` if present).
 3. `cp /var/backups/bugrail/server-YYYYMMDD.db /var/lib/bugrail/server.db`
 4. `sudo systemctl start bugrail`
-5. Clients that synced after the backup was taken hold newer rows. Their outbox pushes them again on the next sync. A restore that must discard those rows needs each client's local data cleared.
+5. Know what a restore does to clients. Pulled rows never go back through a client's outbox, and `pushOutbox` clears an entry once the server accepts it, so rows a client synced after the backup was taken are **not** pushed again. Clients also keep a pull cursor, which can sit ahead of the restored server's sequence numbers. After restoring an older backup, each client must start from a fresh pull, and anything it wrote after the backup is gone from the server.
+6. Before clearing a client's site data, check it has nothing unsent (the sync badge says "up to date"); if it does, let it sync first or export it with the Import/Export screen backup. Clear site data only on clients where discarding the post-backup rows is intended.
+7. This restore path has not been rehearsed with real clients.
 
 ## Retire (after 2 stable weeks)
 

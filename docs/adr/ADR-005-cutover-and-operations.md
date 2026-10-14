@@ -35,6 +35,9 @@ Phase 7 puts `web/` on the existing VM in place of `server/`. `.github/workflows
 
 ## Consequences
 
+- The deploy builds in place: `bun run build` rewrites `.next` while the old process still serves, so requests during the build can miss assets, and a failed build leaves a half-rebuilt `.next` until the next good build. A release-directory switch would avoid it; not done. The cutover itself runs under a write freeze, so this only matters for later releases.
+- `ProtectSystem=strict` with a write exception for `.next/cache` is untested on the VM; if `next start` needs another writable path the service will fail on start and the journal will say which.
+
 - A rollback after 48 h has no automated path; the runbook covers the first 48 h only.
 - Backups live on the same VM. A disk loss takes them too. Copy `/var/backups/bugrail` off the machine if that matters; not done here.
 - `VACUUM INTO` was only measured at 18 MB on a dev machine, not on the production VM or a production-sized DB.

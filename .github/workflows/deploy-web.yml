@@ -9,13 +9,21 @@ on:
         description: 'Type "cutover" to confirm the runbook steps are done'
         required: true
 
+permissions:
+  contents: read
+
+# One deploy at a time: two runs would reset and build the same checkout.
+concurrency:
+  group: deploy-web
+  cancel-in-progress: false
+
 jobs:
   deploy:
     if: inputs.confirm == 'cutover'
     runs-on: ubuntu-latest
     steps:
       - name: Deploy web/ to VM
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@7eaf76671a0d7eec5d98ee897acda4f968735a17 # v1.2.0
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           port: ${{ secrets.DEPLOY_PORT }}
