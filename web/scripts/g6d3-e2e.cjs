@@ -80,7 +80,7 @@ const sync = (p) => until('synced', async () => /up to date/.test(await V(p, '[d
     p.on('dialog', (d) => { dialogText = d.message(); void d.accept(); });
     await p.route('https://api.mymemory.translated.net/**', (r) => {
       const url = new URL(r.request().url());
-      r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ responseData: { translatedText: `[${url.searchParams.get('langpair')}] ${url.searchParams.get('q')}` } }) });
+      r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ responseStatus: 200, responseData: { translatedText: `[${url.searchParams.get('langpair')}] ${url.searchParams.get('q')}` } }) });
     });
     await p.goto(p.url());
     await V(p, 'button:has-text("Translate file")').waitFor({ timeout: 30000 });
