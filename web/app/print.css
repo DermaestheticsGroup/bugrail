@@ -1,0 +1,8 @@
+/* Printing a page prints its content only: no header, nav, sync badge, buttons or filters. */
+@media print {
+  header, nav, [role='search'], [data-testid='bulk-bar'], button, select, input[type='file'] { display: none !important; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { border: 1px solid #999; padding: 2px 4px; font-size: 11px; text-align: left; }
+  h2, h3 { break-after: avoid; }
+  tr { break-inside: avoid; }
+}

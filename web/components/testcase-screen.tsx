@@ -11,6 +11,8 @@ import type { Row } from '@/lib/db-types';
 import { useApp } from './app-provider';
 import { useLive } from './use-live';
 import { FileList } from './file-list';
+import TestforgePanel from './testforge-panel';
+import { myMemory, translateFile } from '@/lib/client/ai-tools';
 
 const s = (v: unknown) => (typeof v === 'string' ? v : '');
 
@@ -33,6 +35,8 @@ function FileView({ ws, fileId }: { ws: string; fileId: string }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [mode, setMode] = useState<{ kind: 'none' } | { kind: 'form'; id: string | null } | { kind: 'run'; id: string } | { kind: 'detail'; id: string }>({ kind: 'none' });
   const [err, setErr] = useState<string | null>(null);
+  const [forge, setForge] = useState(false);
+  const [busy, setBusy] = useState(false);
   const file = useLive('SELECT id, name FROM files WHERE id = ? AND deleted_at IS NULL', [fileId], n);
   const all = useLive('SELECT * FROM testcases WHERE file_id = ? AND deleted_at IS NULL ORDER BY rowid', [fileId], n);
   const defs = useLive("SELECT label FROM custom_field_defs WHERE deleted_at IS NULL ORDER BY server_seq, rowid", [], n);
@@ -60,6 +64,14 @@ function FileView({ ws, fileId }: { ws: string; fileId: string }) {
         </select>
       </div>
       {c.can('testcase_create') ? <button type="button" onClick={() => setMode({ kind: 'form', id: null })}>New test case</button> : null}
+      {c.can('testcase_create') ? <button type="button" disabled={!app.sync.online} title={app.sync.online ? '' : 'Perlu koneksi'} onClick={() => setForge(true)}>Generate AI</button> : null}
+      {c.can('testcase_update') ? (
+        <button type="button" disabled={busy || !app.sync.online || (all ?? []).length === 0} title={app.sync.online ? '' : 'Perlu koneksi'} onClick={() => void run(async () => {
+          if (!confirm((all ?? []).length + ' test case di file ini akan diterjemahkan (ID/EN otomatis) lewat layanan MyMemory (teksnya dikirim ke sana) dan langsung disimpan. Lanjutkan?')) return;
+          setBusy(true);
+          try { await translateFile(app.ctx!, fileId, myMemory); } finally { setBusy(false); }
+        })}>{busy ? 'Translating...' : 'Translate file'}</button>
+      ) : null}
       {sel.length > 0 ? (
         <div data-testid="bulk-bar">
           {sel.length} selected{' '}
@@ -99,6 +111,7 @@ function FileView({ ws, fileId }: { ws: string; fileId: string }) {
         <button type="button" disabled={pg.page >= pg.pages} onClick={() => set({ page: pg.page + 1 })}>Next</button>
       </nav>
 
+      {forge ? <TestforgePanel fileId={fileId} onClose={() => setForge(false)} onSaved={() => { setForge(false); setN((x) => x + 1); }} /> : null}
       {mode.kind === 'form' ? <TcFormView key={mode.id ?? 'new'} row={editing} modules={uniqueValues(all ?? [], 'module')} customFields={(defs ?? []).map((d) => s(d.label))} onCancel={() => setMode({ kind: 'none' })}
         onSave={(f) => run(async () => { await saveTestcase(app.ctx!, fileId, f, mode.id ?? undefined); setMode({ kind: 'none' }); })} /> : null}
       {mode.kind === 'run' ? <RunView row={(all ?? []).find((r) => r.id === mode.id)} onCancel={() => setMode({ kind: 'none' })}

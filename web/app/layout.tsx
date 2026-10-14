@@ -1,3 +1,4 @@
+import './print.css';
 import SwRegister from './sw-register';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

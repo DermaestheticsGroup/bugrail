@@ -24,8 +24,8 @@ Slice = which Phase 6 PR delivers it. Status in this file is the AUTHOR's claim;
 | T8 | Create bug from a failed test case (prefill) | 6b | yes (Chrome) | |
 | T9 | Import from Excel (`TC_IMPORT`), template | 6d | yes (Chrome); .xlsx and .csv, all-or-nothing; template is plain (no header styling or dropdowns) | |
 | T10 | Export Excel / CSV, print | 6d | partial (Chrome): Excel (one sheet per module) and CSV; no styled sheets; print is the browser print of the page | |
-| T11 | Translate active file (`translateActiveFile`) | 6d | | |
-| T12 | Generate test cases with AI (TestForge), online only | 6d | | |
+| T11 | Translate active file (`translateActiveFile`) | 6d | UI and writes: yes (Chrome, MyMemory answered by a test stub); the real MyMemory service: not tested; text is sent to that third party, the confirm says so | |
+| T12 | Generate test cases with AI (TestForge), online only | 6d | UI, review, edit, save: yes (Chrome, server answer stubbed). The real route's disabled message: yes. A real Gemini answer: NOT tested (needs `TESTFORGE_ENABLED=1` and a key) | |
 | **Bug Report (`bugreport.js`)** | | | | |
 | B1 | List, board (drag and drop), filters, sort, pagination | 6b | list, board drag and drop, filters: yes (Chrome); sort and pagination: unit tests only | |
 | B2 | Create / edit form with test case link, similar-bug check, field lock, platform fields | 6b | yes (Chrome) | |
