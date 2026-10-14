@@ -1,3 +1,4 @@
+import './globals.css';
 import './print.css';
 import SwRegister from './sw-register';
 
