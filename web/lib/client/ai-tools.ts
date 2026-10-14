@@ -117,7 +117,10 @@ export async function translateFile(ctx: Ctx, fileId: string, tr: Translate): Pr
     const from = detectLang([t.scenario, t.test_case].filter(Boolean).join(' '));
     const pair = `${from}|${from === 'id' ? 'en' : 'id'}`;
     const steps = stepsHtmlToText(String(t.steps ?? ''));
-    const [fields, translatedSteps] = await Promise.all([Promise.all(TEXT_FIELDS.map((f) => tr(String(t[f] ?? ''), pair))), steps ? tr(steps, pair) : Promise.resolve('')]);
+    // One request at a time: the anonymous MyMemory quota is small, and parallel bursts earn 429s that fail the whole file.
+    const fields: string[] = [];
+    for (const f of TEXT_FIELDS) fields.push(await tr(String(t[f] ?? ''), pair));
+    const translatedSteps = steps ? await tr(steps, pair) : '';
     const patch: Row = Object.fromEntries(TEXT_FIELDS.map((f, i) => [f, fields[i]]));
     if (translatedSteps) patch.steps = textToStepsHtml(plain(translatedSteps));
     out.push({ id: String(t.id), patch, before: Object.fromEntries(Object.keys(patch).map((k) => [k, t[k]])) });
