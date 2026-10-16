@@ -1,12 +1,17 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { Fragment, useEffect } from 'react';
 import { ALL_WS, allowedWorkspaces, hrefFor, navBySlug, navFor } from '@/lib/client/nav';
 import { CLOCK_LIMIT_MS } from '@/lib/client/sync-engine';
 import { useApp } from './app-provider';
+import NavIcon from './nav-icon';
 import NotifBell from './notif-bell';
 import RejectedPanel from './rejected-panel';
+
+// Sidebar section labels, in Rewind's grouped-sidebar style; the order still comes from NAV.
+const groupOf = (slug: string) =>
+  ['import-export', 'activity'].includes(slug) ? 'Data' : ['master/status', 'users', 'roles', 'workspaces', 'settings'].includes(slug) ? 'Admin' : '';
 
 function Badge() {
   const { sync } = useApp();
@@ -43,32 +48,53 @@ export default function Shell({ ws, slug, children }: { ws: string; slug: string
   const blocked = Math.abs(app.sync.skewMs) > CLOCK_LIMIT_MS;
 
   return (
-    <div>
-      <header>
-        <strong>BugRail</strong>
-        <Badge />
-        {choices.length > 1 ? (
-          <select aria-label="Workspace" value={ws} onChange={(e) => router.push(hrefFor(e.target.value, slug))}>
-            {choices.map((id) => <option key={id} value={id}>{nameOf(id)}</option>)}
-          </select>
-        ) : <span>{nameOf(ws)}</span>}
-        <NotifBell ws={ws} />
-        <span>{me.email}</span>
-        <button type="button" onClick={() => void app.logout()}>Log out</button>
-      </header>
-      {blocked ? <p role="alert" data-testid="clock-banner">Your device clock is more than 5 minutes off the server. Editing is paused until it is fixed.</p> : null}
-      <RejectedPanel />
-      <nav aria-label="Main">
-        {/* Every page lists every link, so Next prefetches them all while online and soft navigation keeps working offline. */}
-        {items.map((n) => (
-          <Link key={n.slug} href={hrefFor(ws, n.slug)} aria-current={path === hrefFor(ws, n.slug) ? 'page' : undefined}>{n.title}</Link>
-        ))}
-      </nav>
-      <main>
-        <h1>{current?.title ?? slug}</h1>
-        <p>{current?.sub}</p>
-        {current?.onlineOnly && !app.sync.online ? <p data-testid="needs-connection">This page needs a connection.</p> : children}
-      </main>
+    <div className={app.sync.online ? 'br-app' : 'br-app br-offline'}>
+      <div className="br-window">
+        <aside className="br-side">
+          <header>
+            <span className="br-brand"><span className="br-mark">B</span>BugRail</span>
+            {choices.length > 1 ? (
+              <select aria-label="Workspace" value={ws} onChange={(e) => router.push(hrefFor(e.target.value, slug))}>
+                {choices.map((id) => <option key={id} value={id}>{nameOf(id)}</option>)}
+              </select>
+            ) : <span className="br-ws">{nameOf(ws)}</span>}
+          </header>
+          <nav aria-label="Main">
+            {/* Every page lists every link, so Next prefetches them all while online and soft navigation keeps working offline. */}
+            {items.map((n, i) => (
+              <Fragment key={n.slug}>
+                {groupOf(n.slug) !== groupOf(items[i - 1]?.slug ?? '') ? <div className="br-group">{groupOf(n.slug)}</div> : null}
+                <Link href={hrefFor(ws, n.slug)} aria-current={path === hrefFor(ws, n.slug) ? 'page' : undefined}><NavIcon slug={n.slug} />{n.title}</Link>
+              </Fragment>
+            ))}
+          </nav>
+          <div className="br-foot">
+            <div className="br-me"><span className="br-avatar" aria-hidden="true">{me.email.slice(0, 2).toUpperCase()}</span><span>{me.email}</span></div>
+            <div className="br-foot-row">
+              <button type="button" onClick={() => void app.logout()}>Log out</button>
+            </div>
+          </div>
+        </aside>
+        <div className="br-panel">
+          <div className="br-head">
+            <div className="br-title">
+              <h1>{current?.title ?? slug}</h1>
+              <p>{current?.sub}</p>
+            </div>
+            <div className="br-actions">
+              <Badge />
+              <NotifBell ws={ws} />
+            </div>
+          </div>
+          <div className="br-banners">
+            {blocked ? <p role="alert" data-testid="clock-banner">Your device clock is more than 5 minutes off the server. Editing is paused until it is fixed.</p> : null}
+            <RejectedPanel />
+          </div>
+          <main>
+            {current?.onlineOnly && !app.sync.online ? <p data-testid="needs-connection">This page needs a connection.</p> : children}
+          </main>
+        </div>
+      </div>
     </div>
   );
 }
