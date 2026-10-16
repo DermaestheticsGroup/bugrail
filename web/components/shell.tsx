@@ -67,6 +67,8 @@ export default function Shell({ ws, slug, children }: { ws: string; slug: string
                 <Link href={hrefFor(ws, n.slug)} aria-current={path === hrefFor(ws, n.slug) ? 'page' : undefined}><NavIcon slug={n.slug} />{n.title}</Link>
               </Fragment>
             ))}
+            <div className="br-group">Apps</div>
+            <Link href="/rewind"><NavIcon slug="rewind" />Rewind</Link>
           </nav>
           <div className="br-foot">
             <div className="br-me"><span className="br-avatar" aria-hidden="true">{me.email.slice(0, 2).toUpperCase()}</span><span>{me.email}</span></div>

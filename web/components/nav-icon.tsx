@@ -12,6 +12,7 @@ const PATHS: Record<string, string> = {
   roles: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z',
   workspaces: 'M3 7h18v13H3zM8 7V4h8v3',
   settings: 'M4 7h10M18 7h2M4 17h4M12 17h8M14 5v4M8 15v4',
+  rewind: 'M11 5L3 12l8 7zM21 5l-8 7 8 7z',
 };
 
 export default function NavIcon({ slug }: { slug: string }) {
