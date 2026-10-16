@@ -1,0 +1,9 @@
+.scp0:hover{background:var(--rw-soft) !important}
+.scp1:hover{background:var(--rw-surface2) !important}
+.scp2:hover{border-color:var(--rw-accent) !important}
+.scp3:hover{background:var(--rw-btn-hover) !important}
+.scp4:hover{background:rgba(26,26,26,.85) !important}
+.scp5:hover{color:var(--rw-ink) !important;background:var(--rw-surface2) !important}
+.scp6:hover{color:var(--rw-ink) !important;background:var(--rw-surface) !important}
+.scp7:hover{background:rgba(255,255,255,0.12) !important}
+.scp8:hover{background:#2c3638 !important}

@@ -3,99 +3,103 @@
 @media screen {
   html, body { height: 100%; }
   [data-theme='dark'] { color-scheme: dark; }
-  body { font-size: 14px; line-height: 1.45; -webkit-font-smoothing: antialiased; }
+  body { -webkit-font-smoothing: antialiased; }
+  .br-app, .br-login { font-size: 14px; line-height: 1.45; }
   ::selection { background: var(--rw-soft); }
 
-  h1, h2, h3, h4 { color: var(--rw-ink); font-family: Poppins, Inter, sans-serif; font-weight: 600; margin: 0; }
-  h1 { font-size: 20px; line-height: 1.3; }
-  h2 { font-size: 16px; margin: 28px 0 12px; }
-  h3 { font-size: 14px; margin: 20px 0 10px; }
-  h4 { font-size: 12px; font-family: Inter, sans-serif; font-weight: 500; color: var(--rw-hint); margin: 12px 0 6px; }
-  p { margin: 8px 0; }
-  small { color: var(--rw-hint); font-size: 12px; }
-  em { color: var(--rw-muted); }
-  code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; background: var(--rw-code); border-radius: 6px; }
-  code { padding: 1px 5px; }
-  pre { padding: 12px 14px; overflow: auto; border: 1px solid var(--rw-border); }
-  hr { border: 0; border-top: 1px solid var(--rw-border); margin: 24px 0; }
+  /* Element rules apply inside BugRail screens only, so they never reach Rewind's generated UI under /rewind. :where keeps their specificity at zero. */
+  :where(.br-app, .br-login) {
+    h1, h2, h3, h4 { color: var(--rw-ink); font-family: Poppins, Inter, sans-serif; font-weight: 600; margin: 0; }
+    h1 { font-size: 20px; line-height: 1.3; }
+    h2 { font-size: 16px; margin: 28px 0 12px; }
+    h3 { font-size: 14px; margin: 20px 0 10px; }
+    h4 { font-size: 12px; font-family: Inter, sans-serif; font-weight: 500; color: var(--rw-hint); margin: 12px 0 6px; }
+    p { margin: 8px 0; }
+    small { color: var(--rw-hint); font-size: 12px; }
+    em { color: var(--rw-muted); }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; background: var(--rw-code); border-radius: 6px; }
+    code { padding: 1px 5px; }
+    pre { padding: 12px 14px; overflow: auto; border: 1px solid var(--rw-border); }
+    hr { border: 0; border-top: 1px solid var(--rw-border); margin: 24px 0; }
 
-  /* Controls: Rewind's secondary button is the default, submit is the teal primary. */
-  button {
-    height: 36px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--rw-border); background: var(--rw-surface2);
-    color: var(--rw-ink); font: 500 14px/1 Inter, sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
-    transition: background .12s, border-color .12s;
+    /* Controls: Rewind's secondary button is the default, submit is the teal primary. */
+    button {
+      height: 36px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--rw-border); background: var(--rw-surface2);
+      color: var(--rw-ink); font: 500 14px/1 Inter, sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+      transition: background .12s, border-color .12s;
+    }
+    button:hover:not(:disabled) { background: var(--rw-border); }
+    button[type='submit'] { background: var(--rw-btn); border-color: transparent; color: var(--rw-btn-fg); font-weight: 600; }
+    button[type='submit']:hover:not(:disabled) { background: var(--rw-btn-hover); }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--rw-accent); outline-offset: 2px; }
+
+    input:not([type='checkbox'], [type='radio'], [type='file'], [type='color']), select, textarea {
+      height: 38px; padding: 0 12px; border: 1px solid var(--rw-border); border-radius: 10px; background: var(--rw-surface);
+      color: var(--rw-ink); font-size: 14px; max-width: 100%;
+    }
+    select { padding-right: 8px; border-radius: 9px; font-size: 13px; cursor: pointer; }
+    textarea { height: auto; min-height: 84px; padding: 10px 12px; line-height: 1.5; width: 100%; resize: vertical; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--rw-accent); box-shadow: 0 0 0 3px var(--rw-soft); }
+    input::placeholder, textarea::placeholder { color: var(--rw-hint); }
+    input[type='checkbox'], input[type='radio'] { accent-color: var(--rw-accent); width: 16px; height: 16px; vertical-align: -3px; }
+    input[type='file'] { font-size: 13px; color: var(--rw-muted); }
+    input[type='file']::file-selector-button { margin-right: 10px; height: 32px; padding: 0 12px; border-radius: 9px; border: 1px solid var(--rw-border); background: var(--rw-surface2); color: var(--rw-ink); font: 500 13px Inter, sans-serif; cursor: pointer; }
+    label { color: var(--rw-ink); font-weight: 500; }
+    label:has(input:not([type='checkbox'], [type='radio']), select, textarea) { display: inline-flex; flex-direction: column; gap: 6px; margin: 0 12px 12px 0; vertical-align: top; }
+    label:has(input[type='checkbox'], input[type='radio']) { display: inline-flex; align-items: center; gap: 8px; font-weight: 400; color: var(--rw-body); margin-right: 12px; }
+
+    form { margin: 0 0 16px; }
+    form:has(> label, > input, > select, > button) { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 12px; }
+    form > label { margin: 0; }
+    fieldset { border: 1px solid var(--rw-border); border-radius: 12px; padding: 14px 16px 16px; margin: 0 0 16px; }
+    legend { padding: 0 6px; color: var(--rw-muted); font-size: 12px; font-weight: 500; }
+    [role='search'] { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 16px; }
+    [role='search'] label { margin: 0; }
+
+    /* Tables: Rewind's list view. */
+    table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid var(--rw-border); border-radius: 12px; overflow: hidden; background: var(--rw-surface); margin: 0 0 16px; }
+    th { text-align: left; font-size: 12px; font-weight: 500; color: var(--rw-hint); background: var(--rw-surface2); padding: 10px 14px; white-space: nowrap; }
+    td { padding: 10px 14px; border-top: 1px solid var(--rw-border); color: var(--rw-body); vertical-align: top; }
+    tbody tr:hover td { background: var(--rw-code); }
+    td button, td select { height: 30px; font-size: 13px; padding: 0 10px; border-radius: 8px; }
+    td button + button { margin-left: 4px; }
+    td:has(> button), td > a { white-space: nowrap; }
+
+    ul { padding-left: 20px; margin: 8px 0; }
+    li { margin: 4px 0; }
+    details { border: 1px solid var(--rw-border); border-radius: 12px; padding: 0 16px; margin: 0 0 12px; background: var(--rw-surface); }
+    summary { cursor: pointer; padding: 12px 0; font-weight: 600; color: var(--rw-ink); }
+    details[open] > summary { border-bottom: 1px solid var(--rw-border); margin-bottom: 12px; }
+
+    /* File lists: Rewind's list rows. */
+    [data-testid='file-list'] { list-style: none; padding: 0; margin: 0 0 16px; border: 1px solid var(--rw-border); border-radius: 12px; overflow: hidden; }
+    [data-testid='file-list'] > li { display: flex; align-items: center; gap: 8px; margin: 0; padding: 10px 14px; border-top: 1px solid var(--rw-border); }
+    [data-testid='file-list'] > li:first-child { border-top: 0; }
+    [data-testid='file-list'] > li:hover { background: var(--rw-code); }
+    [data-testid='file-list'] > li > a { font-weight: 600; color: var(--rw-ink); }
+    [data-testid='file-list'] > li > a ~ button:first-of-type { margin-left: auto; }
+    [data-testid='file-list'] button { height: 30px; font-size: 13px; padding: 0 10px; border-radius: 8px; }
+    [data-testid='file-list']:empty { display: none; }
+
+    /* Bug board: Rewind's board columns. */
+    /* Wrap rather than scroll: next to the sidebar a 1280px screen fits about four columns, and every status must stay a drop target. */
+    [data-testid='board'] { flex-wrap: wrap; padding-bottom: 8px; }
+    [data-testid='board'] > [data-status] { flex: 1 1 220px; background: var(--rw-surface2); border-radius: 12px; padding: 10px 12px; }
+    [data-testid='board'] h3 { margin: 4px 0 8px; display: flex; justify-content: space-between; }
+    [data-testid='board'] h3 span { font: 500 12px Inter, sans-serif; color: var(--rw-hint); }
+    [data-testid='board'] .dragging-card { cursor: grab; font-size: 13px; }
+    [data-testid='board'] .dragging-card select { height: 30px; margin-top: 6px; }
+
+    main section { margin: 0 0 24px; }
+    main section > h2:first-child, main section > h3:first-child { margin-top: 0; }
+
+    [role='alert'] { background: var(--rw-err-soft); color: var(--rw-err); border-radius: 10px; padding: 10px 14px; margin: 8px 0; font-size: 13px; }
+    span[role='alert'] { padding: 2px 8px; border-radius: 999px; }
+
+    dialog { border: 0; border-radius: 12px; padding: 24px; background: var(--rw-surface); color: var(--rw-body); box-shadow: var(--rw-pop); max-width: min(640px, 92vw); }
+    dialog::backdrop { background: var(--rw-scrim); }
   }
-  button:hover:not(:disabled) { background: var(--rw-border); }
-  button[type='submit'] { background: var(--rw-btn); border-color: transparent; color: var(--rw-btn-fg); font-weight: 600; }
-  button[type='submit']:hover:not(:disabled) { background: var(--rw-btn-hover); }
-  button:disabled { opacity: .5; cursor: not-allowed; }
-  button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--rw-accent); outline-offset: 2px; }
-
-  input:not([type='checkbox'], [type='radio'], [type='file'], [type='color']), select, textarea {
-    height: 38px; padding: 0 12px; border: 1px solid var(--rw-border); border-radius: 10px; background: var(--rw-surface);
-    color: var(--rw-ink); font-size: 14px; max-width: 100%;
-  }
-  select { padding-right: 8px; border-radius: 9px; font-size: 13px; cursor: pointer; }
-  textarea { height: auto; min-height: 84px; padding: 10px 12px; line-height: 1.5; width: 100%; resize: vertical; }
-  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--rw-accent); box-shadow: 0 0 0 3px var(--rw-soft); }
-  input::placeholder, textarea::placeholder { color: var(--rw-hint); }
-  input[type='checkbox'], input[type='radio'] { accent-color: var(--rw-accent); width: 16px; height: 16px; vertical-align: -3px; }
-  input[type='file'] { font-size: 13px; color: var(--rw-muted); }
-  input[type='file']::file-selector-button { margin-right: 10px; height: 32px; padding: 0 12px; border-radius: 9px; border: 1px solid var(--rw-border); background: var(--rw-surface2); color: var(--rw-ink); font: 500 13px Inter, sans-serif; cursor: pointer; }
-  label { color: var(--rw-ink); font-weight: 500; }
-  label:has(input:not([type='checkbox'], [type='radio']), select, textarea) { display: inline-flex; flex-direction: column; gap: 6px; margin: 0 12px 12px 0; vertical-align: top; }
-  label:has(input[type='checkbox'], input[type='radio']) { display: inline-flex; align-items: center; gap: 8px; font-weight: 400; color: var(--rw-body); margin-right: 12px; }
-
-  form { margin: 0 0 16px; }
-  form:has(> label, > input, > select, > button) { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 12px; }
-  form > label { margin: 0; }
-  fieldset { border: 1px solid var(--rw-border); border-radius: 12px; padding: 14px 16px 16px; margin: 0 0 16px; }
-  legend { padding: 0 6px; color: var(--rw-muted); font-size: 12px; font-weight: 500; }
-  [role='search'] { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 16px; }
-  [role='search'] label { margin: 0; }
-
-  /* Tables: Rewind's list view. */
-  table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid var(--rw-border); border-radius: 12px; overflow: hidden; background: var(--rw-surface); margin: 0 0 16px; }
-  th { text-align: left; font-size: 12px; font-weight: 500; color: var(--rw-hint); background: var(--rw-surface2); padding: 10px 14px; white-space: nowrap; }
-  td { padding: 10px 14px; border-top: 1px solid var(--rw-border); color: var(--rw-body); vertical-align: top; }
-  tbody tr:hover td { background: var(--rw-code); }
-  td button, td select { height: 30px; font-size: 13px; padding: 0 10px; border-radius: 8px; }
-  td button + button { margin-left: 4px; }
-  td:has(> button), td > a { white-space: nowrap; }
-
-  ul { padding-left: 20px; margin: 8px 0; }
-  li { margin: 4px 0; }
-  details { border: 1px solid var(--rw-border); border-radius: 12px; padding: 0 16px; margin: 0 0 12px; background: var(--rw-surface); }
-  summary { cursor: pointer; padding: 12px 0; font-weight: 600; color: var(--rw-ink); }
-  details[open] > summary { border-bottom: 1px solid var(--rw-border); margin-bottom: 12px; }
-
-  /* File lists: Rewind's list rows. */
-  [data-testid='file-list'] { list-style: none; padding: 0; margin: 0 0 16px; border: 1px solid var(--rw-border); border-radius: 12px; overflow: hidden; }
-  [data-testid='file-list'] > li { display: flex; align-items: center; gap: 8px; margin: 0; padding: 10px 14px; border-top: 1px solid var(--rw-border); }
-  [data-testid='file-list'] > li:first-child { border-top: 0; }
-  [data-testid='file-list'] > li:hover { background: var(--rw-code); }
-  [data-testid='file-list'] > li > a { font-weight: 600; color: var(--rw-ink); }
-  [data-testid='file-list'] > li > a ~ button:first-of-type { margin-left: auto; }
-  [data-testid='file-list'] button { height: 30px; font-size: 13px; padding: 0 10px; border-radius: 8px; }
-  [data-testid='file-list']:empty { display: none; }
-
-  /* Bug board: Rewind's board columns. */
-  /* Wrap rather than scroll: next to the sidebar a 1280px screen fits about four columns, and every status must stay a drop target. */
-  [data-testid='board'] { flex-wrap: wrap; padding-bottom: 8px; }
-  [data-testid='board'] > [data-status] { flex: 1 1 220px; background: var(--rw-surface2); border-radius: 12px; padding: 10px 12px; }
-  [data-testid='board'] h3 { margin: 4px 0 8px; display: flex; justify-content: space-between; }
-  [data-testid='board'] h3 span { font: 500 12px Inter, sans-serif; color: var(--rw-hint); }
-  [data-testid='board'] .dragging-card { cursor: grab; font-size: 13px; }
-  [data-testid='board'] .dragging-card select { height: 30px; margin-top: 6px; }
-
-  main section { margin: 0 0 24px; }
-  main section > h2:first-child, main section > h3:first-child { margin-top: 0; }
-
-  [role='alert'] { background: var(--rw-err-soft); color: var(--rw-err); border-radius: 10px; padding: 10px 14px; margin: 8px 0; font-size: 13px; }
-  span[role='alert'] { padding: 2px 8px; border-radius: 999px; }
-
-  dialog { border: 0; border-radius: 12px; padding: 24px; background: var(--rw-surface); color: var(--rw-body); box-shadow: var(--rw-pop); max-width: min(640px, 92vw); }
-  dialog::backdrop { background: var(--rw-scrim); }
 
   /* Shell: grey frame, window with a chrome sidebar, white panel (Rewind's app frame). */
   .br-app { height: 100vh; padding: 14px; display: flex; }
@@ -164,6 +168,6 @@
     .br-panel { margin: 0 8px 8px; }
     .br-head { flex-wrap: wrap; padding: 10px 16px; }
     .br-panel > main { padding: 16px; overflow: visible; }
-    table { display: block; overflow-x: auto; }
+    .br-app table { display: block; overflow-x: auto; }
   }
 }

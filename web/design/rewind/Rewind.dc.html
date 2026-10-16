@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<template id="__bundler_thumbnail" data-bg-color="#6D4AFF"><svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg"><rect width="1200" height="800" fill="#6D4AFF"/><circle cx="600" cy="400" r="150" fill="none" stroke="#fff" stroke-width="40"/><path d="M560 330 L680 400 L560 470 Z" fill="#fff"/></svg></template>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/design-system-65475502-dc49-4a77-b1cb-bd52efd5a09b/fonts/fonts.css">
+<link rel="stylesheet" href="_ds/design-system-65475502-dc49-4a77-b1cb-bd52efd5a09b/_ds_bundle.css">
+<link rel="stylesheet" href="_ds/design-system-65475502-dc49-4a77-b1cb-bd52efd5a09b/styles.css">
+<script src="_ds/design-system-65475502-dc49-4a77-b1cb-bd52efd5a09b/_ds_bundle.js"></script>
+<style>body{margin:0;font-family:Inter,system-ui,sans-serif;--rw-bg:var(--color-background);--rw-surface:#fff;--rw-surface2:var(--color-grey-bg);--rw-border:var(--color-divider);--rw-ink:var(--color-text-near-black);--rw-body:var(--color-text-primary);--rw-muted:var(--color-text-secondary);--rw-hint:var(--color-text-hint);--rw-accent:var(--color-primary);--rw-soft:var(--color-primary-light);--rw-accent-ink:var(--color-green-k800);--rw-btn:var(--color-primary-dark);--rw-btn-hover:var(--color-green-k800);--rw-btn-fg:#fff;--rw-chrome:var(--color-grey-bg);--rw-code:#f4f8f7;--rw-off:var(--color-grey300);--rw-err-soft:var(--color-error-light);--rw-err:var(--color-error-dark);--rw-scrim:rgba(20,30,30,.35);--rw-frame:#dfe3e6;--rw-pop:0 12px 32px rgba(0,0,0,.14);background:var(--rw-frame);color:var(--rw-body)}body.rw-dark{--rw-bg:#0e1313;--rw-surface:#161c1d;--rw-surface2:#20282a;--rw-border:#2c3638;--rw-ink:#eef3f3;--rw-body:#d3dadb;--rw-muted:#98a3a5;--rw-hint:#6f7a7c;--rw-soft:#0f3b3b;--rw-accent-ink:#5fe0dc;--rw-btn:#01afaf;--rw-btn-hover:#1ee3dc;--rw-btn-fg:#052b2b;--rw-chrome:#1b2223;--rw-code:#0f1516;--rw-off:#3a4547;--rw-err-soft:#3a161b;--rw-err:#ff8a9a;--rw-scrim:rgba(0,0,0,.6);--rw-frame:#080b0b;--rw-pop:0 12px 32px rgba(0,0,0,.5)}*{box-sizing:border-box}a{color:var(--rw-accent-ink);text-decoration:none}a:hover{color:var(--rw-accent);text-decoration:underline}input,textarea,select,button{font-family:inherit}@keyframes rwspin{to{transform:rotate(360deg)}}@keyframes rwpulse{0%,100%{opacity:1}50%{opacity:.35}}</style>
+</helmet>
+<div style="height:100vh;min-width:1180px;min-height:760px;padding:14px;display:flex;background:var(--rw-frame)">
+<div style="flex:1;display:flex;flex-direction:column;background:var(--rw-surface);border-radius:12px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.14);position:relative">
+<sc-if value="{{ showChrome }}" hint-placeholder-val="{{ true }}">
+<div style="height:46px;flex:none;display:flex;align-items:center;gap:14px;padding:0 14px;background:var(--rw-chrome);border-bottom:1px solid var(--rw-border)">
+<div style="display:flex;gap:7px"><div style="width:12px;height:12px;border-radius:50%;background:#e35e5e"></div><div style="width:12px;height:12px;border-radius:50%;background:#ffc107"></div><div style="width:12px;height:12px;border-radius:50%;background:#34c759"></div></div>
+<div style="display:flex;gap:10px;color:var(--rw-hint)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"></path></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"></path></svg></div>
+<div style="flex:1;height:30px;border-radius:99px;background:var(--rw-surface);border:1px solid var(--rw-border);display:flex;align-items:center;gap:8px;padding:0 14px;font-size:13px;color:var(--rw-muted)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 11V8a6 6 0 0 1 12 0v3M5 11h14v10H5z"></path></svg><span style="color:var(--rw-ink)">{{ url }}</span></div>
+<div onClick="{{ toggleExt }}" title="Rewind extension" style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:{{ extBtnBg }}" style-hover="background:var(--rw-soft)"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M11 5L3 12l8 7zM21 5l-8 7 8 7z" fill="#01afaf"></path></svg></div>
+<div onClick="{{ openAccount }}" title="Your account" style="cursor:pointer;display:flex"><sc-if value="{{ hasAvatar }}" hint-placeholder-val="{{ false }}"><div role="img" style="width:26px;height:26px;border-radius:50%;object-fit:cover;display:block;background-image:{{ avatarBg }};background-size:cover;background-position:center"></div></sc-if><sc-if value="{{ noAvatar }}" hint-placeholder-val="{{ true }}"><div style="width:26px;height:26px;border-radius:50%;background:#3538cd;color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center">{{ userIni }}</div></sc-if></div>
+</div>
+</sc-if>
+<div style="flex:1;display:flex;min-height:0;background:var(--rw-bg);position:relative">
+<div style="width:250px;flex:none;display:flex;flex-direction:column;padding:14px 12px 12px;gap:4px;position:relative">
+<sc-if value="{{ is.app }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:4px;flex:1;min-height:0">
+<div onClick="{{ toggleWsMenu }}" style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;cursor:pointer;background:{{ wsBtnBg }}" style-hover="background:var(--rw-surface2)">
+<sc-if value="{{ hasWsLogo }}" hint-placeholder-val="{{ false }}"><div role="img" style="width:28px;height:28px;border-radius:8px;object-fit:cover;display:block;flex:none;background-image:{{ wsLogoBg }};background-size:cover;background-position:center"></div></sc-if><sc-if value="{{ noWsLogo }}" hint-placeholder-val="{{ true }}"><div style="width:28px;height:28px;flex:none;border-radius:8px;background:#fff3e0;color:#e65100;font:600 14px Poppins,sans-serif;display:flex;align-items:center;justify-content:center">{{ wsIni }}</div></sc-if>
+<span style="flex:1;font:600 14px Poppins,sans-serif;color:var(--rw-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ wsName }}</span>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--rw-muted)" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"></path></svg>
+</div>
+<sc-if value="{{ wsMenu }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeWsMenu }}" style="position:fixed;inset:0;z-index:40"></div>
+<div style="position:absolute;left:6px;top:58px;width:300px;z-index:41;background:var(--rw-surface);border:1px solid var(--rw-border);border-radius:14px;box-shadow:var(--rw-pop)">
+<div onMouseEnter="{{ hideWsSub }}" style="padding:6px;display:flex;flex-direction:column;gap:2px">
+<div style="display:flex;align-items:center;gap:12px;padding:10px"><sc-if value="{{ hasWsLogo }}" hint-placeholder-val="{{ false }}"><div role="img" style="width:36px;height:36px;border-radius:9px;object-fit:cover;display:block;flex:none;background-image:{{ wsLogoBg }};background-size:cover;background-position:center"></div></sc-if><sc-if value="{{ noWsLogo }}" hint-placeholder-val="{{ true }}"><div style="width:36px;height:36px;flex:none;border-radius:9px;background:#fff3e0;color:#e65100;font:600 17px Poppins,sans-serif;display:flex;align-items:center;justify-content:center">{{ wsIni }}</div></sc-if><span style="flex:1;min-width:0;font-size:15px;font-weight:500;color:var(--rw-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ wsName }}</span><span style="font-size:12px;padding:2px 7px;border:1px solid var(--rw-border);border-radius:6px;color:var(--rw-muted)">Free</span></div>
+<div onClick="{{ openSettings }}" style="display:flex;align-items:center;gap:12px;height:40px;padding:0 10px;border-radius:9px;cursor:pointer;font-size:14px;color:var(--rw-body)" style-hover="background:var(--rw-surface2)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg>Settings</div>
+</div>
+<div style="height:1px;background:var(--rw-border)"></div>
+<div style="padding:6px;position:relative">
+<div onMouseEnter="{{ showWsSub }}" onClick="{{ showWsSub }}" style="display:flex;align-items:center;gap:12px;height:40px;padding:0 10px;border-radius:9px;cursor:pointer;font-size:14px;color:var(--rw-body);background:{{ wsSubBg }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3l4 4-4 4M20 7H4M8 21l-4-4 4-4M4 17h16"></path></svg><span style="flex:1">Switch workspace</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"></path></svg></div>
+<sc-if value="{{ wsSub }}">
+<div style="position:absolute;left:calc(100% + 4px);top:0;width:270px;background:var(--rw-surface);border:1px solid var(--rw-border);border-radius:12px;box-shadow:var(--rw-pop);padding:6px;display:flex;flex-direction:column;gap:2px">
+<sc-for list="{{ otherWsList }}" as="w"><div onClick="{{ w.onClick }}" style="display:flex;align-items:center;gap:12px;height:40px;padding:0 10px;border-radius:9px;cursor:pointer;font-size:14px;color:var(--rw-body)" style-hover="background:var(--rw-surface2)"><div style="width:24px;height:24px;border-radius:7px;background:var(--rw-soft);color:var(--rw-accent-ink);font:600 12px Poppins,sans-serif;display:flex;align-items:center;justify-content:center;flex:none">{{ w.ini }}</div><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ w.name }}</span></div></sc-for>
+<sc-if value="{{ hasOtherWs }}"><div style="height:1px;background:var(--rw-border);margin:4px 6px"></div></sc-if>
+<div onClick="{{ openWsModal }}" style="display:flex;align-items:center;gap:12px;height:40px;padding:0 10px;border-radius:9px;cursor:pointer;font-size:14px;color:var(--rw-body)" style-hover="background:var(--rw-surface2)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg>Join or create workspace</div>
+</div>
+</sc-if>
+</div>
+<div style="height:1px;background:var(--rw-border)"></div>
+<div onMouseEnter="{{ hideWsSub }}" style="padding:6px">
+<div onClick="{{ logOut }}" style="display:flex;align-items:center;gap:12px;height:40px;padding:0 10px;border-radius:9px;cursor:pointer;font-size:14px;color:var(--rw-body)" style-hover="background:var(--rw-surface2)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"></path></svg>Log out</div>
+</div>
+</div>
+</sc-if>
+<div onClick="{{ openPalette }}" style="display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;margin:6px 0 10px;border-radius:9px;border:1px solid var(--rw-border);background:var(--rw-surface);color:var(--rw-hint);font-size:13px;cursor:pointer" style-hover="border-color:var(--rw-accent)">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4"></path></svg>
+<span style="flex:1">Search or jump to…</span>
+<span style="font-size:11px;padding:1px 6px;border-radius:5px;background:var(--rw-surface2);color:var(--rw-muted)">⌘K</span>
+</div>
+<sc-for list="{{ nav }}" as="n" hint-placeholder-count="3">
+<div onClick="{{ n.onClick }}" style="display:flex;align-items:center;gap:10px;height:38px;padding:0 10px;border-radius:9px;cursor:pointer;background:{{ n.bg }};color:{{ n.fg }};font-size:14px;font-weight:{{ n.fw }}" style-hover="background:var(--rw-surface2)">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{ n.d }}"></path></svg>{{ n.label }}
+</div>
+</sc-for>
+<div style="display:flex;align-items:center;justify-content:space-between;padding:18px 10px 6px;font-size:12px;color:var(--rw-hint);font-weight:500">Folders<span onClick="{{ addFolder }}" title="New folder" style="font-size:16px;cursor:pointer;padding:0 4px">+</span></div>
+<sc-for list="{{ folders }}" as="f" hint-placeholder-count="3">
+<div onClick="{{ f.onClick }}" onContextMenu="{{ f.ctx }}" style="position:relative;display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:9px;cursor:pointer;background:{{ f.bg }};color:{{ f.fg }};font-size:14px;font-weight:{{ f.fw }}" style-hover="background:var(--rw-surface2)">
+<div style="width:8px;height:8px;border-radius:3px;background:{{ f.dot }}"></div><sc-if value="{{ f.editing }}" hint-placeholder-val="{{ false }}"><input autoFocus="{{ true }}" value="{{ f.draft }}" onChange="{{ f.onDraft }}" onKeyDown="{{ f.onKey }}" onBlur="{{ f.commit }}" onClick="{{ f.stop }}" style="flex:1;min-width:0;height:24px;padding:0 6px;margin-left:-6px;border:1px solid var(--rw-accent-ink);border-radius:6px;background:var(--rw-surface, transparent);color:inherit;font:inherit;outline:none"></sc-if><sc-if value="{{ f.notEditing }}" hint-placeholder-val="{{ true }}"><span style="flex:1">{{ f.label }}</span></sc-if><span style="font-size:12px;color:var(--rw-hint)">{{ f.n }}</span><sc-if value="{{ f.menu }}" hint-placeholder-val="{{ false }}"><div onClick="{{ f.closeMenu }}" onContextMenu="{{ f.closeMenu }}" style="position:fixed;inset:0;z-index:40;cursor:default"></div><div onClick="{{ f.stop }}" style="position:absolute;top:30px;left:{{ f.mx }}px;z-index:41;min-width:160px;padding:4px;border-radius:10px;background:var(--rw-surface, #fff);border:1px solid var(--rw-line, rgba(0,0,0,0.1));box-shadow:0 8px 24px rgba(0,0,0,0.14);font-size:13px;font-weight:500;color:var(--rw-body)"><div onClick="{{ f.rename }}" style="height:30px;display:flex;align-items:center;padding:0 10px;border-radius:7px;cursor:pointer" style-hover="background:var(--rw-surface2)">Rename</div><div onClick="{{ f.del }}" style="height:30px;display:flex;align-items:center;padding:0 10px;border-radius:7px;cursor:pointer;color:#c70036" style-hover="background:var(--rw-surface2)">Delete folder</div></div></sc-if>
+</div>
+</sc-for>
+<div style="flex:1"></div>
+<div style="border:1px solid var(--rw-border);border-radius:12px;background:var(--rw-surface);overflow:hidden">
+<div onClick="{{ toggleCheck }}" style="display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer">
+<svg width="22" height="22" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--rw-off)" stroke-width="2.5"></circle><circle cx="10" cy="10" r="8" fill="none" stroke="#01afaf" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="{{ ring.dash }}" transform="rotate(-90 10 10)"></circle></svg>
+<div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--rw-ink)">Get started</div><div style="font-size:12px;color:var(--rw-muted)">{{ ring.label }}</div></div>
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--rw-muted)" stroke-width="2" stroke-linecap="round"><path d="M6 15l6-6 6 6"></path></svg>
+</div>
+<sc-if value="{{ checkOpen }}" hint-placeholder-val="{{ false }}">
+<div style="border-top:1px solid var(--rw-border);padding:6px">
+<sc-for list="{{ checks }}" as="c" hint-placeholder-count="4">
+<div onClick="{{ c.onClick }}" style="display:flex;align-items:center;gap:10px;padding:7px 6px;border-radius:8px;cursor:pointer;font-size:13px;color:{{ c.fg }};text-decoration:{{ c.deco }}" style-hover="background:var(--rw-surface2)">
+<sc-if value="{{ c.done }}"><div style="width:16px;height:16px;border-radius:50%;background:#01afaf;display:flex;align-items:center;justify-content:center;flex:none"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round"><path d="M5 12l5 5 9-10"></path></svg></div></sc-if>
+<sc-if value="{{ c.todo }}"><div style="width:16px;height:16px;border-radius:50%;border:1.5px solid var(--rw-off);flex:none"></div></sc-if>
+{{ c.label }}
+</div>
+</sc-for>
+</div>
+</sc-if>
+</div>
+<div style="display:flex;align-items:center;gap:6px;padding-top:8px">
+<div onClick="{{ toggleHelp }}" title="Help" style="width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--rw-muted)" style-hover="background:var(--rw-surface2)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.7M12 17h.01"></path></svg></div>
+<div onClick="{{ toggleDark }}" title="Toggle dark mode" style="width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--rw-muted)" style-hover="background:var(--rw-surface2)">
+<sc-if value="{{ light }}" hint-placeholder-val="{{ true }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg></sc-if>
+<sc-if value="{{ dark }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg></sc-if>
+</div>
+<div style="flex:1"></div>
+<div onClick="{{ openSettings }}" style="display:flex;align-items:center;gap:6px;height:34px;padding:0 10px;border-radius:9px;cursor:pointer;color:var(--rw-muted);font-size:13px" style-hover="background:var(--rw-surface2)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8M16 5v4M10 15v4"></path></svg>Settings</div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ is.settings }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:2px">
+<div onClick="{{ backToApp }}" style="display:flex;align-items:center;gap:8px;height:38px;padding:0 8px;border-radius:9px;cursor:pointer;font-size:14px;font-weight:500;color:var(--rw-ink);margin-bottom:8px" style-hover="background:var(--rw-surface2)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"></path></svg>Back to app</div>
+<sc-for list="{{ snav }}" as="g" hint-placeholder-count="3">
+<div style="display:flex;flex-direction:column;gap:2px;margin-bottom:12px">
+<div style="font-size:12px;color:var(--rw-hint);font-weight:500;padding:4px 10px">{{ g.title }}</div>
+<sc-for list="{{ g.items }}" as="n">
+<div onClick="{{ n.onClick }}" style="display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border-radius:9px;cursor:pointer;background:{{ n.bg }};color:{{ n.fg }};font-size:14px;font-weight:{{ n.fw }}" style-hover="background:var(--rw-surface2)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{ n.d }}"></path></svg>{{ n.label }}</div>
+</sc-for>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ help }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeHelp }}" style="position:fixed;inset:0;z-index:40"></div>
+<div style="position:absolute;left:12px;bottom:56px;width:260px;z-index:41;background:var(--rw-surface);border:1px solid var(--rw-border);border-radius:12px;box-shadow:var(--rw-pop);padding:6px">
+<sc-for list="{{ helpItems }}" as="h" hint-placeholder-count="7">
+<div onClick="{{ h.onClick }}" style="display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border-radius:8px;cursor:pointer;font-size:14px;color:var(--rw-body)" style-hover="background:var(--rw-surface2)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{ h.d }}"></path></svg>{{ h.label }}</div>
+</sc-for>
+<div style="height:1px;background:var(--rw-border);margin:4px 6px"></div>
+<div onMouseEnter="{{ showInstall }}" onClick="{{ showInstall }}" style="display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border-radius:8px;cursor:pointer;font-size:14px;color:var(--rw-body);background:var(--rw-surface2)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 4v11M7 10l5 5 5-5M4 20h16"></path></svg><span style="flex:1">Install</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"></path></svg></div>
+<sc-if value="{{ installSub }}">
+<div style="position:absolute;left:266px;bottom:0;width:250px;background:var(--rw-surface);border:1px solid var(--rw-border);border-radius:12px;box-shadow:var(--rw-pop);padding:6px">
+<sc-for list="{{ installItems }}" as="h">
+<div onClick="{{ h.onClick }}" style="display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border-radius:8px;cursor:pointer;font-size:14px;color:var(--rw-body)" style-hover="background:var(--rw-surface2)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{ h.d }}"></path></svg>{{ h.label }}</div>
+</sc-for>
+</div>
+</sc-if>
+</div>
+</sc-if>
+</div>
+<div style="flex:1;min-width:0;margin:8px 8px 8px 0;background:var(--rw-surface);border:1px solid var(--rw-border);border-radius:14px;display:flex;flex-direction:column;overflow:hidden;position:relative">
+<sc-if value="{{ is.all }}" hint-placeholder-val="{{ true }}">
+<div style="height:64px;flex:none;display:flex;align-items:center;gap:12px;padding:0 24px;border-bottom:1px solid var(--rw-border)">
+<div style="font:600 20px Poppins,sans-serif;color:var(--rw-ink)">{{ pageTitle }}</div>
+<span style="font-size:13px;color:var(--rw-hint)">{{ jamCount }}</span>
+<div style="flex:1"></div>
+<div style="display:flex;padding:3px;border-radius:9px;background:var(--rw-surface2);gap:2px">
+<sc-for list="{{ viewSeg }}" as="v" hint-placeholder-count="3"><div onClick="{{ v.onClick }}" style="padding:5px 12px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;background:{{ v.bg }};color:{{ v.fg }};box-shadow:{{ v.sh }}">{{ v.label }}</div></sc-for>
+</div>
+<div onClick="{{ T.group.flip }}" style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--rw-body);cursor:pointer;padding:0 6px">
+<div style="width:38px;height:22px;border-radius:99px;background:{{ T.group.bg }};position:relative;flex:none;transition:background .15s"><div style="position:absolute;top:2px;left:{{ T.group.left }};width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:left .15s"></div></div>Group duplicates</div>
+<div onClick="{{ openInvite }}" style="height:36px;padding:0 14px;border-radius:10px;background:var(--rw-surface2);border:1px solid var(--rw-border);color:var(--rw-ink);font-size:14px;font-weight:500;display:flex;align-items:center;cursor:pointer" style-hover="border-color:var(--rw-accent)">Invite</div>
+<div onClick="{{ newRewind }}" style="height:36px;padding:0 14px;border-radius:10px;background:var(--rw-btn);color:var(--rw-btn-fg);font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px;cursor:pointer" style-hover="background:var(--rw-btn-hover)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>New Rewind</div>
+</div>
+<div style="flex:1;overflow:auto;padding:24px">
+<sc-if value="{{ is.grid }}" hint-placeholder-val="{{ true }}">
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:28px 22px;padding-top:10px">
+<sc-for list="{{ grid }}" as="j" hint-placeholder-count="6">
+<div onClick="{{ j.open }}" onContextMenu="{{ j.ctx }}" onMouseEnter="{{ j.hoverIn }}" onMouseLeave="{{ j.hoverOut }}" style="cursor:pointer;display:flex;flex-direction:column;gap:10px">
+<div style="position:relative;aspect-ratio:16/10;border-radius:12px;background:{{ j.thumb }};border:1px solid var(--rw-border);box-shadow:{{ j.shadow }}" style-hover="border-color:var(--rw-accent)">
+<div style="position:absolute;inset:14px 14px 0 14px;background:#fff;border-radius:8px 8px 0 0;box-shadow:0 2px 8px rgba(0,0,0,.08);padding:10px;display:flex;flex-direction:column;gap:7px;overflow:hidden">
+<div style="display:flex;gap:4px"><div style="width:5px;height:5px;border-radius:50%;background:#e0e0e0"></div><div style="width:5px;height:5px;border-radius:50%;background:#e0e0e0"></div><div style="width:5px;height:5px;border-radius:50%;background:#e0e0e0"></div></div>
+<div style="height:8px;width:55%;border-radius:3px;background:{{ j.accentC }}"></div>
+<div style="display:flex;gap:6px;flex:1"><div style="flex:2;border-radius:4px;background:#f3f4f6"></div><div style="flex:1;border-radius:4px;background:#f3f4f6"></div></div>
+</div>
+<div onClick="{{ j.copy }}" title="Copy link" style="opacity:{{ j.copyOp }};pointer-events:{{ j.copyPe }};transition:opacity .12s;position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:8px;background:rgba(26,26,26,.6);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:1" style-hover="background:rgba(26,26,26,.85)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"></path></svg></div>
+<div style="position:absolute;right:8px;bottom:8px;padding:2px 7px;border-radius:6px;background:rgba(26,26,26,.78);color:#fff;font-size:11px;font-weight:500">{{ j.durLabel }}</div>
+<sc-if value="{{ j.stacked }}"><div style="position:absolute;left:8px;bottom:8px;display:flex;align-items:center;gap:5px;padding:3px 8px;border-radius:6px;background:#0a6365;color:#fff;font-size:11px;font-weight:600"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5zM3 13l9 5 9-5"></path></svg>{{ j.stackLabel }}</div></sc-if>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;padding:0 2px">
+<sc-if value="{{ j.editing }}" hint-placeholder-val="{{ false }}"><input autoFocus="{{ true }}" value="{{ j.draft }}" onChange="{{ j.onDraft }}" onKeyDown="{{ j.onKey }}" onBlur="{{ j.commit }}" onClick="{{ j.stop }}" style="width:100%;min-width:0;height:28px;padding:0 8px;margin-left:-8px;border:1px solid var(--rw-accent-ink);border-radius:7px;background:var(--rw-surface);color:var(--rw-ink);font:600 14px inherit;font-family:inherit;outline:none;box-sizing:content-box"></sc-if><sc-if value="{{ j.notEditing }}" hint-placeholder-val="{{ true }}"><div style="font-size:14px;font-weight:600;color:var(--rw-ink);line-height:1.35">{{ j.title }}</div></sc-if>
+<div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--rw-muted)">
+<div style="width:18px;height:18px;border-radius:50%;background:{{ j.avBg }};color:#fff;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">{{ j.initials }}</div>
+<span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ j.url }} · {{ j.ago }}</span>
+<x-import component-from-global-scope="DermaestheticsDS.AppStatusBadge" label="{{ j.statusLabel }}" tone="{{ j.tone }}" hint-size="auto,22px"></x-import>
+</div>
+</div>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ is.board }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;min-height:100%;align-items:start">
+<sc-for list="{{ cols }}" as="c" hint-placeholder-count="4">
+<div onDragOver="{{ c.onOver }}" onDrop="{{ c.onDrop }}" style="background:var(--rw-surface2);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;min-height:420px">
+<div style="display:flex;align-items:center;gap:8px;padding:4px 4px 6px;font-size:13px;font-weight:600;color:var(--rw-ink)"><div style="width:8px;height:8px;border-radius:50%;background:{{ c.dot }}"></div>{{ c.label }}<span style="color:var(--rw-hint);font-weight:500">{{ c.count }}</span></div>
+<sc-for list="{{ c.items }}" as="j">
+<div draggable="true" onDragStart="{{ j.onDrag }}" onClick="{{ j.open }}" onContextMenu="{{ j.ctx }}" onMouseEnter="{{ j.hoverIn }}" onMouseLeave="{{ j.hoverOut }}" style="background:var(--rw-surface);border:1px solid var(--rw-border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;cursor:grab" style-hover="border-color:var(--rw-accent)">
+<sc-if value="{{ j.editing }}" hint-placeholder-val="{{ false }}"><input autoFocus="{{ true }}" value="{{ j.draft }}" onChange="{{ j.onDraft }}" onKeyDown="{{ j.onKey }}" onBlur="{{ j.commit }}" onClick="{{ j.stop }}" style="width:100%;min-width:0;height:28px;padding:0 8px;margin-left:-8px;border:1px solid var(--rw-accent-ink);border-radius:7px;background:var(--rw-surface);color:var(--rw-ink);font:600 13px inherit;font-family:inherit;outline:none;box-sizing:content-box"></sc-if><sc-if value="{{ j.notEditing }}" hint-placeholder-val="{{ true }}"><div style="font-size:13px;font-weight:600;color:var(--rw-ink);line-height:1.35">{{ j.title }}</div></sc-if>
+<div style="font-size:12px;color:var(--rw-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ j.url }}</div>
+<div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--rw-muted)">
+<div style="width:20px;height:20px;border-radius:50%;background:{{ j.avBg }};color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ j.initials }}</div>
+<span>{{ j.durLabel }}</span><div style="flex:1"></div>
+<sc-if value="{{ j.hasErr }}"><span style="color:var(--rw-err);font-weight:600">{{ j.errLabel }}</span></sc-if>
+<div onClick="{{ j.copy }}" title="Copy link" style="opacity:{{ j.copyOp }};pointer-events:{{ j.copyPe }};transition:opacity .12s;width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--rw-hint)" style-hover="color:var(--rw-ink);background:var(--rw-surface2)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"></path></svg></div>
+</div>
+</div>
+</sc-for>
+<sc-if value="{{ c.empty }}"><div style="border:1.5px dashed var(--rw-border);border-radius:10px;padding:18px;text-align:center;font-size:12px;color:var(--rw-hint)">Drop Rewinds here</div></sc-if>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ is.list }}" hint-placeholder-val="{{ false }}">
+<div style="border:1px solid var(--rw-border);border-radius:12px;overflow:hidden">
+<div style="display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr) 140px 110px 120px 32px;gap:12px;padding:10px 16px;background:var(--rw-surface2);font-size:12px;font-weight:600;color:var(--rw-muted)"><span>Title</span><span>Page</span><span>Reporter</span><span>Length</span><span>Status</span><span></span></div>
+<sc-for list="{{ base }}" as="j" hint-placeholder-count="6">
+<div onClick="{{ j.open }}" onContextMenu="{{ j.ctx }}" onMouseEnter="{{ j.hoverIn }}" onMouseLeave="{{ j.hoverOut }}" style="display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr) 140px 110px 120px 32px;gap:12px;padding:12px 16px;border-top:1px solid var(--rw-border);align-items:center;font-size:13px;cursor:pointer" style-hover="background:var(--rw-surface2)">
+<span style="min-width:0;display:flex"><sc-if value="{{ j.editing }}" hint-placeholder-val="{{ false }}"><input autoFocus="{{ true }}" value="{{ j.draft }}" onChange="{{ j.onDraft }}" onKeyDown="{{ j.onKey }}" onBlur="{{ j.commit }}" onClick="{{ j.stop }}" style="width:100%;min-width:0;height:28px;padding:0 8px;margin-left:-8px;border:1px solid var(--rw-accent-ink);border-radius:7px;background:var(--rw-surface);color:var(--rw-ink);font:600 13px inherit;font-family:inherit;outline:none;box-sizing:content-box"></sc-if><sc-if value="{{ j.notEditing }}" hint-placeholder-val="{{ true }}"><span style="font-weight:600;color:var(--rw-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ j.title }}</span></sc-if></span>
+<span style="color:var(--rw-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ j.url }}</span>
+<span style="display:flex;align-items:center;gap:6px;color:var(--rw-body)"><span style="width:20px;height:20px;border-radius:50%;background:{{ j.avBg }};color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ j.initials }}</span>{{ j.by }}</span>
+<span style="color:var(--rw-muted)">{{ j.durLabel }}</span>
+<span><x-import component-from-global-scope="DermaestheticsDS.AppStatusBadge" label="{{ j.statusLabel }}" tone="{{ j.tone }}" hint-size="auto,22px"></x-import></span>
+<div onClick="{{ j.copy }}" title="Copy link" style="opacity:{{ j.copyOp }};pointer-events:{{ j.copyPe }};transition:opacity .12s;width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--rw-hint)" style-hover="color:var(--rw-ink);background:var(--rw-surface)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"></path></svg></div>
+</div>
+</sc-for>
+</div>
+</sc-if>
+</div>
+</sc-if>
+<sc-if value="{{ jmenu }}" hint-placeholder-val="{{ false }}"><div onClick="{{ closeJMenu }}" onContextMenu="{{ closeJMenu }}" style="position:fixed;inset:0;z-index:40"></div><div style="position:fixed;left:{{ jmx }};top:{{ jmy }};z-index:41;min-width:160px;padding:4px;border-radius:10px;background:var(--rw-surface);border:1px solid var(--rw-border);box-shadow:var(--rw-pop);font-size:13px;font-weight:500;color:var(--rw-body)"><div onClick="{{ renameJ }}" style="height:30px;display:flex;align-items:center;padding:0 10px;border-radius:7px;cursor:pointer" style-hover="background:var(--rw-surface2)">Rename</div><div onClick="{{ delJ }}" style="height:30px;display:flex;align-items:center;padding:0 10px;border-radius:7px;cursor:pointer;color:#c70036" style-hover="background:var(--rw-surface2)">Delete Rewind</div></div></sc-if>
+<sc-if value="{{ is.viewer }}" hint-placeholder-val="{{ false }}">
+<div style="height:64px;flex:none;display:flex;align-items:center;gap:12px;padding:0 20px;border-bottom:1px solid var(--rw-border)">
+<div onClick="{{ backToApp }}" style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--rw-muted)" style-hover="background:var(--rw-surface2)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"></path></svg></div>
+<div style="display:flex;flex-direction:column;min-width:0;flex:1">
+<div style="font:600 17px Poppins,sans-serif;color:var(--rw-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ jam.title }}</div>
+<div style="font-size:12px;color:var(--rw-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ jam.by }} · {{ jam.ago }} · {{ jam.url }} · Chrome 128 · macOS · 1440×900</div>
+</div>
+<select value="{{ jam.status }}" onChange="{{ onStatus }}" style="height:34px;border-radius:9px;border:1px solid var(--rw-border);background:var(--rw-surface);color:var(--rw-ink);font-size:13px;padding:0 10px;cursor:pointer">
+<sc-for list="{{ statusOpts }}" as="o"><option value="{{ o.val }}">{{ o.label }}</option></sc-for>
+</select>
+<div onClick="{{ sendLinear }}" style="height:34px;padding:0 12px;border-radius:9px;background:var(--rw-surface2);border:1px solid var(--rw-border);color:var(--rw-ink);font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px;cursor:pointer" style-hover="border-color:var(--rw-accent)"><span style="width:14px;height:14px;border-radius:4px;background:#5e6ad2;display:inline-block"></span>Send to Linear</div>
+<div onClick="{{ share }}" style="height:34px;padding:0 14px;border-radius:9px;background:var(--rw-btn);color:var(--rw-btn-fg);font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;cursor:pointer" style-hover="background:var(--rw-btn-hover)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"></path></svg>Copy link</div>
+</div>
+<div style="flex:1;min-height:0;display:flex">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;padding:18px 20px;gap:14px;overflow:auto">
+<div onClick="{{ onVideo }}" style="position:relative;aspect-ratio:16/9;width:100%;border-radius:12px;overflow:hidden;background:#f7f8f9;border:1px solid var(--rw-border);cursor:{{ vid.cursor }};flex:none">
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;font-family:Inter,sans-serif;color:#1a1a1a">
+<div style="height:11%;display:flex;align-items:center;padding:0 4%;background:#fff;border-bottom:1px solid #eee;gap:3%"><div style="font:700 15px Poppins,sans-serif">acme</div><div style="font-size:11px;color:#999">Shop</div><div style="font-size:11px;color:#999">Deals</div><div style="flex:1"></div><div style="font-size:11px;color:#333">Cart (3)</div></div>
+<div style="flex:1;display:flex;gap:4%;padding:4%">
+<div style="flex:1.6;display:flex;flex-direction:column;gap:10px">
+<div style="font:600 15px Poppins,sans-serif">Your cart</div>
+<div style="display:flex;gap:10px;align-items:center;background:#fff;border-radius:8px;padding:8px;border:1px solid #eee"><div style="width:44px;height:44px;border-radius:6px;background:#e0f7f7"></div><div style="flex:1;font-size:11px">Hydrating serum 30ml<div style="color:#999">Qty 1</div></div><div style="font-size:11px">$48.00</div></div>
+<div style="display:flex;gap:10px;align-items:center;background:#fff;border-radius:8px;padding:8px;border:1px solid #eee"><div style="width:44px;height:44px;border-radius:6px;background:#fff3e0"></div><div style="flex:1;font-size:11px">Daily SPF 50<div style="color:#999">Qty 2</div></div><div style="font-size:11px">$56.00</div></div>
+<div style="display:flex;gap:10px;align-items:center;background:#fff;border-radius:8px;padding:8px;border:1px solid #eee"><div style="width:44px;height:44px;border-radius:6px;background:#eef2ff"></div><div style="flex:1;font-size:11px">Gentle cleanser<div style="color:#999">Qty 1</div></div><div style="font-size:11px">$24.00</div></div>
+</div>
+<div style="flex:1;background:#fff;border-radius:10px;border:1px solid #eee;padding:12px;display:flex;flex-direction:column;gap:9px;font-size:11px;align-self:flex-start">
+<div style="font-weight:600;font-size:12px">Summary</div>
+<div style="display:flex;gap:6px"><div style="flex:1;height:28px;border:1px solid #ddd;border-radius:6px;padding:0 8px;display:flex;align-items:center;color:#333">{{ vid.coupon }}<span style="color:#aaa">{{ vid.couponPh }}</span></div><div style="height:28px;padding:0 10px;border-radius:6px;background:#eee;display:flex;align-items:center">Apply</div></div>
+<div style="display:flex;justify-content:space-between;color:#666"><span>Subtotal</span><span>$128.00</span></div>
+<sc-if value="{{ vid.disc }}"><div style="display:flex;justify-content:space-between;color:#248a3d"><span>SPRING25</span><span>−$32.00</span></div></sc-if>
+<div style="display:flex;justify-content:space-between;font-weight:600;border-top:1px solid #eee;padding-top:8px"><span>Total</span><span>{{ vid.total }}</span></div>
+<div style="height:32px;border-radius:7px;background:#1a1a1a;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600">{{ vid.btn }}</div>
+</div>
+</div>
+<sc-if value="{{ vid.err }}"><div style="position:absolute;top:14%;right:3%;width:38%;background:#fff;border:1px solid #ffccd3;border-left:1px solid #ffccd3;border-radius:8px;padding:10px 12px;box-shadow:0 6px 20px rgba(0,0,0,.1);font-size:11px"><div style="font-weight:600;color:#c70036">Something went wrong</div><div style="color:#666;margin-top:2px">We couldn't process your order. Please try again.</div></div></sc-if>
+</div>
+<svg style="position:absolute;left:{{ vid.cx }};top:{{ vid.cy }};width:18px;height:18px;pointer-events:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3))" viewBox="0 0 24 24"><path d="M4 3l16 7-7 2-2 7z" fill="#1a1a1a" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"></path></svg>
+<sc-for list="{{ vcomments }}" as="c">
+<div style="position:absolute;left:{{ c.pl }};top:{{ c.pt }};width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50% 50% 50% 0;background:{{ c.bg }};color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.2)">{{ c.ini }}</div>
+<div style="position:absolute;left:{{ c.left }};top:{{ c.top }};margin:16px 0 0 16px;max-width:240px;background:#fff;color:#1a1a1a;border-radius:10px;padding:8px 10px;font-size:12px;box-shadow:0 6px 20px rgba(0,0,0,.15);pointer-events:none"><div style="font-weight:600;margin-bottom:2px">{{ c.who }}</div>{{ c.txt }}</div>
+</sc-for>
+<sc-if value="{{ hasDraft }}">
+<div style="position:absolute;left:{{ draft.pl }};top:{{ draft.pt }};width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50% 50% 50% 0;background:#3538cd;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #fff">DF</div>
+<div onClick="{{ stop }}" style="position:absolute;left:{{ draft.left }};top:{{ draft.top }};margin:16px 0 0 16px;width:260px;background:var(--rw-surface);border:1px solid var(--rw-border);border-radius:12px;padding:10px;box-shadow:var(--rw-pop);display:flex;flex-direction:column;gap:8px;cursor:default">
+<div style="font-size:11px;color:var(--rw-muted)">Comment at {{ draft.time }}</div>
+<input autofocus="true" value="{{ draftTxt }}" onChange="{{ onDraftTxt }}" onKeyDown="{{ onDraftKey }}" placeholder="Add a comment, @ to mention" style="height:34px;border-radius:8px;border:1px solid var(--rw-accent);background:var(--rw-surface);color:var(--rw-ink);padding:0 10px;font-size:13px;outline:none">
+<div style="display:flex;justify-content:flex-end;gap:6px"><div onClick="{{ cancelDraft }}" style="padding:6px 10px;border-radius:7px;font-size:12px;cursor:pointer;color:var(--rw-muted)">Cancel</div><div onClick="{{ postDraft }}" style="padding:6px 12px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;background:var(--rw-btn);color:var(--rw-btn-fg)">Post</div></div>
+</div>
+</sc-if>
+</div>
+<div style="display:flex;align-items:center;gap:10px;flex:none">
+<div onClick="{{ togglePlay }}" style="width:38px;height:38px;border-radius:10px;background:var(--rw-btn);color:var(--rw-btn-fg);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none">
+<sc-if value="{{ vid.paused }}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"></path></svg></sc-if>
+<sc-if value="{{ vid.playing }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"></path></svg></sc-if>
+</div>
+<div onClick="{{ back5 }}" title="Back 5s" style="font-size:12px;color:var(--rw-muted);cursor:pointer;padding:4px">−5s</div>
+<div onClick="{{ fwd5 }}" title="Forward 5s" style="font-size:12px;color:var(--rw-muted);cursor:pointer;padding:4px">+5s</div>
+<div style="flex:1;position:relative;height:44px">
+<sc-for list="{{ cmarks }}" as="m"><div onClick="{{ m.onClick }}" style="position:absolute;left:{{ m.left }};top:0;transform:translateX(-50%);width:18px;height:18px;border-radius:50%;background:{{ m.bg }};color:#fff;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1.5px solid var(--rw-surface);z-index:2">{{ m.ini }}</div></sc-for>
+<div onClick="{{ onScrub }}" style="position:absolute;left:0;right:0;top:24px;height:14px;cursor:pointer;display:flex;align-items:center">
+<div style="position:absolute;left:0;right:0;height:6px;border-radius:99px;background:var(--rw-surface2)"></div>
+<div style="position:absolute;left:0;width:{{ vid.pct }};height:6px;border-radius:99px;background:var(--rw-accent)"></div>
+<sc-for list="{{ markers }}" as="m"><div style="position:absolute;left:{{ m.left }};width:3px;height:{{ m.h }};margin-left:-1px;border-radius:2px;background:{{ m.color }};pointer-events:none"></div></sc-for>
+<div style="position:absolute;left:{{ vid.pct }};width:14px;height:14px;margin-left:-7px;border-radius:50%;background:#fff;border:2px solid var(--rw-accent);box-shadow:0 1px 3px rgba(0,0,0,.2);pointer-events:none"></div>
+</div>
+</div>
+<div style="font-size:12px;color:var(--rw-muted);font-variant-numeric:tabular-nums;width:76px;text-align:right">{{ vid.time }}</div>
+<div onClick="{{ toggleCmode }}" style="height:34px;padding:0 12px;border-radius:9px;background:{{ vid.cbtnBg }};color:{{ vid.cbtnFg }};font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"></path></svg>{{ vid.cbtnLabel }}</div>
+</div>
+</div>
+<div style="width:380px;flex:none;border-left:1px solid var(--rw-border);display:flex;flex-direction:column;min-height:0">
+<div style="display:flex;gap:2px;padding:0 12px;border-bottom:1px solid var(--rw-border);flex:none">
+<sc-for list="{{ vtabs }}" as="v" hint-placeholder-count="5"><div onClick="{{ v.onClick }}" style="padding:13px 8px 11px;font-size:13px;font-weight:500;color:{{ v.fg }};border-bottom:2px solid {{ v.bd }};cursor:pointer;white-space:nowrap">{{ v.label }}</div></sc-for>
+</div>
+<div style="flex:1;overflow:auto">
+<sc-if value="{{ vt.ai }}" hint-placeholder-val="{{ true }}">
+<div style="padding:16px;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--rw-accent-ink)"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"></path></svg>AI summary</div>
+<div style="font-size:13px;line-height:1.55;color:var(--rw-body)">After applying the coupon <b>SPRING25</b>, checkout fails. <code style="font-size:12px">POST /api/checkout</code> returns 500 twice and the client throws a TypeError reading <code style="font-size:12px">total</code>. The discount line renders, so the coupon applies on the client but is likely missing from the order payload.</div>
+</div>
+<div style="border-radius:10px;background:var(--rw-err-soft);padding:10px 12px;font-size:12px;line-height:1.5;color:var(--rw-body)"><div style="font-weight:600;color:var(--rw-err);margin-bottom:2px">Likely root cause</div>order.pricing is undefined when a coupon is present. See checkout.ts:142.</div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<div style="font-size:12px;font-weight:600;color:var(--rw-ink);margin-bottom:4px">Steps to reproduce</div>
+<sc-for list="{{ steps }}" as="p" hint-placeholder-count="5">
+<div onClick="{{ p.onClick }}" style="display:flex;gap:10px;align-items:flex-start;padding:7px 8px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--rw-body)" style-hover="background:var(--rw-surface2)">
+<span style="width:20px;height:20px;border-radius:50%;background:var(--rw-surface2);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex:none;color:var(--rw-muted)">{{ p.n }}</span><span style="flex:1;line-height:1.45">{{ p.txt }}</span><span style="font-size:11px;color:var(--rw-accent-ink);font-weight:600;font-variant-numeric:tabular-nums">{{ p.time }}</span>
+</div>
+</sc-for>
+</div>
+<sc-if value="{{ jam.hasSimilar }}">
+<div style="border:1px solid var(--rw-border);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--rw-ink)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5zM3 13l9 5 9-5"></path></svg>{{ jam.simCount }} Rewinds share this error</div>
+<sc-for list="{{ similar }}" as="j"><div onClick="{{ j.open }}" style="display:flex;align-items:center;gap:8px;padding:6px;border-radius:8px;cursor:pointer;font-size:13px" style-hover="background:var(--rw-surface2)"><span style="width:20px;height:20px;border-radius:50%;background:{{ j.avBg }};color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">{{ j.initials }}</span><span style="flex:1;color:var(--rw-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ j.title }}</span><span style="font-size:11px;color:var(--rw-hint)">{{ j.ago }}</span></div></sc-for>
+<div onClick="{{ mergeSimilar }}" style="height:32px;border-radius:8px;background:var(--rw-surface2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;cursor:pointer;color:var(--rw-ink)" style-hover="background:var(--rw-soft)">Merge into one issue</div>
+</div>
+</sc-if>
+</div>
+</sc-if>
+<sc-if value="{{ vt.logs }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;padding:6px 0;font-family:ui-monospace,Menlo,monospace">
+<sc-for list="{{ evs }}" as="e">
+<div onClick="{{ e.onClick }}" style="display:flex;gap:10px;padding:8px 14px;background:{{ e.bg }};opacity:{{ e.op }};cursor:pointer;font-size:12px;line-height:1.45" style-hover="background:var(--rw-surface2)">
+<span style="color:var(--rw-hint);width:32px;flex:none">{{ e.time }}</span><span style="color:{{ e.color }};width:44px;flex:none;font-weight:600;font-size:10px;padding-top:1px">{{ e.tag }}</span><span style="color:{{ e.color }};flex:1;word-break:break-word">{{ e.txt }}</span>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ vt.comments }}" hint-placeholder-val="{{ false }}">
+<div style="padding:12px;display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ clist }}" as="c">
+<div onClick="{{ c.onClick }}" style="display:flex;gap:10px;padding:10px;border-radius:10px;cursor:pointer" style-hover="background:var(--rw-surface2)">
+<span style="width:26px;height:26px;border-radius:50%;background:{{ c.bg }};color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">{{ c.ini }}</span>
+<div style="flex:1;font-size:13px;line-height:1.45;color:var(--rw-body)"><div style="display:flex;gap:6px;align-items:baseline"><b style="color:var(--rw-ink)">{{ c.who }}</b><span style="font-size:11px;color:var(--rw-accent-ink);font-weight:600">{{ c.time }}</span></div>{{ c.txt }}</div>
+</div>
+</sc-for>
+<div onClick="{{ toggleCmode }}" style="margin-top:6px;height:36px;border-radius:9px;border:1.5px dashed var(--rw-border);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--rw-muted);cursor:pointer" style-hover="border-color:var(--rw-accent)">Click on the video to leave a comment</div>
+</div>
+</sc-if>
+</div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ is.links }}" hint-placeholder-val="{{ false }}">
+<div style="height:64px;flex:none;display:flex;align-items:center;gap:12px;padding:0 24px;border-bottom:1px solid var(--rw-border)">
+<div style="font:600 20px Poppins,sans-serif;color:var(--rw-ink)">Recording links</div><div style="flex:1"></div>
+<div onClick="{{ openDomain }}" title="Connect your domain" style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--rw-muted);position:relative" style-hover="background:var(--rw-surface2)"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"></path></svg><sc-if value="{{ domainDot }}" hint-placeholder-val="{{ true }}"><div style="position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:#e35e5e"></div></sc-if></div>
+<div onClick="{{ newLink }}" style="height:36px;padding:0 14px;border-radius:10px;background:var(--rw-btn);color:var(--rw-btn-fg);font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px;cursor:pointer" style-hover="background:var(--rw-btn-hover)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>New recording link</div>
+</div>
+<div style="flex:1;overflow:auto;padding:24px">
+<div style="max-width:900px;margin:0 auto;border:1px solid var(--rw-border);border-radius:12px;overflow:hidden">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) 120px 120px 110px;gap:12px;padding:10px 16px;background:var(--rw-surface2);font-size:12px;font-weight:600;color:var(--rw-muted)"><span>Link</span><span>Created</span><span>Recordings</span><span></span></div>
+<sc-for list="{{ links }}" as="l" hint-placeholder-count="2">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) 120px 120px 110px;gap:12px;padding:14px 16px;border-top:1px solid var(--rw-border);align-items:center;font-size:13px">
+<span style="display:flex;align-items:center;gap:10px;font-weight:600;color:var(--rw-ink)"><span style="width:28px;height:28px;border-radius:8px;background:var(--rw-soft);color:var(--rw-accent-ink);display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"></path></svg></span>{{ l.name }}</span>
+<span style="color:var(--rw-muted)">{{ l.made }}</span><span style="color:var(--rw-body)">{{ l.count }}</span>
+<div onClick="{{ l.copy }}" style="height:30px;border-radius:8px;background:var(--rw-surface2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;cursor:pointer;color:var(--rw-ink)" style-hover="background:var(--rw-soft)">Copy link</div>
+</div>
+</sc-for>
+</div>
+<p style="text-align:center;font-size:13px;color:var(--rw-muted);margin-top:18px">Recordings from these links land in All Rewinds, tagged with the link name.</p>
+</div>
+</sc-if>
+<sc-if value="{{ is.helpdesk }}" hint-placeholder-val="{{ false }}">
+<div style="height:64px;flex:none;display:flex;align-items:center;padding:0 24px;border-bottom:1px solid var(--rw-border)"><div style="font:600 20px Poppins,sans-serif;color:var(--rw-ink)">Helpdesk</div></div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:24px;text-align:center">
+<div style="width:420px;border-radius:16px;background:var(--rw-soft);padding:24px;display:flex;flex-direction:column;gap:10px;text-align:left">
+<div style="background:var(--rw-surface);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--rw-body)"><b style="color:var(--rw-ink)">Customer</b><br>I'm having an issue with your website!</div>
+<div style="background:var(--rw-surface);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--rw-body);display:flex;flex-direction:column;gap:8px"><div><b style="color:var(--rw-ink)">Support agent</b><br>Can you record the issue for me?</div><div style="height:30px;border-radius:7px;background:#0a6365;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600">Record screen</div></div>
+</div>
+<div><div style="font:600 18px Poppins,sans-serif;color:var(--rw-ink)">Resolve customer issues without the back and forth</div><div style="font-size:14px;color:var(--rw-muted);margin-top:6px;max-width:520px;line-height:1.5">Support agents send a record button from your helpdesk. Engineers get the video with console and network logs attached.</div></div>
+<div style="display:flex;gap:10px">
+<div onClick="{{ helpdeskFin }}" style="height:38px;padding:0 16px;border-radius:10px;background:var(--rw-btn);color:var(--rw-btn-fg);font-size:14px;font-weight:600;display:flex;align-items:center;cursor:pointer" style-hover="background:var(--rw-btn-hover)">Install for Intercom ↗</div>
+<div onClick="{{ helpdeskOther }}" style="height:38px;padding:0 16px;border-radius:10px;background:var(--rw-surface2);border:1px solid var(--rw-border);color:var(--rw-ink);font-size:14px;font-weight:500;display:flex;align-items:center;cursor:pointer">Other helpdesks ↗</div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ is.settings }}" hint-placeholder-val="{{ false }}">
+<div style="height:64px;flex:none;display:flex;align-items:center;padding:0 24px;border-bottom:1px solid var(--rw-border)"><div style="font:600 20px Poppins,sans-serif;color:var(--rw-ink)">{{ stitle }}</div></div>
+<div style="flex:1;overflow:auto;padding:36px 24px 60px">
+<div style="max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:28px;font-size:14px;color:var(--rw-body)">
+<sc-if value="{{ st.general }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:20px;align-items:center"><label title="Change workspace logo" style="position:relative;width:72px;height:72px;flex:none;cursor:pointer;display:block"><sc-if value="{{ hasWsLogo }}" hint-placeholder-val="{{ false }}"><div role="img" style="width:72px;height:72px;border-radius:16px;object-fit:cover;display:block;flex:none;background-image:{{ wsLogoBg }};background-size:cover;background-position:center"></div></sc-if><sc-if value="{{ noWsLogo }}" hint-placeholder-val="{{ true }}"><div style="width:72px;height:72px;flex:none;border-radius:16px;background:#fff3e0;color:#e65100;font:600 30px Poppins,sans-serif;display:flex;align-items:center;justify-content:center">{{ wsIni }}</div></sc-if><span style="position:absolute;right:-4px;bottom:-4px;width:26px;height:26px;border-radius:50%;background:var(--rw-surface);border:1px solid var(--rw-border);display:flex;align-items:center;justify-content:center;color:var(--rw-muted)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"></path></svg></span><input type="file" accept="image/*" onChange="{{ onWsLogo }}" style="display:none"></label><div style="flex:1;display:flex;flex-direction:column;gap:6px"><label style="font-weight:500;color:var(--rw-ink)">Workspace name</label><input value="{{ wsName }}" onChange="{{ onWsName }}" style="height:40px;border-radius:10px;border:1px solid var(--rw-border);background:var(--rw-surface);color:var(--rw-ink);padding:0 12px;font-size:14px;outline:none"></div></div>
+<div style="height:1px;background:var(--rw-border)"></div>
+<div style="font:600 16px Poppins,sans-serif;color:var(--rw-ink)">Access</div>
+<div style="display:flex;align-items:center;gap:16px"><div style="flex:1"><div style="font-weight:500;color:var(--rw-ink)">Single sign-on <span style="font-size:11px;padding:2px 6px;border:1px solid var(--rw-border);border-radius:5px;color:var(--rw-muted);margin-left:4px">Enterprise</span></div><div style="color:var(--rw-muted);margin-top:3px">Authenticate with your organization's identity provider</div></div><div onClick="{{ openPricing }}" style="width:38px;height:22px;border-radius:99px;background:var(--rw-off);position:relative;cursor:pointer;opacity:.6"><div style="position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff"></div></div></div>
+<div style="display:flex;align-items:center;gap:16px"><div style="flex:1"><div style="font-weight:500;color:var(--rw-ink)">Default link access</div><div style="color:var(--rw-muted);margin-top:3px">Who can open links to Rewinds in this workspace</div></div><select style="height:36px;border-radius:9px;border:1px solid var(--rw-border);background:var(--rw-surface);color:var(--rw-ink);padding:0 10px;font-size:13px"><option>Anyone with the link</option><option>Workspace members</option><option>Only invited people</option></select></div>
+<div style="height:1px;background:var(--rw-border)"></div>
+<div style="font:600 16px Poppins,sans-serif;color:var(--rw-ink)">Data</div>
+<div style="display:flex;align-items:center;gap:16px"><div style="flex:1"><div style="font-weight:500;color:var(--rw-ink)">AI</div><div style="color:var(--rw-muted);margin-top:3px">Generate summaries, repro steps and duplicate grouping</div></div><div onClick="{{ T.ai.flip }}" style="width:38px;height:22px;border-radius:99px;background:{{ T.ai.bg }};position:relative;cursor:pointer;flex:none;transition:background .15s"><div style="position:absolute;top:2px;left:{{ T.ai.left }};width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:left .15s"></div></div></div>
+<div style="display:flex;align-items:center;gap:16px"><div style="flex:1"><div style="font-weight:500;color:var(--rw-ink)">Auto-delete old Rewinds</div><div style="color:var(--rw-muted);margin-top:3px">Delete Rewinds after 90 days</div></div><div onClick="{{ T.autodel.flip }}" style="width:38px;height:22px;border-radius:99px;background:{{ T.autodel.bg }};position:relative;cursor:pointer;flex:none;transition:background .15s"><div style="position:absolute;top:2px;left:{{ T.autodel.left }};width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:left .15s"></div></div></div>
+<div style="display:flex;align-items:center;gap:16px"><div style="flex:1"><div style="font-weight:500;color:var(--rw-ink)">Audit logs</div><div style="color:var(--rw-muted);margin-top:3px">Record every action taken by workspace members</div></div><div onClick="{{ T.audit.flip }}" style="width:38px;height:22px;border-radius:99px;background:{{ T.audit.bg }};position:relative;cursor:pointer;flex:none;transition:background .15s"><div style="position:absolute;top:2px;left:{{ T.audit.left }};width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:left .15s"></div></div></div>
+</sc-if>
+<sc-if value="{{ st.members }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:16px"><div style="flex:1"><div style="font-weight:500;color:var(--rw-ink)">Invite link</div><div style="color:var(--rw-muted);margin-top:3px">Let teammates join with a shareable link</div></div><div onClick="{{ T.inviteLink.flip }}" style="width:38px;height:22px;border-radius:99px;background:{{ T.inviteLink.bg }};position:relative;cursor:pointer;flex:none;transition:background .15s"><div style="position:absolute;top:2px;left:{{ T.inviteLink.left }};width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:left .15s"></div></div></div>
+<sc-if value="{{ tgOn.inviteLink }}">
+<div style="border:1px solid var(--rw-border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--rw-surface2)">
+<div style="display:flex;gap:8px"><div style="flex:1;height:38px;border-radius:9px;border:1px solid var(--rw-border);background:var(--rw-surface);display:flex;align-items:center;padding:0 12px;font-size:13px;color:var(--rw-muted)">{{ inviteUrl }}</div><div onClick="{{ copyInviteLink }}" style="height:38px;padding:0 14px;border-radius:9px;background:var(--rw-surface);border:1px solid var(--rw-border);display:flex;align-items:center;font-size:13px;font-weight:500;cursor:pointer;color:var(--rw-ink)">Copy link</div></div>
+<div style="font-size:12px;color:var(--rw-muted)">Link expires in <b>29 days</b>. New members join as creators. <a onClick="{{ resetLink }}" style="cursor:pointer;font-weight:600">Reset link</a></div>
+</div>
+</sc-if>
+<div style="display:flex;align-items:center;gap:16px"><div style="flex:1"><div style="font-weight:500;color:var(--rw-ink)">Restrict invite access</div><div style="color:var(--rw-muted);margin-top:3px">Only admins can invite new members</div></div><div onClick="{{ T.restrict.flip }}" style="width:38px;height:22px;border-radius:99px;background:{{ T.restrict.bg }};position:relative;cursor:pointer;flex:none;transition:background .15s"><div style="position:absolute;top:2px;left:{{ T.restrict.left }};width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:left .15s"></div></div></div>
+<div style="display:flex;align-items:center"><div style="flex:1"><div style="font-weight:500;color:var(--rw-ink)">Members</div><div style="color:var(--rw-muted);margin-top:3px">{{ memberCount }}</div></div><div onClick="{{ openInvite }}" style="height:36px;padding:0 14px;border-radius:10px;background:var(--rw-btn);color:var(--rw-btn-fg);font-weight:600;display:flex;align-items:center;cursor:pointer">+ Add members</div></div>
+<div style="border:1px solid var(--rw-border);border-radius:12px;overflow:hidden">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) 110px 130px 30px;gap:12px;padding:10px 16px;background:var(--rw-surface2);font-size:12px;font-weight:600;color:var(--rw-muted)"><span>Name</span><span>Role</span><span>Last active</span><span></span></div>
+<sc-for list="{{ members }}" as="m" hint-placeholder-count="4">
+<div style="display:grid;grid-template-columns:minmax(0,1fr) 110px 130px 30px;gap:12px;padding:12px 16px;border-top:1px solid var(--rw-border);align-items:center;font-size:13px">
+<div style="display:flex;align-items:center;gap:10px;min-width:0"><div style="width:36px;height:36px;flex:none;overflow:hidden;border-radius:50%"><x-import component-from-global-scope="DermaestheticsDS.PatientInitialsAvatar" name="{{ m.name }}" background-color="{{ m.bg }}" hint-size="36px,36px"></x-import></div><div style="min-width:0"><div style="font-weight:600;color:var(--rw-ink)">{{ m.name }}</div><div style="color:var(--rw-muted);font-size:12px">{{ m.email }}</div></div></div>
+<span style="color:var(--rw-body)">{{ m.role }}</span><span style="color:var(--rw-muted)">{{ m.last }}</span><span style="color:var(--rw-hint);cursor:pointer">•••</span>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ st.billing }}" hint-placeholder-val="{{ false }}">
+<div style="font-weight:600;color:var(--rw-ink)">Your plan</div>
+<div style="border:1px solid var(--rw-border);border-radius:12px;padding:20px;display:flex;align-items:center;gap:16px"><div style="flex:1"><div style="font:600 16px Poppins,sans-serif;color:var(--rw-ink)">Free</div><div style="color:var(--rw-muted);margin-top:4px">30 Rewinds and core features</div></div><div onClick="{{ openPricing }}" style="height:36px;padding:0 14px;border-radius:10px;background:var(--rw-btn);color:var(--rw-btn-fg);font-weight:600;display:flex;align-items:center;cursor:pointer">Upgrade ↗</div></div>
+<div style="font-weight:600;color:var(--rw-ink)">Usage this cycle</div>
+<div style="border:1px solid var(--rw-border);border-radius:12px;padding:6px 20px">
+<sc-for list="{{ usage }}" as="u" hint-placeholder-count="3">
+<div style="padding:14px 0;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid var(--rw-border)">
+<div style="display:flex;align-items:baseline"><span style="font-weight:500;color:var(--rw-ink);flex:1">{{ u.label }}</span><span style="font-size:12px;color:var(--rw-muted)">{{ u.left }}</span></div>
+<div style="font-size:18px;color:var(--rw-ink);font-weight:500">{{ u.val }}</div>
+<div style="height:6px;border-radius:99px;background:var(--rw-surface2);overflow:hidden"><div style="height:100%;width:{{ u.pct }};background:var(--rw-accent);border-radius:99px"></div></div>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ st.integrations }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:12px"><div style="font-weight:600;color:var(--rw-ink);flex:1">Connect apps</div><input value="{{ integQ }}" onChange="{{ onIntegQ }}" placeholder="Search apps" style="width:240px;height:36px;border-radius:9px;border:1px solid var(--rw-border);background:var(--rw-surface);color:var(--rw-ink);padding:0 12px;font-size:13px;outline:none"></div>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px">
+<sc-for list="{{ integ }}" as="i" hint-placeholder-count="6">
+<div style="border:1px solid var(--rw-border);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:10px">
+<div style="width:38px;height:38px;border-radius:10px;background:{{ i.c }};color:#fff;font:700 16px Poppins,sans-serif;display:flex;align-items:center;justify-content:center">{{ i.ini }}</div>
+<div><div style="font-weight:600;color:var(--rw-ink)">{{ i.name }}</div><div style="color:var(--rw-muted);font-size:13px;margin-top:3px;line-height:1.45;min-height:38px">{{ i.desc }}</div></div>
+<div onClick="{{ i.onClick }}" style="align-self:flex-start;height:32px;padding:0 14px;border-radius:9px;background:{{ i.bbg }};color:{{ i.bfg }};font-size:13px;font-weight:600;display:flex;align-items:center;cursor:pointer">{{ i.btn }}</div>
+</div>
+</sc-for>
+</div>
+<sc-if value="{{ noInteg }}"><div style="text-align:center;color:var(--rw-muted);padding:30px">No apps match that search.</div></sc-if>
+</sc-if>
+<sc-if value="{{ st.sdk }}" hint-placeholder-val="{{ false }}">
+<div><div style="font:600 16px Poppins,sans-serif;color:var(--rw-ink)">Connect your domain</div><div style="color:var(--rw-muted);margin-top:4px">Get console and network logs, plus auto-blurring, from recording links on your site.</div></div>
+<div style="border:1px solid var(--rw-border);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:14px">
+<div style="font-weight:600;color:var(--rw-ink)">1 · Install the snippet</div>
+<div style="display:flex;padding:3px;border-radius:9px;background:var(--rw-surface2);gap:2px;align-self:flex-start"><sc-for list="{{ fwSeg }}" as="v"><div onClick="{{ v.onClick }}" style="padding:6px 14px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;background:{{ v.bg }};color:{{ v.fg }};box-shadow:{{ v.sh }}">{{ v.label }}</div></sc-for></div>
+<div style="border:1px solid var(--rw-border);border-radius:10px;overflow:hidden"><div style="display:flex;align-items:center;gap:12px;padding:8px 12px;border-bottom:1px solid var(--rw-border);font:12px ui-monospace,Menlo,monospace;color:var(--rw-muted)"><span style="flex:1">Paste into &lt;head&gt;</span><a onClick="{{ copyPrompt }}" style="cursor:pointer;font-family:Inter,sans-serif">Copy agent prompt</a><a onClick="{{ copySdk }}" style="cursor:pointer;font-family:Inter,sans-serif">Copy</a></div><pre style="margin:0;padding:14px;background:var(--rw-code);font:12px/1.7 ui-monospace,Menlo,monospace;color:var(--rw-accent-ink);white-space:pre-wrap;word-break:break-all">{{ sdkCode }}</pre></div>
+<div style="font-weight:600;color:var(--rw-ink);margin-top:6px">2 · Verify</div>
+<div style="display:flex;gap:8px"><div style="flex:1;display:flex;height:38px;border-radius:9px;border:1px solid var(--rw-border);overflow:hidden"><span style="padding:0 10px;display:flex;align-items:center;background:var(--rw-surface2);color:var(--rw-muted);font-size:13px">https://</span><input placeholder="yoursite.com" style="flex:1;border:none;background:var(--rw-surface);color:var(--rw-ink);padding:0 10px;font-size:13px;outline:none"></div><div onClick="{{ verify }}" style="height:38px;padding:0 16px;border-radius:9px;background:var(--rw-btn);color:var(--rw-btn-fg);font-weight:600;display:flex;align-items:center;cursor:pointer">Verify</div></div>
+</div>
+</sc-if>
+<sc-if value="{{ st.mcp }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:16px"><div style="flex:1"><div style="font-weight:500;color:var(--rw-ink)">Personal access tokens</div><div style="color:var(--rw-muted);margin-top:3px">Access Rewind programmatically from the CLI and MCP</div></div><div onClick="{{ openToken }}" style="height:36px;padding:0 14px;border-radius:10px;background:var(--rw-surface2);border:1px solid var(--rw-border);color:var(--rw-ink);font-weight:500;display:flex;align-items:center;cursor:pointer">+ Create token</div></div>
+<sc-if value="{{ hasTokens }}"><div style="border:1px solid var(--rw-border);border-radius:12px"><sc-for list="{{ tokens }}" as="k"><div style="display:flex;padding:12px 16px;font-size:13px;border-bottom:1px solid var(--rw-border)"><span style="flex:1;font-weight:600;color:var(--rw-ink)">{{ k.name }}</span><span style="color:var(--rw-muted)">{{ k.exp }}</span></div></sc-for></div></sc-if>
+<div style="height:1px;background:var(--rw-border)"></div>
+<div><div style="font-weight:500;color:var(--rw-ink)">AI agents</div><div style="color:var(--rw-muted);margin-top:3px">Give coding agents the full context of a Rewind</div></div>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px">
+<sc-for list="{{ agents }}" as="a" hint-placeholder-count="4">
+<div style="border:1px solid var(--rw-border);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:10px">
+<div style="width:38px;height:38px;border-radius:10px;background:{{ a.c }};color:#fff;font:700 16px Poppins,sans-serif;display:flex;align-items:center;justify-content:center">{{ a.ini }}</div>
+<div><div style="font-weight:600;color:var(--rw-ink)">{{ a.name }}</div><div style="color:var(--rw-muted);font-size:13px;margin-top:3px;line-height:1.45">{{ a.desc }}</div></div>
+<div onClick="{{ a.onClick }}" style="align-self:flex-start;height:32px;padding:0 14px;border-radius:9px;background:var(--rw-surface2);color:var(--rw-ink);font-size:13px;font-weight:600;display:flex;align-items:center;cursor:pointer" style-hover="background:var(--rw-soft)">Connect</div>
+</div>
+</sc-for>
+</div>
+<div onClick="{{ openOtherMcp }}" style="align-self:flex-start;height:36px;padding:0 14px;border-radius:10px;background:var(--rw-surface2);border:1px solid var(--rw-border);color:var(--rw-ink);font-weight:500;display:flex;align-items:center;cursor:pointer">+ Add other MCP client</div>
+</sc-if>
+<sc-if value="{{ st.cli }}" hint-placeholder-val="{{ false }}">
+<div><div style="font-weight:500;color:var(--rw-ink)">Rewind CLI</div><div style="color:var(--rw-muted);margin-top:3px">Read and record Rewinds from your terminal, or hand the same commands to your coding agent.</div></div>
+<div style="border:1px solid var(--rw-border);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:14px">
+<div style="font-weight:600;color:var(--rw-ink)">1 · Install</div>
+<div style="display:flex;padding:3px;border-radius:9px;background:var(--rw-surface2);gap:2px;align-self:flex-start"><sc-for list="{{ osSeg }}" as="v"><div onClick="{{ v.onClick }}" style="padding:6px 14px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;background:{{ v.bg }};color:{{ v.fg }};box-shadow:{{ v.sh }}">{{ v.label }}</div></sc-for></div>
+<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;background:var(--rw-code);border:1px solid var(--rw-border);font:12px ui-monospace,Menlo,monospace;color:var(--rw-accent-ink)"><span style="color:var(--rw-hint)">$</span><span style="flex:1">{{ cli.install }}</span><a onClick="{{ copyInstall }}" style="cursor:pointer;font-family:Inter,sans-serif">Copy</a></div>
+<div style="font-weight:600;color:var(--rw-ink);margin-top:6px">2 · Log in</div>
+<div style="display:flex;padding:3px;border-radius:9px;background:var(--rw-surface2);gap:2px;align-self:flex-start"><sc-for list="{{ authSeg }}" as="v"><div onClick="{{ v.onClick }}" style="padding:6px 14px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;background:{{ v.bg }};color:{{ v.fg }};box-shadow:{{ v.sh }}">{{ v.label }}</div></sc-for></div>
+<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;background:var(--rw-code);border:1px solid var(--rw-border);font:12px ui-monospace,Menlo,monospace;color:var(--rw-accent-ink)"><span style="color:var(--rw-hint)">$</span><span style="flex:1">{{ cli.login }}</span><a onClick="{{ copyLogin }}" style="cursor:pointer;font-family:Inter,sans-serif">Copy</a></div>
+<div style="font-weight:600;color:var(--rw-ink);margin-top:6px">3 · Install agent skills</div>
+<div style="color:var(--rw-muted);font-size:13px;margin-top:-6px">Let coding agents investigate Rewinds, fix issues and record proof of their work.</div>
+<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;background:var(--rw-code);border:1px solid var(--rw-border);font:12px ui-monospace,Menlo,monospace;color:var(--rw-accent-ink)"><span style="color:var(--rw-hint)">$</span><span style="flex:1">{{ cli.skills }}</span><a onClick="{{ copySkills }}" style="cursor:pointer;font-family:Inter,sans-serif">Copy</a></div>
+</div>
+</sc-if>
+<sc-if value="{{ st.webhooks }}" hint-placeholder-val="{{ false }}">
+<div><div style="font-weight:500;color:var(--rw-ink)">Webhooks</div><div style="color:var(--rw-muted);margin-top:3px">Receive real-time events when Rewinds are created, updated or commented on</div></div>
+<div style="border:1px solid var(--rw-border);border-radius:12px;padding:16px 18px;display:flex;align-items:center;gap:12px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 7a3 3 0 1 1 4.5 2.6L16 14M6.5 12.5a3 3 0 1 0 3 5.2h6M17.5 18a3 3 0 1 0-1.5-5.6"></path></svg><span style="flex:1;font-weight:500;color:var(--rw-ink)">Webhook endpoint</span><div onClick="{{ webhook }}" style="height:34px;padding:0 14px;border-radius:9px;background:var(--rw-surface2);color:var(--rw-ink);font-weight:500;display:flex;align-items:center;cursor:pointer">Set up ↗</div></div>
+</sc-if>
+<sc-if value="{{ st.account }}" hint-placeholder-val="{{ false }}">
+<div style="font:600 16px Poppins,sans-serif;color:var(--rw-ink)">Profile</div>
+<div style="display:flex;align-items:center;gap:18px">
+<div style="width:72px;height:72px;overflow:hidden;border-radius:50%;flex:none"><sc-if value="{{ hasAvatar }}" hint-placeholder-val="{{ false }}"><div role="img" style="width:72px;height:72px;object-fit:cover;display:block;background-image:{{ avatarBg }};background-size:cover;background-position:center"></div></sc-if><sc-if value="{{ noAvatar }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="DermaestheticsDS.PatientInitialsAvatar" name="{{ fullName }}" background-color="#3538cd" hint-size="72px,72px"></x-import></sc-if></div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;gap:8px;align-items:center"><label style="height:36px;padding:0 14px;border-radius:10px;background:var(--rw-surface2);border:1px solid var(--rw-border);color:var(--rw-ink);font-weight:500;display:flex;align-items:center;gap:8px;cursor:pointer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"></path></svg>{{ avatarBtn }}<input type="file" accept="image/*" onChange="{{ onAvatar }}" style="display:none"></label><sc-if value="{{ hasAvatar }}" hint-placeholder-val="{{ false }}"><div onClick="{{ removeAvatar }}" style="height:36px;padding:0 12px;border-radius:10px;display:flex;align-items:center;cursor:pointer;color:var(--rw-muted)" style-hover="background:var(--rw-surface2)">Remove</div></sc-if></div>
+<div style="font-size:12px;color:var(--rw-muted)">JPG, PNG or GIF. Cropped to a square.</div>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<div style="display:flex;flex-direction:column;gap:6px"><label style="font-weight:500;color:var(--rw-ink)">First name</label><input value="{{ firstName }}" onChange="{{ onFirst }}" style="height:40px;border-radius:10px;border:1px solid var(--rw-border);background:var(--rw-surface);color:var(--rw-ink);padding:0 12px;font-size:14px"></div>
+<div style="display:flex;flex-direction:column;gap:6px"><label style="font-weight:500;color:var(--rw-ink)">Last name</label><input value="{{ lastName }}" onChange="{{ onLast }}" style="height:40px;border-radius:10px;border:1px solid var(--rw-border);background:var(--rw-surface);color:var(--rw-ink);padding:0 12px;font-size:14px"></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px"><label style="font-weight:500;color:var(--rw-ink)">Role</label><select style="height:40px;border-radius:10px;border:1px solid var(--rw-border);background:var(--rw-surface);color:var(--rw-ink);padding:0 10px;font-size:14px"><option>Engineering</option><option>Product</option><option>Design</option><option>QA</option><option>Support</option></select></div>
+<div style="display:flex;flex-direction:column;gap:6px"><label style="font-weight:500;color:var(--rw-ink)">Email</label><input value="dhiazfathra@gmail.com" disabled="true" style="height:40px;border-radius:10px;border:1px solid var(--rw-border);background:var(--rw-surface2);color:var(--rw-muted);padding:0 12px;font-size:14px"></div>
+<div style="height:1px;background:var(--rw-border)"></div>
+<div style="display:flex;align-items:center;gap:16px"><div style="flex:1"><div style="font-weight:500;color:var(--rw-ink)">Appearance</div><div style="color:var(--rw-muted);margin-top:3px">Applies to the web app and the extension</div></div><div style="display:flex;padding:3px;border-radius:9px;background:var(--rw-surface2);gap:2px"><sc-for list="{{ themeSeg }}" as="v"><div onClick="{{ v.onClick }}" style="padding:6px 16px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;background:{{ v.bg }};color:{{ v.fg }};box-shadow:{{ v.sh }}">{{ v.label }}</div></sc-for></div></div>
+<div style="height:1px;background:var(--rw-border)"></div>
+<div style="display:flex;align-items:center"><span style="flex:1;font-weight:500;color:var(--rw-ink)">Delete account</span><div onClick="{{ deleteAcct }}" style="height:36px;padding:0 16px;border-radius:10px;background:#c70036;color:#fff;font-weight:600;display:flex;align-items:center;cursor:pointer">Delete</div></div>
+</sc-if>
+<sc-if value="{{ st.notifications }}" hint-placeholder-val="{{ false }}">
+<div style="font:600 16px Poppins,sans-serif;color:var(--rw-ink)">Email notifications</div>
+<div style="border:1px solid var(--rw-border);border-radius:12px;padding:0 18px">
+<sc-for list="{{ notif }}" as="r" hint-placeholder-count="5">
+<div style="display:flex;align-items:center;gap:16px;padding:16px 0;border-bottom:1px solid var(--rw-border)"><span style="flex:1;color:var(--rw-body)">{{ r.label }}</span><div onClick="{{ r.t.flip }}" style="width:38px;height:22px;border-radius:99px;background:{{ r.t.bg }};position:relative;cursor:pointer;flex:none;transition:background .15s"><div style="position:absolute;top:2px;left:{{ r.t.left }};width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:left .15s"></div></div></div>
+</sc-for>
+</div>
+<div style="display:flex;align-items:center"><span style="flex:1;font-weight:500;color:var(--rw-ink)">Don't send me email notifications</span><a onClick="{{ turnOffAll }}" style="cursor:pointer">Turn off all</a></div>
+</sc-if>
+</div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ is.app }}" hint-placeholder-val="{{ true }}">
+<div onClick="{{ supportBubble }}" style="position:absolute;right:22px;bottom:22px;width:48px;height:48px;border-radius:50%;background:#0a6365;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.25);z-index:30">
+<sc-if value="{{ support }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 9l6 6 6-6"></path></svg></sc-if>
+<sc-if value="{{ noSupport }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"></path></svg></sc-if>
+</div>
+</sc-if>
+<sc-if value="{{ support }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;right:22px;bottom:82px;width:360px;height:520px;border-radius:18px;background:var(--rw-surface);border:1px solid var(--rw-border);box-shadow:var(--rw-pop);z-index:31;display:flex;flex-direction:column;overflow:hidden">
+<sc-if value="{{ sp.home }}">
+<div style="background:#0a6365;color:#fff;padding:22px 22px 60px;display:flex;flex-direction:column;gap:18px"><div style="display:flex;align-items:center"><div style="display:flex"><div style="width:32px;height:32px;border-radius:50%;background:#01afaf;border:2px solid #0a6365;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">MC</div><div style="width:32px;height:32px;border-radius:50%;background:#e65100;border:2px solid #0a6365;margin-left:-8px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">LP</div></div><div style="flex:1"></div><div onClick="{{ closeSupport }}" style="cursor:pointer;font-size:18px">✕</div></div><div style="font:600 24px/1.25 Poppins,sans-serif">Hi {{ firstName }}<br>How can we help?</div></div>
+<div style="margin-top:-44px;padding:0 14px;display:flex;flex-direction:column;gap:10px;flex:1">
+<div onClick="{{ supChat }}" style="background:var(--rw-surface);border:1px solid var(--rw-border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.06)" style-hover="border-color:var(--rw-accent)"><div style="flex:1"><div style="font-weight:600;font-size:14px;color:var(--rw-ink)">Send us a message</div><div style="font-size:13px;color:var(--rw-muted);margin-top:2px">We'll be back online tomorrow</div></div><span style="color:var(--rw-accent-ink);font-size:18px">➤</span></div>
+<div onClick="{{ supStatus }}" style="background:var(--rw-surface);border:1px solid var(--rw-border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:10px;cursor:pointer" style-hover="border-color:var(--rw-accent)"><div style="width:20px;height:20px;border-radius:50%;background:#34c759;color:#fff;display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><path d="M5 12l5 5 9-10"></path></svg></div><span style="font-weight:600;font-size:14px;color:var(--rw-ink)">Status: All systems operational</span></div>
+</div>
+</sc-if>
+<sc-if value="{{ sp.messages }}">
+<div style="height:56px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--rw-border);font-weight:600;color:var(--rw-ink);position:relative">Messages<div onClick="{{ closeSupport }}" style="position:absolute;right:16px;cursor:pointer;color:var(--rw-muted)">✕</div></div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:20px">
+<sc-if value="{{ sp.noChat }}"><div style="font-weight:600;color:var(--rw-ink);font-size:16px">No messages</div><div style="font-size:13px;color:var(--rw-muted)">Messages from the team will show here</div></sc-if>
+<sc-if value="{{ sp.hasChat }}"><div onClick="{{ supChat }}" style="width:100%;text-align:left;border:1px solid var(--rw-border);border-radius:12px;padding:12px;cursor:pointer"><div style="font-weight:600;color:var(--rw-ink);font-size:14px">Rewind support</div><div style="font-size:13px;color:var(--rw-muted)">Thanks, we'll reply by email tomorrow.</div></div></sc-if>
+<div onClick="{{ supChat }}" style="margin-top:14px;height:40px;padding:0 18px;border-radius:10px;background:#0a6365;color:#fff;font-weight:600;font-size:14px;display:flex;align-items:center;cursor:pointer">Send us a message ➤</div>
+</div>
+</sc-if>
+<sc-if value="{{ sp.tabs }}">
+<div style="display:flex;border-top:1px solid var(--rw-border);flex:none"><div onClick="{{ supHome }}" style="flex:1;padding:12px;text-align:center;font-size:13px;font-weight:600;color:{{ sp.homeFg }};cursor:pointer">Home</div><div onClick="{{ supMsgs }}" style="flex:1;padding:12px;text-align:center;font-size:13px;font-weight:600;color:{{ sp.msgFg }};cursor:pointer">Messages</div></div>
+</sc-if>
+<sc-if value="{{ sp.chat }}">
+<div style="height:60px;display:flex;align-items:center;gap:10px;padding:0 14px;border-bottom:1px solid var(--rw-border);flex:none"><div onClick="{{ supHome }}" style="cursor:pointer;color:var(--rw-muted);font-size:18px">‹</div><div style="flex:1"><div style="font-weight:600;color:var(--rw-ink);font-size:14px">Rewind</div><div style="font-size:12px;color:var(--rw-muted)">Back tomorrow</div></div><div onClick="{{ closeSupport }}" style="cursor:pointer;color:var(--rw-muted)">✕</div></div>
+<div style="flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:8px">
+<div style="text-align:center;font-size:12px;color:var(--rw-hint);margin-bottom:6px">Ask us anything, or share your feedback.</div>
+<sc-for list="{{ chat }}" as="m"><div style="align-self:flex-end;max-width:80%;background:#0a6365;color:#fff;padding:8px 12px;border-radius:14px 14px 4px 14px;font-size:13px">{{ m.txt }}</div></sc-for>
+<sc-if value="{{ sp.hasChat }}"><div style="align-self:flex-start;max-width:80%;background:var(--rw-surface2);color:var(--rw-body);padding:8px 12px;border-radius:14px 14px 14px 4px;font-size:13px">Thanks, we'll reply to dhiazfathra@gmail.com tomorrow.</div></sc-if>
+</div>
+<div style="margin:12px;border:1px solid var(--rw-border);border-radius:12px;display:flex;align-items:center;padding:6px 6px 6px 12px;gap:8px"><input value="{{ chatTxt }}" onChange="{{ onChatTxt }}" onKeyDown="{{ onChatKey }}" placeholder="Message…" style="flex:1;border:none;outline:none;background:transparent;color:var(--rw-ink);font-size:13px;height:30px"><div onClick="{{ sendChat }}" style="width:32px;height:32px;border-radius:50%;background:#0a6365;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer">↑</div></div>
+</sc-if>
+<sc-if value="{{ sp.status }}">
+<div style="height:56px;display:flex;align-items:center;gap:10px;padding:0 14px;border-bottom:1px solid var(--rw-border);flex:none"><div onClick="{{ supHome }}" style="cursor:pointer;color:var(--rw-muted);font-size:18px">‹</div><div style="flex:1;font-weight:600;color:var(--rw-ink)">System status</div><div onClick="{{ closeSupport }}" style="cursor:pointer;color:var(--rw-muted)">✕</div></div>
+<div style="flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:14px">
+<div style="border-radius:12px;background:var(--rw-soft);padding:14px;font-weight:600;color:var(--rw-accent-ink)">✓ All systems operational</div>
+<sc-for list="{{ services }}" as="v"><div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;font-size:13px"><span style="flex:1;font-weight:500;color:var(--rw-ink)">{{ v.name }}</span><span style="color:#248a3d;font-weight:600">99.9%</span></div><div style="display:flex;gap:2px;height:22px"><sc-for list="{{ v.bars }}" as="b"><div style="flex:1;border-radius:2px;background:{{ b.c }}"></div></sc-for></div></div></sc-for>
+<div style="font-size:12px;color:var(--rw-hint)">30 days ago → today</div>
+</div>
+</sc-if>
+</div>
+</sc-if>
+<sc-if value="{{ wsModal }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeWsModal }}" style="position:absolute;inset:0;background:var(--rw-scrim);z-index:60;display:flex;align-items:center;justify-content:center">
+<div onClick="{{ stop }}" style="width:480px;background:var(--rw-surface);border-radius:18px;padding:26px;box-shadow:var(--rw-pop);display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center"><div style="flex:1;font:600 18px Poppins,sans-serif;color:var(--rw-ink)">Join or create workspace</div><div onClick="{{ closeWsModal }}" style="cursor:pointer;color:var(--rw-muted);font-size:18px">✕</div></div>
+<label style="font-size:13px;font-weight:500;color:var(--rw-ink);margin-top:6px">Create a new workspace</label>
+<div style="display:flex;gap:8px"><input autofocus="true" value="{{ newWsName }}" onChange="{{ onNewWsName }}" onKeyDown="{{ onNewWsKey }}" placeholder="Workspace name" style="height:40px;border-radius:10px;border:1px solid var(--rw-border);background:var(--rw-surface);color:var(--rw-ink);padding:0 12px;font-size:14px;outline:none;flex:1;min-width:0"><div onClick="{{ createWs }}" style="height:40px;padding:0 16px;border-radius:10px;background:{{ wsCreateBg }};color:{{ wsCreateFg }};font-weight:600;font-size:14px;display:flex;align-items:center;cursor:pointer">Create</div></div>
+<div style="display:flex;align-items:center;gap:10px;color:var(--rw-hint);font-size:12px;margin:6px 0"><div style="flex:1;height:1px;background:var(--rw-border)"></div>or<div style="flex:1;height:1px;background:var(--rw-border)"></div></div>
+<label style="font-size:13px;font-weight:500;color:var(--rw-ink)">Join with an invite link</label>
+<div style="display:flex;gap:8px"><input value="{{ joinLink }}" onChange="{{ onJoinLink }}" onKeyDown="{{ onJoinKey }}" placeholder="https://rewind.dev/team-invite/…" style="height:40px;border-radius:10px;border:1px solid var(--rw-border);background:var(--rw-surface);color:var(--rw-ink);padding:0 12px;font-size:14px;outline:none;flex:1;min-width:0"><div onClick="{{ joinWs }}" style="height:40px;padding:0 16px;border-radius:10px;background:var(--rw-surface2);border:1px solid var(--rw-border);color:var(--rw-ink);font-weight:600;font-size:14px;display:flex;align-items:center;cursor:pointer">Join</div></div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ loggedOut }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:95;background:var(--rw-bg);display:flex;align-items:center;justify-content:center">
+<div style="width:380px;background:var(--rw-surface);border:1px solid var(--rw-border);border-radius:18px;padding:32px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;box-shadow:var(--rw-pop)">
+<svg width="34" height="34" viewBox="0 0 24 24"><path d="M11 5L3 12l8 7zM21 5l-8 7 8 7z" fill="#01afaf"></path></svg>
+<div style="font:600 20px Poppins,sans-serif;color:var(--rw-ink)">You're logged out</div>
+<div style="font-size:14px;color:var(--rw-muted)">Log back in to get to your Rewinds.</div>
+<div onClick="{{ logIn }}" style="margin-top:8px;align-self:stretch;height:42px;border-radius:10px;background:var(--rw-btn);color:var(--rw-btn-fg);font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:var(--rw-btn-hover)">Continue as dhiazfathra@gmail.com</div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ hasToast }}"><div style="position:absolute;left:50%;top:18px;transform:translateX(-50%);z-index:90;background:#1a1a1a;color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.25);display:flex;align-items:center;gap:8px"><span style="width:16px;height:16px;border-radius:50%;background:#01afaf;display:flex;align-items:center;justify-content:center"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"><path d="M5 12l5 5 9-10"></path></svg></span>{{ toast }}<sc-if value="{{ toastUndo }}" hint-placeholder-val="{{ false }}"><span onClick="{{ doUndo }}" style="margin-left:6px;padding:2px 8px;border-radius:6px;color:#5fd4d4;font-weight:600;cursor:pointer" style-hover="background:rgba(255,255,255,0.12)">Undo</span></sc-if></div></sc-if>
+<sc-if value="{{ palette }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closePalette }}" style="position:absolute;inset:0;background:var(--rw-scrim);z-index:70;display:flex;justify-content:center;padding-top:90px">
+<div onClick="{{ stop }}" style="width:580px;align-self:flex-start;background:var(--rw-surface);border:1px solid var(--rw-border);border-radius:14px;box-shadow:var(--rw-pop);overflow:hidden">
+<div style="display:flex;align-items:center;gap:10px;padding:0 16px;border-bottom:1px solid var(--rw-border)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--rw-hint)" stroke-width="2" stroke-linecap="round"><path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4"></path></svg><input autofocus="true" value="{{ pq }}" onChange="{{ onPq }}" onKeyDown="{{ onPqKey }}" placeholder="Search Rewinds, pages and actions…" style="flex:1;height:52px;border:none;outline:none;background:transparent;color:var(--rw-ink);font-size:15px"><span style="font-size:11px;padding:2px 6px;border-radius:5px;background:var(--rw-surface2);color:var(--rw-muted)">esc</span></div>
+<div style="padding:6px;max-height:380px;overflow:auto">
+<sc-for list="{{ pitems }}" as="p"><div onClick="{{ p.run }}" style="display:flex;align-items:center;gap:10px;height:40px;padding:0 12px;border-radius:9px;cursor:pointer;font-size:14px;color:var(--rw-body)" style-hover="background:var(--rw-soft)"><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.label }}</span><span style="font-size:11px;color:var(--rw-hint)">{{ p.kind }}</span></div></sc-for>
+<sc-if value="{{ noPitems }}"><div style="padding:24px;text-align:center;color:var(--rw-muted);font-size:13px">No results</div></sc-if>
+</div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ invite }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeInvite }}" style="position:absolute;inset:0;background:var(--rw-scrim);z-index:60;display:flex;align-items:center;justify-content:center">
+<div onClick="{{ stop }}" style="width:560px;background:var(--rw-surface);border-radius:16px;padding:24px;box-shadow:var(--rw-pop);display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center"><div style="flex:1;font:600 18px Poppins,sans-serif;color:var(--rw-ink)">Add members</div><div onClick="{{ closeInvite }}" style="cursor:pointer;color:var(--rw-muted);font-size:18px">✕</div></div>
+<label style="font-size:13px;font-weight:500;color:var(--rw-ink)">Invite by email</label>
+<div style="display:flex;gap:8px"><input autofocus="true" value="{{ inviteEmail }}" onChange="{{ onInviteEmail }}" onKeyDown="{{ onInviteKey }}" placeholder="Separate emails with a space" style="flex:1;height:40px;border-radius:10px;border:1.5px solid var(--rw-accent);background:var(--rw-surface);color:var(--rw-ink);padding:0 12px;font-size:14px;outline:none"><select value="{{ inviteRole }}" onChange="{{ onInviteRole }}" style="height:40px;border-radius:10px;border:1px solid var(--rw-border);background:var(--rw-surface2);color:var(--rw-ink);padding:0 10px;font-size:14px"><option>Creator</option><option>Admin</option><option>Viewer</option></select><div onClick="{{ sendInvite }}" style="height:40px;padding:0 16px;border-radius:10px;background:{{ inviteBg }};color:{{ inviteFg }};font-weight:600;font-size:14px;display:flex;align-items:center;cursor:pointer">Invite</div></div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ linksOnboard }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;background:var(--rw-scrim);z-index:60;display:flex;align-items:center;justify-content:center">
+<div style="width:900px;background:var(--rw-surface);border-radius:18px;padding:32px;box-shadow:var(--rw-pop);display:flex;flex-direction:column;gap:22px">
+<div><div style="font:600 22px Poppins,sans-serif;color:var(--rw-ink)">Recording links</div><div style="color:var(--rw-muted);margin-top:6px;font-size:14px">Ask anyone to record their screen, no extension needed.</div></div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
+<div style="display:flex;flex-direction:column;gap:10px"><div style="height:150px;border-radius:12px;background:var(--rw-soft);padding:16px;display:flex;flex-direction:column;justify-content:flex-end"><div style="background:var(--rw-surface);border-radius:8px;padding:10px;font-size:11px;color:var(--rw-body)">Can you show me?<br><span style="color:var(--rw-accent-ink)">acme.rewind.dev/rec/qZcL</span></div></div><div style="font-weight:600;color:var(--rw-ink);font-size:14px">1 · You send the link</div><div style="font-size:13px;color:var(--rw-muted);line-height:1.5">Create a link and share it with anyone who needs to show you something.</div></div>
+<div style="display:flex;flex-direction:column;gap:10px"><div style="height:150px;border-radius:12px;background:var(--rw-soft);display:flex;align-items:center;justify-content:center"><div style="background:var(--rw-surface);border-radius:10px;padding:14px 18px;text-align:center;font-size:12px;color:var(--rw-ink);font-weight:600">Ready to record?<div style="margin-top:8px;padding:6px 12px;border-radius:6px;background:#0a6365;color:#fff">Start recording</div></div></div><div style="font-weight:600;color:var(--rw-ink);font-size:14px">2 · They record</div><div style="font-size:13px;color:var(--rw-muted);line-height:1.5">They open the link and start recording. Rewind captures their screen and logs.</div></div>
+<div style="display:flex;flex-direction:column;gap:10px"><div style="height:150px;border-radius:12px;background:var(--rw-soft);padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:8px"><div style="border-radius:6px;background:var(--rw-surface);border:2px solid #01afaf"></div><div style="border-radius:6px;background:var(--rw-surface)"></div><div style="border-radius:6px;background:var(--rw-surface)"></div><div style="border-radius:6px;background:var(--rw-surface)"></div></div><div style="font-weight:600;color:var(--rw-ink);font-size:14px">3 · You get the Rewind</div><div style="font-size:13px;color:var(--rw-muted);line-height:1.5">It lands in your workspace and we email you when it's ready.</div></div>
+</div>
+<div style="display:flex;justify-content:flex-end"><div onClick="{{ closeOnboard }}" style="height:40px;padding:0 20px;border-radius:10px;background:var(--rw-btn);color:var(--rw-btn-fg);font-weight:600;font-size:14px;display:flex;align-items:center;cursor:pointer">Okay, let's go</div></div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ domain }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeDomain }}" style="position:absolute;inset:0;background:var(--rw-scrim);z-index:60;display:flex;align-items:center;justify-content:center">
+<div onClick="{{ stop }}" style="width:520px;background:var(--rw-surface);border-radius:18px;padding:28px;box-shadow:var(--rw-pop);display:flex;flex-direction:column;gap:18px;position:relative">
+<div onClick="{{ closeDomain }}" style="position:absolute;right:20px;top:18px;cursor:pointer;color:var(--rw-muted)">✕</div>
+<div style="text-align:center"><div style="font:600 20px Poppins,sans-serif;color:var(--rw-ink)">Connect your domain</div><div style="color:var(--rw-muted);font-size:14px;margin-top:4px">Add the Rewind SDK to your site to level up recording links</div></div>
+<div style="height:170px;border-radius:12px;background:var(--rw-soft);padding:18px;display:flex;flex-direction:column;justify-content:center;gap:8px;font:12px ui-monospace,Menlo,monospace">
+<sc-if value="{{ dom.s0 }}"><div style="background:var(--rw-surface);border-radius:8px;padding:8px 10px;color:var(--rw-accent-ink)">0:06 → Navigated to /settings</div><div style="background:var(--rw-surface);border-radius:8px;padding:8px 10px;color:var(--rw-body)">0:09 · Clicked “Save”</div><div style="background:var(--rw-err-soft);border-radius:8px;padding:8px 10px;color:var(--rw-err)">0:11 ⇆ Network error 503 /api/data</div></sc-if>
+<sc-if value="{{ dom.s1 }}"><div style="background:var(--rw-surface);border-radius:10px;padding:12px 14px;font-family:Inter,sans-serif;color:var(--rw-ink);font-size:13px">AcmeCorp's Recorder<div style="margin-top:8px;padding:6px 10px;border-radius:99px;background:var(--rw-surface2);font-size:12px;color:var(--rw-muted)">🔒 acmecorp.com/recorder</div></div></sc-if>
+<sc-if value="{{ dom.s2 }}"><div style="font-family:Inter,sans-serif;color:var(--rw-muted);font-size:13px">Credit card</div><div style="height:40px;border-radius:9px;background:var(--rw-surface);border:2px solid #b6d6ff;display:flex;align-items:center;padding:0 12px"><div style="width:160px;height:12px;border-radius:4px;background:#b6d6ff;filter:blur(3px)"></div></div><div style="align-self:flex-end;background:#1a1a1a;color:#fff;border-radius:8px;padding:5px 10px;font-family:Inter,sans-serif;font-size:12px">2 fields hidden</div></sc-if>
+</div>
+<div style="display:flex;gap:12px"><span style="width:24px;height:24px;border-radius:50%;background:var(--rw-surface2);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex:none;color:var(--rw-muted)">{{ dom.n }}</span><div><div style="font-weight:600;color:var(--rw-ink);font-size:14px">{{ dom.title }}</div><div style="color:var(--rw-muted);font-size:13px;margin-top:4px;line-height:1.5">{{ dom.desc }}</div></div></div>
+<div style="display:flex;align-items:center"><a onClick="{{ viewDocs }}" style="flex:1;cursor:pointer;font-size:14px">View docs ↗</a><div style="display:flex;gap:5px;flex:1;justify-content:center"><sc-for list="{{ dom.dots }}" as="d"><div onClick="{{ d.onClick }}" style="height:6px;width:{{ d.w }};border-radius:99px;background:{{ d.bg }};cursor:pointer;transition:width .2s"></div></sc-for></div><div style="flex:1;display:flex;justify-content:flex-end"><div onClick="{{ domNext }}" style="height:38px;padding:0 16px;border-radius:10px;background:var(--rw-btn);color:var(--rw-btn-fg);font-weight:600;font-size:14px;display:flex;align-items:center;cursor:pointer">{{ dom.next }} →</div></div></div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ mcpModal }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeMcp }}" style="position:absolute;inset:0;background:var(--rw-scrim);z-index:60;display:flex;align-items:center;justify-content:center">
+<div onClick="{{ stop }}" style="width:640px;background:var(--rw-surface);border-radius:18px;padding:28px;box-shadow:var(--rw-pop);display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;align-items:center"><div style="flex:1;font:600 18px Poppins,sans-serif;color:var(--rw-ink)">Add MCP to {{ mcpV.name }}</div><div onClick="{{ closeMcp }}" style="cursor:pointer;color:var(--rw-muted)">✕</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding-bottom:16px;border-bottom:1px solid var(--rw-border)"><div style="width:38px;height:38px;border-radius:10px;background:{{ mcpV.c }};color:#fff;font:700 16px Poppins,sans-serif;display:flex;align-items:center;justify-content:center">{{ mcpV.ini }}</div><span style="flex:1;font-weight:500;color:var(--rw-ink)">{{ mcpV.name }}</span><div onClick="{{ copyMcp }}" style="height:34px;padding:0 14px;border-radius:9px;background:var(--rw-surface2);color:var(--rw-ink);font-size:13px;font-weight:500;display:flex;align-items:center;cursor:pointer">Copy snippet</div></div>
+<div style="font-weight:500;color:var(--rw-ink);font-size:14px">1 · Run this in your terminal or config</div>
+<div style="border:1px solid var(--rw-border);border-radius:10px;overflow:hidden"><div style="padding:8px 12px;border-bottom:1px solid var(--rw-border);font:12px ui-monospace,Menlo,monospace;color:var(--rw-muted)">{{ mcpV.file }}</div><pre style="margin:0;padding:14px;background:var(--rw-code);font:12px/1.7 ui-monospace,Menlo,monospace;color:var(--rw-accent-ink);white-space:pre-wrap;word-break:break-all">{{ mcpV.cmd }}</pre></div>
+<div style="font-size:13px;color:var(--rw-muted)">2 · Ask your agent: “Fix the bug in this Rewind” and paste a Rewind link.</div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ tokenModal }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeToken }}" style="position:absolute;inset:0;background:var(--rw-scrim);z-index:60;display:flex;align-items:center;justify-content:center">
+<div onClick="{{ stop }}" style="width:480px;background:var(--rw-surface);border-radius:18px;padding:26px;box-shadow:var(--rw-pop);display:flex;flex-direction:column;gap:12px">
+<div style="font:600 18px Poppins,sans-serif;color:var(--rw-ink)">Create personal access token</div>
+<label style="font-size:13px;font-weight:500;color:var(--rw-ink);margin-top:6px">Name</label><input autofocus="true" value="{{ tokenName }}" onChange="{{ onTokenName }}" placeholder="my-laptop" style="height:40px;border-radius:10px;border:1.5px solid var(--rw-accent);background:var(--rw-surface);color:var(--rw-ink);padding:0 12px;font-size:14px;outline:none">
+<label style="font-size:13px;font-weight:500;color:var(--rw-ink)">Expires in</label><select style="height:40px;border-radius:10px;border:1px solid var(--rw-border);background:var(--rw-surface);color:var(--rw-ink);padding:0 10px;font-size:14px"><option>1 year</option><option>90 days</option><option>30 days</option></select>
+<label style="font-size:13px;font-weight:500;color:var(--rw-ink)">Permissions</label>
+<div style="border:1px solid var(--rw-border);border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;font-size:14px;color:var(--rw-ink)"><input type="checkbox" checked="true" style="accent-color:#01afaf">Rewind CLI<span style="flex:1"></span><span style="color:var(--rw-muted);font-size:13px">Read-only</span></div>
+<div style="border:1px solid var(--rw-border);border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;font-size:14px;color:var(--rw-ink)"><input type="checkbox" checked="true" style="accent-color:#01afaf">MCP<span style="flex:1"></span><span style="color:var(--rw-muted);font-size:13px">Read-only</span></div>
+<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px"><div onClick="{{ closeToken }}" style="height:38px;padding:0 14px;display:flex;align-items:center;cursor:pointer;color:var(--rw-muted);font-size:14px">Cancel</div><div onClick="{{ createToken }}" style="height:38px;padding:0 16px;border-radius:10px;background:{{ tokBg }};color:{{ tokFg }};font-weight:600;font-size:14px;display:flex;align-items:center;cursor:pointer">Create token</div></div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ pricing }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;background:var(--rw-surface);z-index:65;overflow:auto;padding:30px">
+<div onClick="{{ closePricing }}" style="width:36px;height:36px;border-radius:9px;border:1px solid var(--rw-border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--rw-muted)">✕</div>
+<div style="text-align:center;font:600 28px Poppins,sans-serif;color:var(--rw-ink);margin:10px 0 34px">Level up with advanced features</div>
+<div style="display:flex;justify-content:center;align-items:stretch">
+<div style="width:380px;border:1px solid var(--rw-border);border-right:none;border-radius:16px 0 0 16px;background:var(--rw-surface2);padding:28px;display:flex;flex-direction:column;gap:16px;margin:10px 0">
+<div style="font:600 20px Poppins,sans-serif;color:var(--rw-ink)">Free</div><div style="font-size:26px;font-weight:600;color:var(--rw-ink)">$0</div><div style="color:var(--rw-muted);font-size:14px">Free for everyone</div>
+<div style="height:40px;border-radius:10px;background:var(--rw-border);color:var(--rw-muted);display:flex;align-items:center;justify-content:center;font-size:14px">Your current plan</div>
+<div style="font-weight:600;color:var(--rw-ink);font-size:14px">Core features</div>
+<div style="display:flex;flex-direction:column;gap:12px;font-size:14px;color:var(--rw-body)"><span>▸ 30 Rewinds</span><span>▸ 5 recording links</span><span>▸ 5-minute recordings</span><span>▸ Linear, Jira and more</span><span>▸ Debug via MCP</span></div>
+</div>
+<div style="width:420px;border:1.5px solid var(--rw-accent);border-radius:16px;background:var(--rw-surface);padding:28px;display:flex;flex-direction:column;gap:16px;box-shadow:var(--rw-pop)">
+<div style="font:600 20px Poppins,sans-serif;color:var(--rw-ink)">Team</div><div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:26px;font-weight:600;color:var(--rw-ink)">${{ teamPrice }}</span><span style="color:var(--rw-muted);font-size:13px">per creator / month</span></div>
+<div onClick="{{ T.yearly.flip }}" style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px;color:var(--rw-body)"><div style="width:38px;height:22px;border-radius:99px;background:{{ T.yearly.bg }};position:relative;transition:background .15s"><div style="position:absolute;top:2px;left:{{ T.yearly.left }};width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s"></div></div>{{ billNote }}</div>
+<div onClick="{{ upgrade }}" style="height:40px;border-radius:10px;background:var(--rw-btn);color:var(--rw-btn-fg);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;cursor:pointer" style-hover="background:var(--rw-btn-hover)">Upgrade to Team</div>
+<div style="font-weight:600;color:var(--rw-ink);font-size:14px">Everything in Free, and</div>
+<div style="display:flex;flex-direction:column;gap:12px;font-size:14px;color:var(--rw-body)"><span>▸ Unlimited Rewinds</span><span>▸ 150 recording links</span><span>▸ 15-minute recordings</span><span>▸ 200 AI summaries</span><span>▸ Duplicate grouping and board triage</span><span>▸ Access controls</span></div>
+</div>
+</div>
+<div style="text-align:center;margin-top:30px;color:var(--rw-muted);font-size:14px">Looking for Enterprise? <a onClick="{{ contactSales }}" style="cursor:pointer">Contact sales</a></div>
+</div>
+</sc-if>
+<sc-if value="{{ editor }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;background:var(--rw-scrim);z-index:55;display:flex;align-items:center;justify-content:center;padding:28px">
+<div style="width:100%;max-width:1180px;height:100%;max-height:680px;background:var(--rw-surface);border-radius:18px;box-shadow:var(--rw-pop);display:flex;overflow:hidden">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;padding:20px;gap:16px;background:var(--rw-bg)">
+<div onClick="{{ closeEditor }}" style="align-self:flex-start;height:36px;padding:0 14px;border-radius:10px;background:var(--rw-surface);border:1px solid var(--rw-border);display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;color:var(--rw-ink)">✕ {{ ed.close }}</div>
+<div style="flex:1;min-height:0;border-radius:12px;background:#f7f8f9;border:1px solid var(--rw-border);display:flex;gap:4%;padding:4%;color:#1a1a1a;position:relative;overflow:hidden">
+<div style="flex:1.6;display:flex;flex-direction:column;gap:10px"><div style="font:600 15px Poppins,sans-serif">Your cart</div><div style="height:52px;border-radius:8px;background:#fff;border:1px solid #eee"></div><div style="height:52px;border-radius:8px;background:#fff;border:1px solid #eee"></div><div style="height:52px;border-radius:8px;background:#fff;border:1px solid #eee"></div></div>
+<div style="flex:1;height:170px;border-radius:10px;background:#fff;border:1px solid #eee"></div>
+<sc-if value="{{ ed.shot }}"><div style="position:absolute;left:58%;top:22%;width:30%;height:34%;border:3px solid #e35e5e;border-radius:8px"></div><div style="position:absolute;left:58%;top:58%;background:#e35e5e;color:#fff;font-size:12px;font-weight:600;padding:4px 8px;border-radius:6px">Total is wrong here</div></sc-if>
+</div>
+<sc-if value="{{ ed.video }}">
+<div style="display:flex;align-items:center;gap:10px"><div style="width:38px;height:38px;border-radius:10px;background:var(--rw-surface);border:1px solid var(--rw-border);display:flex;align-items:center;justify-content:center;color:var(--rw-ink)"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"></path></svg></div><div style="flex:1;height:38px;border-radius:9px;border:2px solid #01afaf;background:var(--rw-soft);position:relative"><div style="position:absolute;left:0;top:0;bottom:0;width:10px;background:#01afaf"></div><div style="position:absolute;right:0;top:0;bottom:0;width:10px;background:#01afaf"></div><div style="position:absolute;left:30%;top:-6px;bottom:-6px;width:2px;background:#e35e5e"></div></div></div>
+</sc-if>
+<div style="text-align:center;font-size:15px;font-weight:500;color:var(--rw-ink)">{{ ed.dur }}</div>
+</div>
+<div style="width:420px;flex:none;border-left:1px solid var(--rw-border);padding:22px;display:flex;flex-direction:column;gap:14px;position:relative">
+<div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px;color:var(--rw-muted)">Create a</span>
+<div onClick="{{ toggleDest }}" style="flex:1;height:40px;border-radius:10px;border:1px solid var(--rw-border);display:flex;align-items:center;gap:8px;padding:0 12px;cursor:pointer;color:var(--rw-ink);font-size:14px" style-hover="border-color:var(--rw-accent)"><span style="width:20px;height:20px;border-radius:6px;background:{{ ed.destC }};color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ ed.destIni }}</span><span style="flex:1">{{ ed.destLabel }}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"></path></svg></div>
+<div style="height:40px;padding:0 10px;border-radius:10px;border:1px solid var(--rw-border);display:flex;align-items:center;gap:6px"><span style="width:22px;height:22px;border-radius:6px;background:#fff3e0;color:#e65100;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center">D</span></div>
+</div>
+<sc-if value="{{ destOpen }}">
+<div style="position:absolute;left:90px;right:22px;top:68px;z-index:5;background:var(--rw-surface);border:1px solid var(--rw-border);border-radius:12px;box-shadow:var(--rw-pop);padding:6px;max-height:360px;overflow:auto">
+<sc-for list="{{ dests }}" as="d"><div onClick="{{ d.onClick }}" style="display:flex;align-items:center;gap:10px;height:38px;padding:0 10px;border-radius:8px;cursor:pointer;font-size:14px;color:var(--rw-body)" style-hover="background:var(--rw-surface2)"><span style="width:20px;height:20px;border-radius:6px;background:{{ d.c }};color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ d.ini }}</span><span style="flex:1">{{ d.label }}</span><sc-if value="{{ d.check }}"><span style="color:var(--rw-accent-ink)">✓</span></sc-if></div></sc-for>
+</div>
+</sc-if>
+<input value="{{ title }}" onChange="{{ onTitle }}" placeholder="Title" style="border:none;outline:none;background:transparent;font:600 20px Poppins,sans-serif;color:var(--rw-ink);margin-top:10px">
+<textarea value="{{ desc }}" onChange="{{ onDesc }}" placeholder="Write a description or @ to mention" style="flex:1;border:none;outline:none;background:transparent;resize:none;font-size:14px;color:var(--rw-body);line-height:1.5"></textarea>
+<div style="border-radius:10px;background:var(--rw-surface2);padding:10px 12px;font-size:12px;color:var(--rw-muted);line-height:1.5">Attached automatically: 13 events · 3 errors · 5 network requests · device info</div>
+<div style="display:flex;align-items:center;gap:12px"><div onClick="{{ attach }}" title="Attach" style="cursor:pointer;color:var(--rw-muted);font-size:16px">📎</div>
+<div onClick="{{ T.editorAI.flip }}" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:var(--rw-body)">AI summary<div style="width:38px;height:22px;border-radius:99px;background:{{ T.editorAI.bg }};position:relative;transition:background .15s"><div style="position:absolute;top:2px;left:{{ T.editorAI.left }};width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s"></div></div></div>
+<div style="flex:1"></div><div onClick="{{ create }}" style="height:40px;padding:0 18px;border-radius:10px;background:var(--rw-btn);color:var(--rw-btn-fg);font-weight:600;font-size:14px;display:flex;align-items:center;cursor:pointer" style-hover="background:var(--rw-btn-hover)">{{ ed.cta }}</div></div>
+</div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ rec }}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{ recV.countdown }}"><div onClick="{{ pauseCount }}" style="position:absolute;inset:0;z-index:80;background:rgba(20,30,30,.4);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;cursor:pointer"><div style="background:#1f2a2a;color:#fff;border-radius:16px;padding:26px 40px;text-align:center"><div style="font:600 22px Poppins,sans-serif">Preparing to record</div><div style="margin-top:10px;font-size:15px">Your microphone is <span style="color:{{ recV.micColor }};font-weight:600">{{ recV.micLabel }}</span>.</div><div style="margin-top:4px;font-size:14px;color:#b8c2c3">Click anywhere to pause the countdown</div></div></div></sc-if>
+<div style="position:absolute;left:50%;bottom:26px;transform:translateX(-50%);z-index:81;height:52px;border-radius:14px;background:#141a1a;border:1px solid #2c3638;display:flex;align-items:center;gap:6px;padding:0 10px;color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.35)">
+<div onClick="{{ stopRec }}" title="Stop" style="width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:#2c3638"><div style="width:16px;height:16px;border-radius:4px;background:#e35e5e"></div></div>
+<sc-if value="{{ recV.countdown }}"><span style="font-size:15px;font-weight:500;padding:0 12px;min-width:140px">Recording in {{ recV.count }}</span></sc-if>
+<sc-if value="{{ recV.recording }}"><span style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:500;padding:0 10px;font-variant-numeric:tabular-nums;min-width:90px"><span style="width:8px;height:8px;border-radius:50%;background:{{ recV.dot }};animation:rwpulse 1.2s infinite"></span>{{ recV.time }}</span></sc-if>
+<div onClick="{{ pauseCount }}" title="{{ recV.pauseLabel }}" style="width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:#2c3638"><sc-if value="{{ recV.running }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M6 4h4v16H6zM14 4h4v16h-4z"></path></svg></sc-if><sc-if value="{{ recV.paused }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M7 4l13 8-13 8z"></path></svg></sc-if></div>
+<div onClick="{{ toggleRecMic }}" title="Microphone" style="width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:{{ recV.micOp }}" style-hover="background:#2c3638"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5 11a7 7 0 0 0 14 0M12 18v3"></path></svg></div>
+<div style="width:1px;height:22px;background:#2c3638"></div>
+<div onClick="{{ drawTool }}" title="Draw" style="width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:#2c3638"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"><path d="M4 20l4-1 11-11-3-3L5 16zM14 6l3 3"></path></svg></div>
+<div onClick="{{ cancelRec }}" title="Discard" style="width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:#2c3638"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></div>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{ ext }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ toggleExt }}" style="position:absolute;inset:46px 0 0 0;z-index:74"></div>
+<div style="position:absolute;top:52px;right:44px;width:390px;z-index:75;background:var(--rw-surface);border:1px solid var(--rw-border);border-radius:16px;box-shadow:var(--rw-pop);font-size:14px;color:var(--rw-body)">
+<sc-if value="{{ extHome }}">
+<div style="display:flex;align-items:center;gap:8px;padding:14px 16px 10px">
+<svg width="22" height="22" viewBox="0 0 24 24"><path d="M11 5L3 12l8 7zM21 5l-8 7 8 7z" fill="#01afaf"></path></svg><span style="font:700 17px Poppins,sans-serif;color:var(--rw-ink);flex:1">rewind</span>
+<sc-if value="{{ hasDrafts }}"><div onClick="{{ extToDrafts }}" style="height:28px;padding:0 10px;border-radius:99px;background:var(--rw-soft);color:var(--rw-accent-ink);border:1px solid var(--rw-accent);font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;cursor:pointer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2"></path></svg>{{ draftLabel }}</div></sc-if>
+<div onClick="{{ extOpenApp }}" title="Open web app" style="width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--rw-muted)" style-hover="background:var(--rw-surface2)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9H4z"></path></svg></div>
+<div onClick="{{ toggleExtMenu }}" style="width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--rw-muted);font-weight:700;letter-spacing:1px" style-hover="background:var(--rw-surface2)">•••</div>
+</div>
+<sc-if value="{{ extMenu }}">
+<div style="position:absolute;right:12px;top:50px;width:230px;z-index:3;background:var(--rw-surface);border:1px solid var(--rw-border);border-radius:12px;box-shadow:var(--rw-pop);padding:6px">
+<div onClick="{{ extToSettings }}" style="padding:9px 10px;border-radius:8px;cursor:pointer" style-hover="background:var(--rw-surface2)">Settings</div>
+<div onClick="{{ extDocs }}" style="padding:9px 10px;border-radius:8px;cursor:pointer" style-hover="background:var(--rw-surface2)">Docs</div>
+<div onClick="{{ extHelp }}" style="padding:9px 10px;border-radius:8px;cursor:pointer" style-hover="background:var(--rw-surface2)">Help</div>
+<div style="height:1px;background:var(--rw-border);margin:4px 6px"></div>
+<div onClick="{{ extRestart }}" style="padding:9px 10px;border-radius:8px;cursor:pointer" style-hover="background:var(--rw-surface2)">Restart extension</div>
+<div onClick="{{ extReport }}" style="padding:9px 10px;border-radius:8px;cursor:pointer" style-hover="background:var(--rw-surface2)">Report an issue</div>
+</div>
+</sc-if>
+<div style="padding:4px 12px 14px;display:flex;flex-direction:column;gap:8px">
+<div style="border:1px solid var(--rw-border);border-radius:12px">
+<div style="display:flex;align-items:center;height:48px">
+<div onClick="{{ shot }}" style="flex:1;display:flex;align-items:center;gap:10px;height:100%;padding:0 14px;cursor:pointer;font-weight:500;color:var(--rw-ink);border-radius:12px 0 0 0" style-hover="background:var(--rw-surface2)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"></path></svg>Capture screenshot</div>
+<div onClick="{{ toggleShot }}" style="width:46px;height:100%;border-left:1px solid var(--rw-border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--rw-muted)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"></path></svg></div>
+</div>
+<sc-if value="{{ shotOpen }}"><div style="display:flex;align-items:center;padding:10px 14px;border-top:1px solid var(--rw-border)"><span style="flex:1;color:var(--rw-muted)">Time delay</span><div style="display:flex;padding:3px;border-radius:8px;background:var(--rw-surface2);gap:2px"><sc-for list="{{ delaySeg }}" as="v"><div onClick="{{ v.onClick }}" style="padding:4px 12px;border-radius:6px;font-size:13px;cursor:pointer;background:{{ v.bg }};color:{{ v.fg }};box-shadow:{{ v.sh }}">{{ v.label }}</div></sc-for></div></div></sc-if>
+</div>
+<div style="border:1px solid var(--rw-border);border-radius:12px;position:relative">
+<div style="display:flex;align-items:center;height:48px">
+<div onClick="{{ startRec }}" style="flex:1;display:flex;align-items:center;gap:10px;height:100%;padding:0 14px;cursor:pointer;font-weight:500;color:var(--rw-ink);border-radius:12px 0 0 0" style-hover="background:var(--rw-surface2)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 4h18v12H3zM8 20h8M12 16v4"></path></svg>Record desktop</div>
+<div onClick="{{ toggleMicOn }}" style="height:28px;padding:0 10px;margin-right:8px;border-radius:8px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:4px;cursor:pointer;background:var(--rw-soft);color:var(--rw-accent-ink)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5 11a7 7 0 0 0 14 0M12 18v3"></path></svg><sc-if value="{{ micOn }}">On</sc-if><sc-if value="{{ micOff }}">Off</sc-if></div>
+<div onClick="{{ toggleRecOpen }}" style="width:46px;height:100%;border-left:1px solid var(--rw-border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--rw-muted)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"></path></svg></div>
+</div>
+<sc-if value="{{ recOpen }}">
+<div style="display:flex;align-items:center;padding:10px 14px;border-top:1px solid var(--rw-border)"><span style="flex:1;color:var(--rw-muted)">Record area</span><div style="height:30px;padding:0 12px;border-radius:8px;border:1px solid var(--rw-border);display:flex;align-items:center;font-size:13px;color:var(--rw-ink)">Desktop</div></div>
+<div onClick="{{ toggleMic }}" style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--rw-border);cursor:pointer"><span style="color:var(--rw-muted)">Microphone</span><span style="flex:1;text-align:right;color:var(--rw-ink);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ mic }}</span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"></path></svg></div>
+</sc-if>
+<sc-if value="{{ micOpen }}"><div style="position:absolute;left:10px;right:10px;top:100%;margin-top:-6px;z-index:3;background:var(--rw-surface);border:1px solid var(--rw-border);border-radius:12px;box-shadow:var(--rw-pop);padding:6px"><sc-for list="{{ mics }}" as="m"><div onClick="{{ m.onClick }}" style="display:flex;gap:8px;padding:9px 10px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--rw-body)" style-hover="background:var(--rw-surface2)"><span style="width:14px;color:var(--rw-accent-ink)"><sc-if value="{{ m.check }}">✓</sc-if></span>{{ m.label }}</div></sc-for></div></sc-if>
+</div>
+<div onClick="{{ extLink }}" style="border:1px solid var(--rw-border);border-radius:12px;height:48px;display:flex;align-items:center;gap:10px;padding:0 14px;cursor:pointer;font-weight:500;color:var(--rw-ink)" style-hover="background:var(--rw-surface2)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"></path></svg><span style="flex:1">Create recording link</span><span style="font-size:12px;color:var(--rw-hint)">No install needed</span></div>
+</div>
+</sc-if>
+<sc-if value="{{ extDrafts }}">
+<div style="display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--rw-border)"><div onClick="{{ extToHome }}" style="cursor:pointer;color:var(--rw-muted);font-size:18px">←</div><span style="font:600 17px Poppins,sans-serif;color:var(--rw-ink)">Drafts</span></div>
+<div style="padding:14px 16px">
+<sc-if value="{{ hasDrafts }}"><div style="display:flex;align-items:center;gap:12px"><div style="width:64px;height:40px;border-radius:6px;background:oklch(0.955 0.025 190);border:1px solid var(--rw-border)"></div><div style="flex:1;min-width:0"><div style="font-weight:500;color:var(--rw-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">shop.acme.co/cart</div><div style="font-size:12px;color:var(--rw-muted)">1:04 · 16 Sep</div></div><div onClick="{{ viewDraft }}" style="height:32px;padding:0 14px;border-radius:9px;background:var(--rw-btn);color:var(--rw-btn-fg);font-weight:600;font-size:13px;display:flex;align-items:center;cursor:pointer">Open</div><div onClick="{{ deleteDraft }}" title="Delete" style="cursor:pointer;color:var(--rw-muted)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></div></div></sc-if>
+<sc-if value="{{ noDrafts }}"><div style="text-align:center;color:var(--rw-muted);padding:16px 0">No unfinished drafts</div></sc-if>
+</div>
+</sc-if>
+<sc-if value="{{ extSettings }}">
+<div style="display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--rw-border)"><div onClick="{{ extToHome }}" style="cursor:pointer;color:var(--rw-muted);font-size:18px">←</div><span style="font:600 17px Poppins,sans-serif;color:var(--rw-ink)">Settings</span></div>
+<div style="max-height:460px;overflow:auto;padding:4px 16px 16px;display:flex;flex-direction:column">
+<div style="font:600 15px Poppins,sans-serif;color:var(--rw-ink);padding:12px 0 4px">General</div>
+<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--rw-border)"><span style="flex:1;color:var(--rw-ink)">Open Rewinds in a new tab</span><div onClick="{{ T.extNewTab.flip }}" style="width:38px;height:22px;border-radius:99px;background:{{ T.extNewTab.bg }};position:relative;cursor:pointer;flex:none;transition:background .15s"><div style="position:absolute;top:2px;left:{{ T.extNewTab.left }};width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s"></div></div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--rw-border)"><div style="flex:1"><div style="color:var(--rw-ink)">Capture user events</div><div style="font-size:12px;color:var(--rw-muted);margin-top:2px">Clicks, navigation and input</div></div><div onClick="{{ T.extEvents.flip }}" style="width:38px;height:22px;border-radius:99px;background:{{ T.extEvents.bg }};position:relative;cursor:pointer;flex:none;transition:background .15s"><div style="position:absolute;top:2px;left:{{ T.extEvents.left }};width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s"></div></div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--rw-border)"><span style="flex:1;color:var(--rw-ink)">Appearance</span><div style="display:flex;padding:3px;border-radius:8px;background:var(--rw-surface2);gap:2px"><sc-for list="{{ themeSeg }}" as="v"><div onClick="{{ v.onClick }}" style="padding:4px 12px;border-radius:6px;font-size:13px;cursor:pointer;background:{{ v.bg }};color:{{ v.fg }};box-shadow:{{ v.sh }}">{{ v.label }}</div></sc-for></div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:10px 0"><span style="flex:1;color:var(--rw-ink)">Keyboard shortcuts</span><div onClick="{{ extShortcuts }}" style="height:30px;padding:0 12px;border-radius:8px;background:var(--rw-surface2);display:flex;align-items:center;font-size:13px;cursor:pointer;color:var(--rw-ink)">Edit ↗</div></div>
+<div style="font:600 15px Poppins,sans-serif;color:var(--rw-ink);padding:16px 0 4px">Instant replay</div>
+<div style="display:flex;align-items:center;gap:12px;padding:10px 0"><div style="flex:1"><div style="color:var(--rw-ink)">Enable instant replay</div><div style="font-size:12px;color:var(--rw-muted);margin-top:2px">Capture a bug right after it happens</div></div><div onClick="{{ T.extReplay.flip }}" style="width:38px;height:22px;border-radius:99px;background:{{ T.extReplay.bg }};position:relative;cursor:pointer;flex:none;transition:background .15s"><div style="position:absolute;top:2px;left:{{ T.extReplay.left }};width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s"></div></div></div>
+<div style="border-radius:10px;background:var(--rw-soft);padding:12px;font-size:12px;line-height:1.5;color:var(--rw-body)"><b style="color:var(--rw-ink)">How it works</b><br>Rewind keeps the last 2 minutes of snapshots on your computer. They stay local and are deleted on a rolling basis.</div>
+<div style="font:600 15px Poppins,sans-serif;color:var(--rw-ink);padding:16px 0 4px">Troubleshooting</div>
+<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--rw-border)"><span style="flex:1;color:var(--rw-ink)">Send error logs to Rewind</span><div onClick="{{ T.extErrors.flip }}" style="width:38px;height:22px;border-radius:99px;background:{{ T.extErrors.bg }};position:relative;cursor:pointer;flex:none;transition:background .15s"><div style="position:absolute;top:2px;left:{{ T.extErrors.left }};width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s"></div></div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:10px 0"><div style="flex:1"><div style="color:var(--rw-ink)">Reset extension</div><div style="font-size:12px;color:var(--rw-muted);margin-top:2px">Restore all settings to default</div></div><div onClick="{{ extReset }}" style="height:32px;padding:0 14px;border-radius:9px;background:#c70036;color:#fff;font-weight:600;font-size:13px;display:flex;align-items:center;cursor:pointer">Reset</div></div>
+</div>
+</sc-if>
+</div>
+</sc-if>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;startRoute&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;all&quot;,&quot;viewer&quot;,&quot;links&quot;,&quot;helpdesk&quot;,&quot;settings&quot;],&quot;default&quot;:&quot;all&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;darkMode&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;showBrowserChrome&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const IC={grid:"M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z",link:"M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1",headset:"M4 15v-3a8 8 0 0 1 16 0v3M4 14h3v6H4zM17 14h3v6h-3z",sliders:"M4 7h10M18 7h2M4 17h4M12 17h8M16 5v4M10 15v4",users:"M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21a7 7 0 0 1 14 0M16 3.5a4 4 0 0 1 0 7.5M22 21a7 7 0 0 0-5-6.7",card:"M3 6h18v12H3zM3 10h18M7 15h4",code:"M8 8l-4 4 4 4M16 8l4 4-4 4M14 5l-4 14",spark:"M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z",term:"M4 5h16v14H4zM8 10l3 2-3 2M13 15h3",hook:"M9 7a3 3 0 1 1 4.5 2.6L16 14M6.5 12.5a3 3 0 1 0 3 5.2h6M17.5 18a3 3 0 1 0-1.5-5.6",bell:"M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 21h4",user:"M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0",msg:"M4 5h16v11H9l-5 4z",life:"M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM5.6 5.6l3.6 3.6M14.8 14.8l3.6 3.6M18.4 5.6l-3.6 3.6M9.2 14.8l-3.6 3.6",doc:"M6 3h9l4 4v14H6zM9 12h6M9 16h6",shield:"M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z",pulse:"M3 12h4l3-7 4 14 3-7h4",dollar:"M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM15 9c-.5-1-1.6-1.5-3-1.5-1.7 0-3 .8-3 2s1.3 1.7 3 2 3 .8 3 2-1.3 2-3 2c-1.4 0-2.5-.5-3-1.5M12 6v1.5M12 16.5V18",book:"M4 5a2 2 0 0 1 2-2h14v16H6a2 2 0 0 0-2 2zM4 21V5",dl:"M12 4v11M7 10l5 5 5-5M4 20h16",chrome:"M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM12 8.5h8.5M9 13.7L4.8 6.3M15 13.7L10.8 21",phone:"M7 3h10v18H7zM11 18h2"};
+const LT='\u003c';
+const EV=[{t:0,k:'nav',txt:'Navigated to shop.acme.co/cart'},{t:2,k:'click',txt:'Clicked “Coupon code” field'},{t:4,k:'net',txt:'GET /api/cart · 200 · 92ms'},{t:7,k:'input',txt:'Typed “SPRING25”, clicked Apply'},{t:9,k:'net',txt:'POST /api/coupon · 200 · 142ms'},{t:12,k:'click',txt:'Clicked “Checkout”'},{t:14,k:'log',txt:'checkout:start { items: 3, coupon: "SPRING25" }'},{t:17,k:'net',txt:'POST /api/checkout · 500 · 1.2s',err:1},{t:18,k:'err',txt:"TypeError: Cannot read properties of undefined (reading 'total')",err:1},{t:21,k:'warn',txt:'Retrying payment intent (1/3)'},{t:26,k:'click',txt:'Clicked “Try again”'},{t:28,k:'net',txt:'POST /api/checkout · 500 · 1.1s',err:1},{t:34,k:'nav',txt:'Navigated to shop.acme.co/cart'}];
+const DUR=42;
+const KEYS=[[0,40,40],[2,76,40],[5,76,40],[7,88,40],[9,76,62],[12,76,80],[17,76,80],[22,60,50],[26,76,80],[30,76,80],[34,25,20],[42,25,20]];
+const PEOPLE={'Maya Chen':'#01afaf','Dhiaz Fathra':'#3538cd','Leo Park':'#e65100','Sara Ali':'#a65f00'};
+const JAMS=[{id:'r1',title:'Checkout fails after applying coupon',url:'shop.acme.co/cart',by:'Maya Chen',ago:'12 min ago',dur:'0:42',status:'new',sig:'total',errs:3,hue:190,folder:'Checkout'},{id:'r2',title:'Coupon total shows NaN on mobile',url:'m.acme.co/cart',by:'Sara Ali',ago:'1 h ago',dur:'0:31',status:'new',sig:'total',errs:2,hue:190,folder:'Mobile web'},{id:'r3',title:'Checkout button spins forever',url:'shop.acme.co/checkout',by:'Leo Park',ago:'3 h ago',dur:'1:04',status:'triage',sig:'total',errs:4,hue:190,folder:'Checkout'},{id:'r4',title:'Avatar upload crops the wrong side',url:'app.acme.co/settings/profile',by:'Dhiaz Fathra',ago:'Yesterday',dur:'shot',status:'progress',sig:'a',errs:0,hue:30,folder:'Q3 regressions'},{id:'r5',title:'Search results flash empty state',url:'app.acme.co/search?q=invoice',by:'Maya Chen',ago:'Yesterday',dur:'0:18',status:'triage',sig:'b',errs:1,hue:260,folder:'Q3 regressions'},{id:'r6',title:'Dark mode toggle resets on reload',url:'app.acme.co/preferences',by:'Leo Park',ago:'2 days ago',dur:'0:22',status:'done',sig:'c',errs:0,hue:150,folder:'Q3 regressions'},{id:'r7',title:'Invoice PDF missing tax line',url:'app.acme.co/billing/inv-2231',by:'Sara Ali',ago:'3 days ago',dur:'shot',status:'new',sig:'d',errs:0,hue:60,folder:'Checkout'},{id:'r8',title:'Date picker off by one day in Safari',url:'app.acme.co/bookings/new',by:'Dhiaz Fathra',ago:'4 days ago',dur:'0:37',status:'progress',sig:'e',errs:1,hue:330,folder:'Mobile web'}];
+const COLS=[['new','New','#3538cd'],['triage','Triaging','#a65f00'],['progress','In progress','#e65100'],['done','Fixed','#248a3d']];
+const TONE={new:['New','indigo'],triage:['Triaging','amber'],progress:['In progress','peach'],done:['Fixed','green']};
+const DESTS=[['link','Link to share','#01afaf'],['linear','Linear','#5e6ad2'],['jira','Jira','#2684ff'],['github','GitHub','#333'],['slack','Slack','#4a154b'],['gitlab','GitLab','#fc6d26'],['notion','Notion','#333'],['asana','Asana','#f06a6a'],['clickup','ClickUp','#7b68ee']];
+const INTEG=[['Claude','Analyze Rewinds and draft implementation plans','#d97757'],['ChatGPT','Summarize and suggest fixes from Rewinds','#10a37f'],['Linear','Create issues with full debug context','#5e6ad2'],['Jira','Structured tickets with logs and repro steps','#2684ff'],['Slack','Share and triage issues with your team','#4a154b'],['GitHub','Open issues linked to your codebase','#333'],['ClickUp','Turn recordings into actionable tasks','#7b68ee'],['Notion','Embed and document bugs or feedback','#333'],['Azure DevOps','Log bugs with session-level context','#0078d4'],['GitLab','Issues alongside your repos and pipelines','#fc6d26'],['Asana','Track bugs and requests as tasks','#f06a6a'],['Intercom','Capture and escalate customer issues','#1f8ded'],['Sentry','Attach visual context to errors','#362d59']];
+const AGENTS=[['Claude Code','Analyze Rewinds and generate implementation plans','#d97757','claude mcp add rewind https://mcp.rewind.dev/mcp -t http -s user'],['Cursor','Connect your codebase, write fixes and open PRs','#333','cursor://install-mcp?name=rewind&url=https://mcp.rewind.dev/mcp'],['Codex','Summarize, analyze and suggest fixes','#10a37f','codex mcp add rewind --url https://mcp.rewind.dev/mcp'],['VS Code','Analyze and fix issues without leaving your IDE','#0078d4','code --add-mcp \'{"name":"rewind","url":"https://mcp.rewind.dev/mcp"}\''],['Other apps','Any client that supports Streamable HTTP','#737577','{\n  "mcpServers": {\n    "rewind": { "url": "https://mcp.rewind.dev/mcp" }\n  }\n}']];
+const COMMENTS=[{t:18,x:70,y:18,who:'Leo Park',txt:'This is the 500 from /api/checkout. Coupon object is null after apply.'},{t:27,x:78,y:84,who:'Maya Chen',txt:'Try again hits the same error.'}];
+const SC='scr'+'ipt';
+const SDK={html:LT+'meta name="rewind:team" content="69c0e36e-b9be-4ee8" />\n'+LT+SC+' type="module" src="https://js.rewind.dev/recorder.js">'+LT+'/'+SC+'>\n'+LT+SC+' type="module" src="https://js.rewind.dev/capture.js">'+LT+'/'+SC+'>',next:'// app/layout.tsx\nimport Script from "next/script";\n\n'+LT+'Script src="https://js.rewind.dev/recorder.js" type="module" />\n'+LT+'Script src="https://js.rewind.dev/capture.js" type="module" />',angular:'// angular.json → build.options\n"scripts": [\n  "https://js.rewind.dev/recorder.js",\n  "https://js.rewind.dev/capture.js"\n]',gtm:'1. Tags → New → Custom HTML\n2. Paste the HTML snippet\n3. Trigger: All Pages → Submit → Publish',other:'npm install @rewind.dev/sdk\n\nimport { rewind } from "@rewind.dev/sdk";\nrewind.init({ team: "69c0e36e-b9be-4ee8" });'};
+const SERVICES=['Website','API','Chrome extension','Recording links','Linear integration','Jira integration','SSO'];
+const LS='rewind-proto-v1';const PERSIST=['linksOnboard','domainSeen','firstName','lastName','wsName','otherWs','extraFolders','inviteCode','delFolders','folderNames'];
+const fmt=t=>{t=Math.floor(t);return Math.floor(t/60)+':'+String(t%60).padStart(2,'0')};
+const ini=n=>n.split(' ').map(w=>w[0]).join('').slice(0,2);
+class Component extends DCLogic {
+  state={route:'all',stab:'general',view:'grid',jams:JAMS.map(j=>({...j})),sel:'r1',t:0,playing:false,vtab:'ai',ext:null,extMenu:false,shotOpen:true,recOpen:true,delay:'off',micOpen:false,mic:'Default – MacBook Pro Microphone',micOn:true,rec:null,recCount:3,recSec:0,recPaused:false,editor:false,editorKind:'video',dest:'link',destOpen:false,title:'',desc:'',palette:false,pq:'',help:false,installSub:false,support:null,invite:false,inviteEmail:'',inviteRole:'Creator',invited:false,pricing:false,linksOnboard:true,domain:false,domStep:0,tg:{inviteLink:true,restrict:false,ai:true,sso:false,autodel:false,audit:false,n1:true,n2:true,n3:true,n4:false,n5:true,extNewTab:true,extEvents:true,extReplay:false,extErrors:true,yearly:true,editorAI:true,group:true},connected:{Linear:true,Slack:true},sdkFw:'html',cliOs:'mac',cliAuth:'oauth',mcpModal:null,tokenModal:false,tokenName:'',tokens:[],toast:null,checkOpen:false,comments:COMMENTS,draft:null,draftTxt:'',cmode:false,links:[{name:'Support: checkout issues',made:'Sep 18',count:6},{name:'Beta testers',made:'Sep 2',count:14}],integQ:'',fold:null,dark:false,drafts:1,wsName:"Dhiaz's Workspace",chat:[],chatTxt:'',wsMenu:false,wsSub:false,wsModal:false,newWsName:'',joinLink:'',otherWs:[],loggedOut:false,domainSeen:false,avatar:null,wsLogos:{},firstName:'Dhiaz',lastName:'Fathra',extraFolders:[],inviteCode:'RsSg6prV8T8'};
+  componentDidMount(){
+    const p=this.props||{};const o={};try{const sv=JSON.parse(localStorage.getItem(LS)||'{}');PERSIST.forEach(k=>{if(sv[k]!==undefined&&sv[k]!==null)o[k]=sv[k];});}catch(e){}if(p.startRoute)o.route=p.startRoute;if(p.darkMode)o.dark=true;if(Object.keys(o).length)this.setState(o);
+    document.body.classList.toggle('rw-dark',!!o.dark);
+    this.iv=setInterval(()=>{const s=this.state;
+      if(s.playing){const t=Math.min(DUR,s.t+0.25);this.setState({t,playing:t<DUR});}
+      if(s.rec==='countdown'&&!s.recPaused){this._c=(this._c||0)+1;if(this._c>=4){this._c=0;if(s.recCount<=1)this.setState({rec:'recording',recSec:0});else this.setState({recCount:s.recCount-1});}}
+      if(s.rec==='recording'&&!s.recPaused){this._r=(this._r||0)+1;if(this._r>=4){this._r=0;this.setState({recSec:s.recSec+1});}}
+    },250);
+    this.kd=e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();this.setState(s=>({palette:!s.palette,pq:''}));}
+      if(e.key==='Escape')this.setState({palette:false,ext:null,help:false,invite:false,pricing:false,mcpModal:null,tokenModal:false,destOpen:false,support:null,draft:null,domain:false,extMenu:false,micOpen:false,wsMenu:false,wsSub:false,wsModal:false});};
+    window.addEventListener('keydown',this.kd);
+  }
+  componentDidUpdate(pp,ps){const sv={};PERSIST.forEach(k=>sv[k]=this.state[k]);const js=JSON.stringify(sv);if(js!==this._sv){this._sv=js;try{localStorage.setItem(LS,js);}catch(e){}}if(ps&&ps.dark!==this.state.dark)document.body.classList.toggle('rw-dark',this.state.dark);if(pp&&this.props&&pp.darkMode!==this.props.darkMode)this.setState({dark:!!this.props.darkMode});if(pp&&this.props&&pp.startRoute!==this.props.startRoute&&this.props.startRoute)this.setState({route:this.props.startRoute});}
+  componentWillUnmount(){clearInterval(this.iv);window.removeEventListener('keydown',this.kd);clearTimeout(this.tt);document.body.classList.remove('rw-dark');}
+  toast(m,undo){this.undoFn=undo||null;this.setState({toast:m,toastUndo:!!undo});clearTimeout(this.tt);this.tt=setTimeout(()=>{this.undoFn=null;this.setState({toast:null,toastUndo:false});},undo?5000:2400);}
+  copyText(txt,msg){const fb=()=>{try{const ta=document.createElement('textarea');ta.value=txt;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;left:-9999px;top:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();}catch(x){}};try{if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(txt).catch(fb);else fb();}catch(x){fb();}this.toast(msg||'Copied to clipboard');}
+  readImg(e,cb){const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;if(!/^image\//.test(f.type)){this.toast('Choose an image file');return;}const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const S=256,c=document.createElement('canvas');c.width=c.height=S;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,S,S);const k=Math.min(im.width,im.height);x.drawImage(im,(im.width-k)/2,(im.height-k)/2,k,k,0,0,S,S);let u;try{u=c.toDataURL('image/jpeg',0.86);}catch(z){u=r.result;}cb(u);};im.onerror=()=>this.toast("Couldn't read that image");im.src=r.result;};r.readAsDataURL(f);}
+  delJam(id){const s=this.state;const idx=s.jams.findIndex(j=>j.id===id);if(idx<0)return;const j=s.jams[idx];const wasView=s.route==='viewer'&&s.sel===id;this.setState(st=>({jams:st.jams.filter(x=>x.id!==id),route:wasView?'all':st.route,playing:false}));this.toast('Rewind deleted',()=>this.setState(st=>{const a=[...st.jams];a.splice(Math.min(idx,a.length),0,j);return wasView?{jams:a,route:'viewer',sel:id}:{jams:a};}));}
+  open(id){this.setState({route:'viewer',sel:id,t:0,playing:false,vtab:'ai',palette:false,draft:null,cmode:false,ext:null});}
+  renderVals(){
+    const s=this.state,set=o=>this.setState(o),T={},self=this,P=this.props||{};const fullName=(s.firstName+' '+s.lastName).trim()||'You';const userIni=(ini(fullName)||'U').toUpperCase();const wsLogo=s.wsLogos[s.wsName]||null;
+    if(typeof document!=='undefined'&&document.body.classList.contains('rw-dark')!==!!s.dark)document.body.classList.toggle('rw-dark',!!s.dark);
+    Object.keys(s.tg).forEach(k=>{const on=s.tg[k];T[k]={bg:on?'var(--rw-accent)':'var(--rw-off)',left:on?'18px':'2px',flip:()=>this.setState(st=>({tg:{...st.tg,[k]:!st.tg[k]}}))};});
+    const close={help:false,installSub:false,palette:false,ext:null,extMenu:false,pricing:false,support:null,wsMenu:false,wsSub:false};
+    const go=(r,x)=>()=>set({...close,route:r,...(x||{})});
+    const is={all:s.route==='all',links:s.route==='links',helpdesk:s.route==='helpdesk',viewer:s.route==='viewer',settings:s.route==='settings',app:s.route!=='settings',board:s.view==='board',grid:s.view==='grid',list:s.view==='list'};
+    const st={};['general','members','billing','integrations','sdk','mcp','cli','webhooks','account','notifications'].forEach(k=>st[k]=s.stab===k);
+    const act=a=>({bg:a?'var(--rw-soft)':'transparent',fg:a?'var(--rw-accent-ink)':'var(--rw-body)',fw:a?'600':'500'});
+    const nav=[['all','All Rewinds',IC.grid],['links','Recording links',IC.link],['helpdesk','Helpdesk',IC.headset]].map(([k,l,d])=>({label:l,d,...act((s.route===k&&!(k==='all'&&s.fold))||(k==='all'&&s.route==='viewer')),onClick:go(k,{fold:null})}));
+    const fcol={'Checkout':'#01afaf','Mobile web':'#3538cd','Q3 regressions':'#e65100'};s.extraFolders.forEach((f,i)=>fcol[f]=['#a65f00','#248a3d','#5e6ad2','#c70036'][i%4]);
+    const folders=Object.keys(fcol).filter(f=>!(s.delFolders||[]).includes(f)).map(f=>({label:f,dot:fcol[f],n:s.jams.filter(j=>j.folder===f).length,...act(s.route==='all'&&s.fold===f),onClick:go('all',{fold:f,fctx:null}),label:(s.folderNames||{})[f]||f,menu:s.fctx&&s.fctx.f===f,mx:s.fctx?s.fctx.x:0,editing:s.fedit===f,notEditing:s.fedit!==f,draft:s.fdraft,stop:e=>e.stopPropagation(),
+ctx:e=>{e.preventDefault();e.stopPropagation();const b=e.currentTarget.getBoundingClientRect();set({fctx:{f,x:Math.max(0,Math.min(e.clientX-b.left,b.width-160))}});},
+closeMenu:e=>{e.preventDefault();e.stopPropagation();set({fctx:null});},
+rename:e=>{e.stopPropagation();set({fctx:null,fedit:f,fdraft:(s.folderNames||{})[f]||f});},
+onDraft:e=>set({fdraft:e.target.value}),
+commit:()=>{if(this.state.fedit!==f)return;const v=(this.state.fdraft||'').trim();this.setState(st=>({fedit:null,folderNames:v?{...(st.folderNames||{}),[f]:v}:st.folderNames}));},
+onKey:e=>{if(e.key==='Enter'){e.target.blur();}else if(e.key==='Escape'){set({fedit:null});}},
+del:e=>{e.stopPropagation();const nm=(s.folderNames||{})[f]||f;const snap={delFolders:s.delFolders||[],extraFolders:s.extraFolders,jams:s.jams,fold:s.fold};this.setState(st=>({fctx:null,delFolders:[...(st.delFolders||[]),f],extraFolders:st.extraFolders.filter(x=>x!==f),jams:st.jams.map(j=>j.folder===f?{...j,folder:null}:j),fold:st.fold===f?null:st.fold}));this.toast('Folder “'+nm+'” deleted',()=>{const ids=snap.jams.filter(j=>j.folder===f).map(j=>j.id);this.setState(st=>({delFolders:(st.delFolders||[]).filter(x=>x!==f),extraFolders:snap.extraFolders.includes(f)&&!st.extraFolders.includes(f)?[...st.extraFolders,f]:st.extraFolders,jams:st.jams.map(j=>ids.includes(j.id)?{...j,folder:f}:j),fold:snap.fold===f?f:st.fold}));});}}));
+    const grp=(title,items)=>({title,items:items.map(([k,l,d])=>({label:l,d,...act(s.stab===k),onClick:()=>set({stab:k})}))});
+    const snav=[grp('Workspace',[['general','General',IC.sliders],['members','Members',IC.users],['billing','Billing',IC.card]]),grp('Apps & tools',[['integrations','Integrations',IC.grid],['sdk','Rewind SDK',IC.code],['mcp','MCP',IC.spark],['cli','CLI',IC.term],['webhooks','Webhooks',IC.hook]]),grp('Account',[['account',fullName,IC.user],['notifications','Notifications',IC.bell]])];
+    const stitle={general:'General',members:'Members',billing:'Billing',integrations:'Integrations',sdk:'Rewind SDK',mcp:'MCP',cli:'CLI',webhooks:'Webhooks',account:'Your account',notifications:'Notifications'}[s.stab];
+    const deco=j=>({...j,open:()=>this.open(j.id),ctx:e=>{e.preventDefault();e.stopPropagation();set({jctx:{id:j.id,x:Math.min(e.clientX,window.innerWidth-176),y:Math.min(e.clientY,window.innerHeight-80)}});},hoverIn:()=>{if(this.state.jhover!==j.id)set({jhover:j.id});},hoverOut:()=>{if(this.state.jhover===j.id)set({jhover:null});},copyOp:s.jhover===j.id?1:0,copyPe:s.jhover===j.id?'auto':'none',copy:e=>{e.stopPropagation();this.copyText('https://app.rewind.dev/r/'+j.id,'Link copied · app.rewind.dev/r/'+j.id);},editing:s.jedit===j.id,notEditing:s.jedit!==j.id,draft:s.jdraft||'',onDraft:e=>set({jdraft:e.target.value}),onKey:e=>{if(e.key==='Enter'){e.target.blur();}else if(e.key==='Escape'){set({jedit:null});}},commit:()=>{if(this.state.jedit!==j.id)return;const v=(this.state.jdraft||'').trim();this.setState(st=>({jedit:null,jams:v?st.jams.map(x=>x.id===j.id?{...x,title:v}:x):st.jams}));},stop:e=>e.stopPropagation(),thumb:s.dark?`oklch(0.32 0.04 ${j.hue})`:`oklch(0.955 0.025 ${j.hue})`,accentC:`oklch(0.7 0.09 ${j.hue})`,statusLabel:TONE[j.status][0],tone:TONE[j.status][1],initials:ini(j.by),avBg:PEOPLE[j.by],durLabel:j.dur==='shot'?'Screenshot':j.dur,hasErr:j.errs>0,errLabel:j.errs+(j.errs===1?' error':' errors'),onDrag:e=>{self.drag=j.id;try{e.dataTransfer.setData('text/plain',j.id);}catch(x){}},stacked:false,shadow:'none',stackLabel:''});
+    const base=s.jams.filter(j=>!s.fold||j.folder===s.fold).map(deco);
+    let grid=base;
+    if(s.tg.group){const seen={};grid=[];base.forEach(j=>{const n=base.filter(x=>x.sig===j.sig).length;if(n>1){if(seen[j.sig])return;seen[j.sig]=1;grid.push({...j,stacked:true,stackLabel:n+' similar',shadow:'6px -6px 0 -1px var(--rw-surface), 6px -6px 0 0 var(--rw-border), 12px -12px 0 -2px var(--rw-surface), 12px -12px 0 -1px var(--rw-border)'});}else grid.push(j);});}
+    const cols=COLS.map(([k,l,c])=>{const items=base.filter(j=>j.status===k);return {label:l,dot:c,count:items.length,items,empty:items.length===0,onOver:e=>e.preventDefault(),onDrop:e=>{e.preventDefault();const id=self.drag;if(!id)return;self.drag=null;self.setState(st2=>({jams:st2.jams.map(j=>j.id===id?{...j,status:k}:j)}));self.toast('Moved to '+l);}};});
+    const seg=(opts,cur,fn)=>opts.map(([k,l])=>({label:l,bg:cur===k?'var(--rw-surface)':'transparent',fg:cur===k?'var(--rw-ink)':'var(--rw-muted)',sh:cur===k?'0 1px 2px rgba(0,0,0,.12)':'none',onClick:()=>fn(k)}));
+    const viewSeg=seg([['grid','Grid'],['board','Board'],['list','List']],s.view,k=>set({view:k}));
+    const themeSeg=seg([['light','Light'],['dark','Dark']],s.dark?'dark':'light',k=>set({dark:k==='dark'}));
+    const jam=s.jams.find(j=>j.id===s.sel)||s.jams[0],t=s.t;
+    let cx=KEYS[0][1],cy=KEYS[0][2];for(let i=0;i<KEYS.length-1;i++){const a=KEYS[i],b=KEYS[i+1];if(t>=a[0]&&t<=b[0]){const f=(t-a[0])/(b[0]-a[0]||1);cx=a[1]+(b[1]-a[1])*f;cy=a[2]+(b[2]-a[2])*f;}}
+    const cur=EV.reduce((m,e,i)=>e.t<=t?i:m,-1);
+    const evColor={err:'var(--rw-err)',warn:'#c27c00',net:'#5b6ee1',nav:'var(--rw-accent-ink)',click:'var(--rw-body)',input:'var(--rw-body)',log:'var(--rw-muted)'};
+    const evTag={err:'ERROR',warn:'WARN',net:'NET',nav:'NAV',click:'CLICK',input:'INPUT',log:'LOG'};
+    const seek=tt=>()=>set({t:tt,playing:false});
+    const tabMap={actions:['nav','click','input'],console:['log','warn','err'],network:['net']};
+    const evs=EV.map((e,i)=>({...e,i,time:fmt(e.t),tag:evTag[e.k],color:evColor[e.k],bg:i===cur?(e.err?'var(--rw-err-soft)':'var(--rw-soft)'):'transparent',op:e.t>t?'.45':'1',onClick:seek(e.t)})).filter(e=>!tabMap[s.vtab]||tabMap[s.vtab].includes(e.k));
+    const vt={ai:s.vtab==='ai',logs:!!tabMap[s.vtab],comments:s.vtab==='comments'};
+    const vtabs=[['ai','Summary'],['actions','Actions'],['console','Console'],['network','Network'],['comments','Comments '+s.comments.length]].map(([k,l])=>({label:l,fg:s.vtab===k?'var(--rw-accent-ink)':'var(--rw-muted)',bd:s.vtab===k?'var(--rw-accent)':'transparent',onClick:()=>set({vtab:k})}));
+    const markers=EV.filter(e=>e.err||e.k==='click'||e.k==='nav').map(e=>({left:(e.t/DUR*100)+'%',color:e.err?'#e35e5e':e.k==='nav'?'#01afaf':'#99a1af',h:e.err?'14px':'8px',onClick:seek(e.t)}));
+    const cmarks=s.comments.map(c=>({left:(c.t/DUR*100)+'%',ini:ini(c.who),bg:PEOPLE[c.who]||'#3538cd',onClick:seek(c.t)}));
+    const vcomments=s.comments.filter(c=>Math.abs(t-c.t)<4).map(c=>({...c,left:Math.min(c.x,68)+'%',top:Math.min(c.y,72)+'%',pl:c.x+'%',pt:c.y+'%',ini:ini(c.who),bg:PEOPLE[c.who]||'#3538cd'}));
+    const clist=s.comments.map(c=>({...c,time:fmt(c.t),ini:ini(c.who),bg:PEOPLE[c.who]||'#3538cd',onClick:seek(c.t)}));
+    const steps=[['Open the cart with 3 items',0],['Enter coupon SPRING25 and click Apply',7],['Click Checkout',12],['POST /api/checkout returns 500 and the page throws a TypeError',17],['Click Try again. Same error',26]].map(([txt,tt],i)=>({n:i+1,txt,time:fmt(tt),onClick:seek(tt)}));
+    const similar=s.jams.filter(j=>j.sig===jam.sig&&j.id!==jam.id).map(deco);
+    const coupon=t<5?'':t<7?'SPRING25'.slice(0,Math.max(1,Math.floor((t-5)/2*8))):'SPRING25';
+    const vid={cx:cx+'%',cy:cy+'%',pct:(t/DUR*100)+'%',time:fmt(t)+' / '+fmt(DUR),coupon,couponPh:coupon?'':'Coupon code',disc:t>=9,total:t>=9?'$96.00':'$128.00',btn:(t>=12&&t<17)||(t>=26&&t<28)?'Processing…':'Checkout',err:t>=18&&t<34,playing:s.playing,paused:!s.playing,cursor:s.cmode?'crosshair':'default',cbtnBg:s.cmode?'var(--rw-soft)':'var(--rw-surface2)',cbtnFg:s.cmode?'var(--rw-accent-ink)':'var(--rw-body)',cbtnLabel:s.cmode?'Click the video…':'Comment'};
+    const jamV={...deco(jam),hasSimilar:similar.length>0,simCount:similar.length+1};
+    const statusOpts=COLS.map(([k,l])=>({label:l,val:k}));
+    const onVideo=e=>{if(!s.cmode)return;const r=e.currentTarget.getBoundingClientRect();set({draft:{x:Math.round((e.clientX-r.left)/r.width*100),y:Math.round((e.clientY-r.top)/r.height*100),t:Math.floor(t)},draftTxt:'',playing:false});};
+    const draft=s.draft?{left:Math.min(s.draft.x,68)+'%',top:Math.min(s.draft.y,70)+'%',pl:s.draft.x+'%',pt:s.draft.y+'%',time:fmt(s.draft.t)}:{left:'0',top:'0',pl:'0',pt:'0',time:''};
+    const postDraft=()=>{if(!s.draftTxt.trim()||!s.draft)return;const d=s.draft;this.setState(st2=>({comments:[...st2.comments,{t:d.t,x:d.x,y:d.y,who:'Dhiaz Fathra',txt:st2.draftTxt}].sort((a,b)=>a.t-b.t),draft:null,cmode:false,vtab:'comments'}));this.toast('Comment added at '+fmt(d.t));};
+    const delaySeg=seg([['off','Off'],['3','3s'],['6','6s']],s.delay,k=>set({delay:k}));
+    const startRec=()=>{this._c=0;this._r=0;set({ext:null,extMenu:false,rec:'countdown',recCount:3,recPaused:false,recSec:0,micOpen:false});};
+    const shot=()=>{set({ext:null,extMenu:false,editor:true,editorKind:'shot',title:'',desc:''});};
+    const dest=DESTS.find(d=>d[0]===s.dest);
+    const dests=DESTS.map(([k,l,c])=>({label:k==='link'||s.connected[l]?l:'Connect '+l,c,ini:l[0],check:s.dest===k,onClick:()=>{if(k!=='link'&&!s.connected[l]){this.setState(st2=>({connected:{...st2.connected,[l]:true},dest:k,destOpen:false}));this.toast(l+' connected');}else set({dest:k,destOpen:false});}}));
+    const create=()=>{const id='n'+Date.now();const shotK=s.editorKind==='shot';const nj={id,title:s.title||(shotK?'Screenshot of shop.acme.co/cart':'Checkout fails after applying coupon'),url:'shop.acme.co/cart',by:'Dhiaz Fathra',ago:'Just now',dur:shotK?'shot':fmt(Math.max(s.recSec,5)),status:'new',sig:'total',errs:3,hue:190,folder:'Checkout',mine:true};this.setState(st2=>({jams:[nj,...st2.jams],editor:false,route:'viewer',sel:id,t:0,vtab:'ai',destOpen:false,fold:null}));if(s.dest==='link')this.copyText('https://app.rewind.dev/r/'+id,'Rewind created · link copied');else this.toast('Rewind created · sent to '+dest[1]);};
+    const cmds=[['Go to All Rewinds','Navigate',go('all',{fold:null})],['Go to Recording links','Navigate',go('links')],['Go to Helpdesk','Navigate',go('helpdesk')],['Switch to board view','View',go('all',{view:'board',fold:null})],['Switch to grid view','View',go('all',{view:'grid',fold:null})],[s.dark?'Switch to light mode':'Switch to dark mode','Appearance',()=>set({palette:false,dark:!s.dark})],['New Rewind','Action',()=>set({...close,ext:'home'})],['Invite teammates','Action',()=>set({...close,invite:true})],['Workspace settings','Settings',go('settings',{stab:'general'})],['Integrations','Settings',go('settings',{stab:'integrations'})],['Members','Settings',go('settings',{stab:'members'})],['Billing & usage','Settings',go('settings',{stab:'billing'})],['View pricing','Action',()=>set({...close,pricing:true})],...s.jams.map(j=>[j.title,'Rewind',()=>this.open(j.id)])];
+    const pq=s.pq.toLowerCase();
+    const pitems=cmds.filter(c=>!pq||c[0].toLowerCase().includes(pq)).slice(0,9).map(([label,kind,run])=>({label,kind,run}));
+    const integ=INTEG.filter(i=>!s.integQ||i[0].toLowerCase().includes(s.integQ.toLowerCase())).map(([name,desc,c])=>{const on=!!s.connected[name];return {name,desc,c,ini:name[0],btn:on?'Connected':'Connect',bbg:on?'var(--rw-soft)':'var(--rw-surface2)',bfg:on?'var(--rw-accent-ink)':'var(--rw-body)',onClick:()=>{this.setState(st2=>({connected:{...st2.connected,[name]:!on}}));this.toast(on?name+' disconnected':name+' connected');}};});
+    const agents=AGENTS.slice(0,4).map(([name,desc,c])=>({name,desc,c,ini:name[0],onClick:()=>set({mcpModal:name})}));
+    const mcp=AGENTS.find(a=>a[0]===s.mcpModal)||AGENTS[0];
+    const mcpV={name:mcp[0],c:mcp[2],ini:mcp[0][0],cmd:mcp[3],file:mcp[0]==='Other apps'?'mcp.json':'Terminal'};
+    const fwSeg=seg([['html','HTML'],['next','Next.js'],['angular','Angular'],['gtm','GTM'],['other','npm']],s.sdkFw,k=>set({sdkFw:k}));
+    const osSeg=seg([['mac','macOS / Linux'],['win','Windows']],s.cliOs,k=>set({cliOs:k}));
+    const authSeg=seg([['oauth','OAuth'],['pat','Personal access token']],s.cliAuth,k=>set({cliAuth:k}));
+    const copy=m=>()=>this.copyText(m,'Copied to clipboard');const inviteUrl='https://rewind.dev/team-invite/'+s.inviteCode;const rnd=n=>Array.from({length:n},()=>'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*56)]).join('');
+    const cli={install:s.cliOs==='mac'?'curl -fsSL https://get.rewind.dev/install | bash':'irm https://get.rewind.dev/install.ps1 | iex',login:s.cliAuth==='oauth'?'rewind auth login':'rewind auth login --token $REWIND_TOKEN',skills:'rewind skills install'};
+    const members=[[fullName,'dhiazfathra@gmail.com','Admin','Sep 23, 2026'],['Maya Chen','maya@acme.co','Creator','Sep 23, 2026'],['Leo Park','leo@acme.co','Creator','Sep 22, 2026'],['Sara Ali','sara@acme.co','Viewer','Sep 19, 2026']].map(([name,email,role,last])=>({name,email,role,last,bg:PEOPLE[name]||'#3538cd'}));
+    const notif=[['n1','When my Rewind is viewed for the first time'],['n2','When a Rewind is shared with me'],['n3','When my recording link is used'],['n4','When someone with my email domain joins'],['n5','When feature usage limits are reached']].map(([k,label])=>({label,t:T[k]}));
+    const usage=[['Rewinds',s.jams.length,30],['Recording links',s.links.length,5],['AI summaries',12,20]].map(([l,u,m])=>({label:l,val:u+'/'+m,pct:Math.min(100,Math.round(u/m*100))+'%',left:Math.max(0,m-u)+' left until Sep 30'}));
+    const mine=s.jams.some(j=>j.mine),conn=Object.keys(s.connected).some(k=>s.connected[k]);
+    const doneCount=[true,mine,conn,s.invited].filter(Boolean).length;
+    const checks=[['Install the Chrome extension',true,()=>set({ext:'home'})],['Record your first Rewind',mine,()=>set({ext:'home'})],['Connect an integration',conn,go('settings',{stab:'integrations'})],['Invite team members',s.invited,()=>set({invite:true})]].map(([label,done,onClick])=>({label,done,todo:!done,onClick,fg:done?'var(--rw-hint)':'var(--rw-body)',deco:done?'line-through':'none'}));
+    const ring={dash:(doneCount/4*50.3)+' 50.3',label:doneCount+'/4 completed'};
+    const helpItems=[['Report an issue with Rewind',IC.msg,()=>set({help:false,support:'chat'})],['Contact support',IC.life,()=>set({help:false,support:'home'})],['Docs',IC.doc,()=>{set({help:false});this.toast('Docs open in a new tab');}],['Security',IC.shield,()=>{set({help:false});this.toast('Security page opens in a new tab');}],['System status',IC.pulse,()=>set({help:false,support:'status'})],['Pricing',IC.dollar,()=>set({help:false,pricing:true})],['Blog',IC.book,()=>{set({help:false});this.toast('Blog opens in a new tab');}]].map(([label,d,onClick])=>({label,d,onClick}));
+    const installItems=[['Install Rewind extension',IC.chrome,()=>set({help:false,ext:'home'})],['Install Rewind SDK',IC.code,go('settings',{stab:'sdk'})],['Install Rewind CLI',IC.term,go('settings',{stab:'cli'})],['Install MCP',IC.spark,go('settings',{stab:'mcp'})],['Install iOS app',IC.phone,()=>{set({help:false});this.toast('App Store opens in a new tab');}]].map(([label,d,onClick])=>({label,d,onClick}));
+    const services=SERVICES.map(n=>({name:n,bars:Array.from({length:30},(_,i)=>({c:(n==='API'&&i===11)?'#ffc107':'#34c759'}))}));
+    const sp={home:s.support==='home',messages:s.support==='messages',chat:s.support==='chat',status:s.support==='status',tabs:s.support==='home'||s.support==='messages',homeFg:s.support==='home'?'var(--rw-ink)':'var(--rw-hint)',msgFg:s.support==='messages'?'var(--rw-ink)':'var(--rw-hint)',hasChat:s.chat.length>0,noChat:s.chat.length===0};
+    const domSteps=[['Capture dev logs','Every recording includes console logs, network requests and user actions, so engineers can fix issues fast.'],['Send links from your domain','Recording links come from your own URL, so they look branded and familiar to your customers.'],['Built-in privacy protection','Sensitive fields like passwords and card numbers are blurred automatically.']];
+    const dom={title:domSteps[s.domStep][0],desc:domSteps[s.domStep][1],n:s.domStep+1,s0:s.domStep===0,s1:s.domStep===1,s2:s.domStep===2,next:s.domStep===2?'Set up':'Next',dots:[0,1,2].map(i=>({bg:i===s.domStep?'var(--rw-accent)':'var(--rw-off)',w:i===s.domStep?'18px':'6px',onClick:()=>set({domStep:i})}))};
+    const recV={count:s.recCount,time:fmt(s.recSec),countdown:s.rec==='countdown',recording:s.rec==='recording',paused:s.recPaused,running:!s.recPaused,pauseLabel:s.recPaused?'Resume':'Pause',micLabel:s.micOn?'ON':'OFF',micColor:s.micOn?'#5fe0dc':'#ff8a9a',dot:s.recPaused?'#99a1af':'#e35e5e',micOp:s.micOn?'1':'.45'};
+    const url='app.rewind.dev/'+(s.route==='settings'?'settings/'+s.stab:s.route==='viewer'?'r/'+s.sel:s.route==='all'?(s.fold?'folders/'+s.fold.toLowerCase().replace(/ /g,'-'):'rewinds'):s.route);
+    const ed={shot:s.editorKind==='shot',video:s.editorKind!=='shot',dur:s.editorKind==='shot'?'Screenshot · 1440 × 900':(s.recSec||1)+(s.recSec===1?' second':' seconds'),destLabel:dest[1],destC:dest[2],destIni:dest[1][0],cta:s.dest==='link'?'Create link':'Create in '+dest[1],close:s.editorKind==='shot'?'Discard':'Save for later'};
+    const pushChat=()=>{const v=(s.chatTxt||'').trim();if(!v)return;set({chat:[...s.chat,{txt:v}],chatTxt:''});};
+    return {
+      showChrome:P.showBrowserChrome!==false,url,T,is,st,nav,folders,snav,stitle,grid,base,cols,viewSeg,themeSeg,dark:s.dark,light:!s.dark,
+      extBtnBg:s.ext?'var(--rw-soft)':'transparent',
+      toggleExt:()=>set({ext:s.ext?null:'home',extMenu:false,micOpen:false,help:false}),
+      openSettings:go('settings',{stab:'general'}),backToApp:go('all'),toggleDark:()=>set({dark:!s.dark}),
+      openPalette:()=>set({palette:true,pq:''}),closePalette:()=>set({palette:false}),palette:s.palette,pq:s.pq,onPq:e=>set({pq:e.target.value}),onPqKey:e=>{if(e.key==='Enter'&&pitems[0])pitems[0].run();},pitems,noPitems:pitems.length===0,stop:e=>e.stopPropagation(),
+      help:s.help,toggleHelp:()=>set({help:!s.help,installSub:false,ext:null}),closeHelp:()=>set({help:false,installSub:false}),helpItems,installItems,installSub:s.installSub,showInstall:()=>set({installSub:true}),
+      checkOpen:s.checkOpen,toggleCheck:()=>set({checkOpen:!s.checkOpen}),checks,ring,
+      pageTitle:s.fold||'All Rewinds',jamCount:base.length+' Rewinds',
+      newRewind:()=>set({...close,ext:'home'}),openInvite:()=>set({...close,invite:true}),
+      jam:jamV,vid,evs,vt,vtabs,markers,cmarks,vcomments,clist,steps,similar,statusOpts,
+      togglePlay:()=>set({playing:!s.playing,t:s.t>=DUR?0:s.t,draft:null}),
+      onScrub:e=>{const r=e.currentTarget.getBoundingClientRect();set({t:Math.max(0,Math.min(DUR,(e.clientX-r.left)/r.width*DUR)),playing:false});},
+      back5:()=>set({t:Math.max(0,s.t-5)}),fwd5:()=>set({t:Math.min(DUR,s.t+5)}),
+      toggleCmode:()=>set({cmode:!s.cmode,draft:null,playing:false}),onVideo,draft,hasDraft:!!s.draft,draftTxt:s.draftTxt,onDraftTxt:e=>set({draftTxt:e.target.value}),onDraftKey:e=>{if(e.key==='Enter')postDraft();},postDraft,cancelDraft:e=>{e&&e.stopPropagation&&e.stopPropagation();set({draft:null});},
+      onStatus:e=>{const v=e.target.value;this.setState(st2=>({jams:st2.jams.map(j=>j.id===jam.id?{...j,status:v}:j)}));this.toast('Status: '+TONE[v][0]);},
+      jmenu:!!s.jctx,jmx:(s.jctx?s.jctx.x:0)+'px',jmy:(s.jctx?s.jctx.y:0)+'px',closeJMenu:e=>{e.preventDefault();e.stopPropagation();set({jctx:null});},renameJ:()=>{const id=s.jctx&&s.jctx.id;const x=s.jams.find(q=>q.id===id);set({jctx:null,jedit:id,jdraft:x?x.title:''});},delJ:()=>{const id=s.jctx&&s.jctx.id;set({jctx:null});if(id)this.delJam(id);},share:()=>this.copyText('https://app.rewind.dev/r/'+jam.id,'Link copied · app.rewind.dev/r/'+jam.id),sendLinear:()=>this.toast('Issue ENG-482 created in Linear'),mergeSimilar:()=>this.toast('Merged '+(similar.length+1)+' Rewinds into one issue'),
+      ext:!!s.ext,extHome:s.ext==='home',extSettings:s.ext==='settings',extDrafts:s.ext==='drafts',extMenu:s.extMenu,toggleExtMenu:()=>set({extMenu:!s.extMenu}),
+      extToSettings:()=>set({ext:'settings',extMenu:false}),extToDrafts:()=>set({ext:'drafts',extMenu:false}),extToHome:()=>set({ext:'home'}),extOpenApp:go('all',{fold:null}),
+      extDocs:()=>{set({extMenu:false});this.toast('Docs open in a new tab');},extHelp:()=>set({extMenu:false,ext:null,support:'home'}),extRestart:()=>{set({extMenu:false});this.toast('Extension restarted');},extReport:()=>set({extMenu:false,ext:null,support:'chat'}),
+      extReset:()=>this.toast('Extension settings reset'),extShortcuts:()=>this.toast('chrome://extensions/shortcuts opens in a new tab'),
+      hasDrafts:s.drafts>0,noDrafts:s.drafts===0,draftLabel:s.drafts+(s.drafts===1?' draft unfinished':' drafts unfinished'),
+      viewDraft:()=>set({ext:null,editor:true,editorKind:'video',recSec:64,title:'',drafts:Math.max(0,s.drafts-1)}),deleteDraft:()=>{set({drafts:0});this.toast('Draft deleted');},
+      shotOpen:s.shotOpen,recOpen:s.recOpen,toggleShot:()=>set({shotOpen:!s.shotOpen}),toggleRecOpen:()=>set({recOpen:!s.recOpen}),delaySeg,shot,startRec,
+      micOn:s.micOn,micOff:!s.micOn,toggleMicOn:()=>set({micOn:!s.micOn}),mic:s.mic,micOpen:s.micOpen,toggleMic:()=>set({micOpen:!s.micOpen}),
+      mics:['Default – MacBook Pro Microphone','MacBook Pro Microphone (Built-in)','iPhone Microphone','Studio Display Microphone'].map(m=>({label:m,check:s.mic===m,onClick:()=>set({mic:m,micOpen:false})})),
+      extLink:()=>set({...close,route:'links',ext:null}),
+      rec:!!s.rec,recV,pauseCount:()=>set({recPaused:!s.recPaused}),stopRec:()=>set({rec:null,editor:true,editorKind:'video',title:'',desc:'',recSec:Math.max(s.recSec,1)}),cancelRec:()=>{set({rec:null});this.toast('Recording discarded');},toggleRecMic:()=>set({micOn:!s.micOn}),drawTool:()=>this.toast('Draw on screen: click and drag'),
+      editor:s.editor,ed,closeEditor:()=>{this.setState(st2=>({editor:false,destOpen:false,drafts:st2.editorKind==='shot'?st2.drafts:st2.drafts+1}));this.toast(s.editorKind==='shot'?'Screenshot discarded':'Saved to drafts');},
+      destOpen:s.destOpen,toggleDest:()=>set({destOpen:!s.destOpen}),dests,title:s.title,desc:s.desc,onTitle:e=>set({title:e.target.value}),onDesc:e=>set({desc:e.target.value}),create,attach:()=>this.toast('File picker opens'),
+      invite:s.invite,closeInvite:()=>set({invite:false}),inviteEmail:s.inviteEmail,onInviteEmail:e=>set({inviteEmail:e.target.value}),inviteRole:s.inviteRole,onInviteRole:e=>set({inviteRole:e.target.value}),
+      inviteBg:s.inviteEmail.includes('@')?'var(--rw-btn)':'var(--rw-surface2)',inviteFg:s.inviteEmail.includes('@')?'var(--rw-btn-fg)':'var(--rw-hint)',
+      sendInvite:()=>{if(!s.inviteEmail.includes('@'))return;set({invite:false,inviteEmail:'',invited:true});this.toast('Invite sent to '+s.inviteEmail);},onInviteKey:e=>{if(e.key==='Enter'&&s.inviteEmail.includes('@')){set({invite:false,inviteEmail:'',invited:true});this.toast('Invite sent to '+s.inviteEmail);}},
+      pricing:s.pricing,openPricing:()=>set({...close,pricing:true}),closePricing:()=>set({pricing:false}),teamPrice:s.tg.yearly?'14':'18',billNote:s.tg.yearly?'Billed yearly':'Billed monthly',upgrade:()=>{set({pricing:false});this.toast('Checkout opens in a new tab');},contactSales:()=>this.toast('Sales will reach out within one business day'),
+      linksOnboard:s.linksOnboard&&s.route==='links',closeOnboard:()=>set({linksOnboard:false}),links:s.links.map(l=>({...l,copy:()=>this.copyText(l.url||'https://acme.rewind.dev/rec/'+l.name.slice(0,4).toLowerCase(),'Link copied')})),hasLinks:s.links.length>0,
+      newLink:()=>{const u='https://acme.rewind.dev/rec/'+rnd(4);this.setState(st2=>({links:[{name:'New recording link '+(st2.links.length+1),made:'Sep 23',count:0,url:u},...st2.links]}));this.copyText(u,'Recording link created · copied');},
+      domain:s.domain,openDomain:()=>set({domain:true,domStep:0,domainSeen:true}),domainDot:!s.domainSeen,viewDocs:()=>this.toast('Docs open in a new tab'),closeDomain:()=>set({domain:false}),dom,domNext:()=>{if(s.domStep<2)set({domStep:s.domStep+1});else set({domain:false,route:'settings',stab:'sdk'});},
+      helpdeskFin:()=>this.toast('Intercom app store opens in a new tab'),helpdeskOther:()=>this.toast('Zendesk, Front and Help Scout guides open in a new tab'),
+      support:!!s.support,noSupport:!s.support,tgOn:s.tg,sp,supportBubble:()=>set({support:s.support?null:'home',help:false}),closeSupport:()=>set({support:null}),supHome:()=>set({support:'home'}),supMsgs:()=>set({support:'messages'}),supChat:()=>set({support:'chat'}),supStatus:()=>set({support:'status'}),services,
+      chat:s.chat,chatTxt:s.chatTxt,onChatTxt:e=>set({chatTxt:e.target.value}),sendChat:pushChat,onChatKey:e=>{if(e.key==='Enter')pushChat();},
+      toast:s.toast||'',hasToast:!!s.toast,toastUndo:!!s.toastUndo,doUndo:()=>{const u=this.undoFn;this.undoFn=null;clearTimeout(this.tt);this.setState({toast:null,toastUndo:false});if(u)u();},
+      wsName:s.wsName,onWsName:e=>{const v=e.target.value;this.setState(st2=>{const L={...st2.wsLogos};if(L[st2.wsName]){L[v]=L[st2.wsName];delete L[st2.wsName];}return {wsName:v,wsLogos:L};});},
+      fullName,userIni,firstName:s.firstName,lastName:s.lastName,onFirst:e=>set({firstName:e.target.value}),onLast:e=>set({lastName:e.target.value}),
+      avatar:s.avatar||'',avatarBg:s.avatar?'url("'+s.avatar+'")':'none',hasAvatar:!!s.avatar,noAvatar:!s.avatar,avatarBtn:s.avatarUploading?'Uploading '+s.avatarUploading+'…':(s.avatar?'Change photo':'Upload photo'),onAvatar:e=>{const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;const nm=f.name.length>18?f.name.slice(0,15)+'…':f.name;set({avatarUploading:nm});clearTimeout(this.upT);this.upT=setTimeout(()=>{this.setState({avatarUploading:null});this.toast('Profile picture uploaded');},1600);},removeAvatar:()=>{set({avatar:null});this.toast('Profile picture removed');},openAccount:go('settings',{stab:'account'}),
+      wsLogo:wsLogo||'',wsLogoBg:wsLogo?'url("'+wsLogo+'")':'none',hasWsLogo:!!wsLogo,noWsLogo:!wsLogo,wsIni:((s.wsName.trim()[0])||'W').toUpperCase(),onWsLogo:e=>this.readImg(e,u=>{this.setState(st2=>({wsLogos:{...st2.wsLogos,[st2.wsName]:u}}));this.toast('Workspace logo updated');}),
+      wsMenu:s.wsMenu,wsSub:s.wsSub,wsBtnBg:s.wsMenu?'var(--rw-surface2)':'transparent',wsSubBg:s.wsSub?'var(--rw-surface2)':'transparent',toggleWsMenu:()=>set({wsMenu:!s.wsMenu,wsSub:false,help:false,ext:null}),closeWsMenu:()=>set({wsMenu:false,wsSub:false}),showWsSub:()=>{if(!s.wsSub)set({wsSub:true});},hideWsSub:()=>{if(s.wsSub)set({wsSub:false});},
+      otherWsList:s.otherWs.map(n=>({name:n,ini:(n.trim()[0]||'W').toUpperCase(),onClick:()=>{set({...close,wsName:n,otherWs:[...s.otherWs.filter(x=>x!==n),s.wsName],route:'all',fold:null});this.toast('Switched to '+n);}})),hasOtherWs:s.otherWs.length>0,
+      wsModal:s.wsModal,openWsModal:()=>set({...close,wsModal:true,newWsName:'',joinLink:''}),closeWsModal:()=>set({wsModal:false}),newWsName:s.newWsName,onNewWsName:e=>set({newWsName:e.target.value}),joinLink:s.joinLink,onJoinLink:e=>set({joinLink:e.target.value}),
+      wsCreateBg:s.newWsName.trim()?'var(--rw-btn)':'var(--rw-surface2)',wsCreateFg:s.newWsName.trim()?'var(--rw-btn-fg)':'var(--rw-hint)',
+      createWs:()=>{const n=s.newWsName.trim();if(!n)return;set({wsModal:false,newWsName:'',wsName:n,otherWs:[...s.otherWs.filter(x=>x!==n),s.wsName],route:'all',fold:null});this.toast('Created '+n);},
+      onNewWsKey:e=>{if(e.key==='Enter'){const n=s.newWsName.trim();if(!n)return;set({wsModal:false,newWsName:'',wsName:n,otherWs:[...s.otherWs.filter(x=>x!==n),s.wsName],route:'all',fold:null});this.toast('Created '+n);}},
+      joinWs:()=>{if(!/team-invite\/\w+/.test(s.joinLink)){this.toast("That invite link isn't valid");return;}const n='Acme Corp';set({wsModal:false,joinLink:'',wsName:n,otherWs:[...s.otherWs.filter(x=>x!==n&&x!==s.wsName),...(s.wsName===n?[]:[s.wsName])],route:'all',fold:null});this.toast('Joined '+n);},
+      onJoinKey:e=>{if(e.key==='Enter'){if(!/team-invite\/\w+/.test(s.joinLink)){this.toast("That invite link isn't valid");return;}const n='Acme Corp';set({wsModal:false,joinLink:'',wsName:n,otherWs:[...s.otherWs.filter(x=>x!==n&&x!==s.wsName),...(s.wsName===n?[]:[s.wsName])],route:'all',fold:null});this.toast('Joined '+n);}},
+      loggedOut:s.loggedOut,logOut:()=>set({...close,loggedOut:true,invite:false,editor:false}),logIn:()=>{set({loggedOut:false,route:'all'});this.toast('Logged in as dhiazfathra@gmail.com');},
+      addFolder:()=>{const n='Untitled folder '+(s.extraFolders.length+1);set({extraFolders:[...s.extraFolders,n],route:'all',fold:n});this.toast('Folder created');},
+      integ,integQ:s.integQ,onIntegQ:e=>set({integQ:e.target.value}),noInteg:integ.length===0,agents,mcpModal:!!s.mcpModal,mcpV,closeMcp:()=>set({mcpModal:null}),copyMcp:copy(mcpV.cmd),openOtherMcp:()=>set({mcpModal:'Other apps'}),
+      tokenModal:s.tokenModal,openToken:()=>set({tokenModal:true,tokenName:''}),closeToken:()=>set({tokenModal:false}),tokenName:s.tokenName,onTokenName:e=>set({tokenName:e.target.value}),tokens:s.tokens,hasTokens:s.tokens.length>0,
+      tokBg:s.tokenName.trim()?'var(--rw-btn)':'var(--rw-surface2)',tokFg:s.tokenName.trim()?'var(--rw-btn-fg)':'var(--rw-hint)',
+      createToken:()=>{if(!s.tokenName.trim())return;set({tokenModal:false,tokens:[...s.tokens,{name:s.tokenName,exp:'Expires Sep 23, 2027'}]});this.toast('Token created · copied');},
+      fwSeg,sdkCode:SDK[s.sdkFw],copySdk:copy(SDK[s.sdkFw]),copyPrompt:()=>this.copyText('Install the Rewind SDK on this site. Add the following to every page:\n\n'+SDK[s.sdkFw],'Agent prompt copied'),verify:()=>this.toast('Rewind SDK not detected on that domain yet'),
+      osSeg,authSeg,cli,copyInstall:copy(cli.install),copyLogin:copy(cli.login),copySkills:copy(cli.skills),copyInviteLink:copy(inviteUrl),inviteUrl,resetLink:()=>{set({inviteCode:rnd(11)});this.toast('Invite link reset. The old link no longer works');},
+      members,memberCount:members.length+' members',notif,turnOffAll:()=>{this.setState(st2=>({tg:{...st2.tg,n1:false,n2:false,n3:false,n4:false,n5:false}}));this.toast('Email notifications turned off');},
+      usage,webhook:()=>this.toast('Webhook endpoint form opens'),deleteAcct:()=>this.toast('Account deletion is disabled in this prototype'),
+    };
+  }
+}
+</script>
+</body>
+</html>
