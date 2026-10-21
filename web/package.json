@@ -11,18 +11,23 @@
     "build": "next build",
     "start": "node node_modules/next/dist/bin/next start -p 3001",
     "test": "bun test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "rewind:gen": "bun scripts/rewind-dc2jsx.ts",
+    "rewind:migrate": "bun scripts/rewind-migrate.ts"
   },
   "dependencies": {
     "@fontsource/instrument-serif": "^5.3.0",
     "@fontsource/inter": "^5.3.0",
     "@fontsource/poppins": "^5.3.0",
+    "@libsql/client": "^0.18.0",
     "@tursodatabase/database": "0.8.3",
     "@tursodatabase/database-wasm": "0.8.3",
+    "@tursodatabase/sync-wasm": "0.8.3",
     "iron-session": "^9.0.1",
     "next": "16.4.0",
     "react": "^19",
     "react-dom": "^19",
+    "server-only": "^0.0.1",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
@@ -30,6 +35,13 @@
     "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "htmlparser2": "^12.0.0",
     "typescript": "^5"
+  },
+  "//overrides": "Pinned so the @tursodatabase WASM packages resolve one @emnapi version in bun.lock; drop once the lockfile resolves them without a pin.",
+  "overrides": {
+    "@emnapi/core": "1.8.1",
+    "@emnapi/runtime": "1.8.1",
+    "@emnapi/wasi-threads": "1.1.0"
   }
 }

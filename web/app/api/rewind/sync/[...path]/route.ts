@@ -1,0 +1,46 @@
+// Backend-for-frontend proxy for Turso Sync: the browser's local database syncs
+// through here so the Turso auth token never leaves the server. Signed-in BugRail users only.
+import type { NextRequest } from "next/server";
+import { requireUser } from "@/lib/server/session";
+
+// Turso sync endpoints the client may reach; anything else (e.g. the SQL pipeline) is not proxied. The SQL pipeline/cursor endpoints (v2, v3) are deliberately excluded: this route must never forward SQL.
+const ALLOWED = new Set(["info", "export", "sync", "pull-updates", "push"]);
+
+type Ctx = { params: Promise<{ path: string[] }> };
+
+async function proxy(req: NextRequest, ctx: Ctx) {
+  if (!(await requireUser(req))) return new Response("unauthorized", { status: 401 });
+  const remote = process.env.REWIND_TURSO_DATABASE_URL;
+  if (!remote) return new Response("sync not configured", { status: 503 });
+  const { path } = await ctx.params;
+  // exactly one plain segment from the allowlist: no sub-paths, and no "%", "." or separators, so no encoded-dot traversal
+  if (path.length !== 1 || !ALLOWED.has(path[0])) return new Response("invalid path", { status: 400 });
+  if (process.env.REWIND_TURSO_AUTH_TOKEN && /^http:\/\//i.test(remote)) {
+    return new Response("sync misconfigured: remote must be https", { status: 500 });
+  }
+  const base = remote.replace(/^(libsql|turso):\/\//, "https://");
+  const headers = new Headers();
+  for (const h of ["content-type", "accept"]) {
+    const v = req.headers.get(h);
+    if (v) headers.set(h, v);
+  }
+  if (process.env.REWIND_TURSO_AUTH_TOKEN) headers.set("authorization", `Bearer ${process.env.REWIND_TURSO_AUTH_TOKEN}`);
+  let res: Response;
+  try {
+    res = await fetch(`${base}/${path.join("/")}${req.nextUrl.search}`, {
+      method: req.method,
+      headers,
+      body: req.method === "GET" || req.method === "HEAD" ? undefined : await req.arrayBuffer(),
+      signal: AbortSignal.any([req.signal, AbortSignal.timeout(30_000)]),
+    });
+  } catch {
+    return new Response("upstream unavailable", { status: 502 });
+  }
+  const out = new Headers();
+  const ct = res.headers.get("content-type");
+  if (ct) out.set("content-type", ct);
+  out.set("cache-control", "no-store");
+  return new Response(res.body, { status: res.status, headers: out });
+}
+
+export { proxy as GET, proxy as POST };

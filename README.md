@@ -28,6 +28,15 @@ Production runs Node 24 (`node node_modules/next/dist/bin/next start`); Bun is l
 - Design: [`docs/superpowers/specs/2026-10-13-bugrail-local-first-design.md`](docs/superpowers/specs/2026-10-13-bugrail-local-first-design.md)
 - Decisions: [`docs/adr/`](docs/adr/)
 
+## Rewind
+
+Rewind, the bug-recording app built from a claude.ai/design export, runs inside `web/` at `/rewind`. It uses BugRail's sign-in, theme and service worker, and each half links to the other from its sidebar.
+
+- Code: `web/app/rewind/` (route and layout), `web/app/rewind/_app/` (the app), `web/lib/rewind/` (its databases), `web/app/api/rewind/` (APIs, signed-in users only).
+- Data: a local-first Turso database per browser (`rewind.db` in OPFS), separate from BugRail's. It syncs to Turso Cloud through `/api/rewind/sync` only when `REWIND_TURSO_DATABASE_URL` (and `REWIND_TURSO_AUTH_TOKEN`) are set. Run `bun run rewind:migrate` once to create the remote schema and seed the demo data.
+- Design source: `web/design/rewind/`. `bun run rewind:gen` regenerates `_app/view.tsx` and `_app/hover.css` from `template.html`; do not edit those two files by hand.
+- Browser check: `web/scripts/rewind-e2e.cjs` (same harness as the g6 scripts). Seed a DB with `bun scripts/e2e-seed.ts <db path>`, serve it on port 3200 with `next start`, then from `web/` run `CHROME=<chrome binary> [PLAYWRIGHT_CORE=<path>] node scripts/rewind-e2e.cjs <outdir> <alphaWsId>` (`<alphaWsId>` is the seeded Alpha workspace's id).
+
 ## Features
 
 - Realtime dashboard stats (Chart.js): Test Case status, Bug severity, per-module progress.
@@ -36,6 +45,7 @@ Production runs Node 24 (`node node_modules/next/dist/bin/next start`); Bun is l
 - Summary & PDF export, JSON backup/restore.
 - Auth & user management, activity log.
 - TestForge — generate test cases with Gemini AI.
+- Rewind (`/rewind`) — record, share and debug bugs with full context. See [Rewind](#rewind).
 - Dark/Light mode, keyboard shortcuts, responsive.
 
 ## Running
@@ -60,7 +70,7 @@ API runs at `http://localhost:3001`. Frontend reads API URL from `API_BASE` in `
 ```
 qa-app/    frontend (index.html, css/, js/)
 server/    backend Express + MongoDB (server.js, app.js, db.js)
-web/       Next.js 16 local-first app (feature complete, awaiting G6 and cutover)
+web/       Next.js 16 local-first app (feature complete, awaiting G6 and cutover), Rewind included under /rewind
 deploy/    systemd units (app, nightly backup) and the env template
 docs/      specs (superpowers/specs), decisions (adr), plans, reviews
 ```

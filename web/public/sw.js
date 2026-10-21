@@ -38,12 +38,42 @@ const esc = (s) => s.replace(/[&<>"']/g, (ch) => '&#' + ch.charCodeAt(0) + ';');
 // the routes that do work on this device.
 async function offlinePage() {
   const c = await caches.open(PAGES);
-  const routes = (await c.keys()).map((k) => new URL(k.url).pathname).filter((p) => p.startsWith('/w/')).slice(-8).reverse();
+  const routes = (await c.keys()).map((k) => new URL(k.url).pathname).filter((p) => p.startsWith('/w/') || isRewind(p)).slice(-8).reverse();
   const list = routes.map((p) => '<li><a href="' + esc(p) + '">' + esc(decodeURIComponent(p)) + '</a></li>').join('');
   const body = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Offline</title>'
     + '<h1>You are offline</h1><p>This page was not opened on this device while online, so it is not available offline. '
     + 'Reconnect, or open a page you used before:</p><ul>' + (list || '<li>none yet</li>') + '</ul><p><a href="/login">Login</a></p>';
   return new Response(body, { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+}
+
+const isRewind = (p) => p === '/rewind' || p.startsWith('/rewind/');
+// Rewind's prerendered routes. Each document's HTML is route-specific, so serving one for another hydrates with a mismatch:
+// the first Rewind page load caches all of them (the same list Rewind prefetches).
+const REWIND_ROUTES = ['/rewind', '/rewind/links', '/rewind/helpdesk', '/rewind/settings/general'];
+let rewindWarm = false;
+async function warmRewind() {
+  if (rewindWarm) return;
+  rewindWarm = true;
+  const c = await caches.open(PAGES);
+  for (const r of REWIND_ROUTES) {
+    if (await c.match(r)) continue;
+    try {
+      const res = await fetch(r);
+      // a login redirect or no-store page must not stand in for a Rewind route
+      const noStore = /no-store/i.test(res.headers.get("Cache-Control") || "");
+      if (res.ok && !res.redirected && !noStore) await c.put(r, res);
+      else rewindWarm = false;
+    } catch { rewindWarm = false; } // retried on the next Rewind load
+  }
+}
+
+// Every /rewind route renders the same client app (its layout reads the URL), so any cached Rewind page can stand in for
+// a Rewind route that was never opened on this device (React re-renders it on the client after a hydration mismatch).
+async function rewindShell(req) {
+  if (!isRewind(new URL(req.url).pathname)) return null;
+  const c = await caches.open(PAGES);
+  const keys = (await c.keys()).filter((k) => isRewind(new URL(k.url).pathname));
+  return keys.length ? c.match(keys[keys.length - 1]) : null;
 }
 
 // Network first, remember the answer, fall back to the last one. For RSC the match ignores the query string (the _rsc value
@@ -59,7 +89,7 @@ function networkFirst(event, cacheName, rsc) {
       })
       .catch(() => caches.open(cacheName)
         .then((c) => c.match(req, rsc ? { ignoreSearch: true } : undefined))
-        .then((hit) => hit || (req.mode === 'navigate' ? offlinePage() : offlineText()))),
+        .then((hit) => hit || (req.mode === 'navigate' ? rewindShell(req).then((shell) => shell || offlinePage()) : offlineText()))),
   );
 }
 
@@ -82,5 +112,8 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (isRsc(req, url)) return networkFirst(event, RSC, true); // soft navigation payloads and prefetches
-  if (req.mode === 'navigate') return networkFirst(event, PAGES, false);
+  if (req.mode === 'navigate') {
+    if (isRewind(url.pathname)) event.waitUntil(warmRewind());
+    return networkFirst(event, PAGES, false);
+  }
 });
