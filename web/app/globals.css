@@ -1,0 +1,50 @@
+/* Screen styles. Design tokens come from the old app (qa-app/css/style.css); the markup here is semantic, so rules target elements and data-* hooks, not classes. print.css owns printing. */
+@media screen {
+  :root {
+    --bg: #F1F3F6; --surface: #FFFFFF; --surface-alt: #F7F8FA; --border: #E3E7ED;
+    --text: #1A2130; --text-dim: #626C7E; --primary: #3949AB; --primary-dark: #2C3789; --primary-soft: #E9EBFB;
+    --danger: #D64550; --radius-s: 8px; --radius-m: 12px;
+    --shadow-s: 0 1px 2px rgba(20,24,35,.05), 0 1px 1px rgba(20,24,35,.04);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 Inter, system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 16px; text-transform: uppercase; letter-spacing: .04em; margin: 24px 0 10px; }
+  h3, h4 { font-size: 14px; margin: 16px 0 8px; }
+  p { margin: 6px 0; }
+  main > p:first-of-type { color: var(--text-dim); }
+  a { color: var(--primary); }
+
+  header { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; padding: 10px 24px; background: var(--surface); border-bottom: 1px solid var(--border); }
+  header > p { margin: 0; color: var(--text-dim); font-size: 12px; }
+  header > strong { font-size: 16px; color: var(--primary); }
+  header > span:nth-last-child(2) { margin-left: auto; color: var(--text-dim); }
+  nav { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 24px; background: var(--surface); border-bottom: 1px solid var(--border); }
+  nav a { padding: 6px 12px; border-radius: var(--radius-s); color: var(--text-dim); text-decoration: none; font-weight: 500; }
+  nav a:hover { background: var(--surface-alt); color: var(--text); }
+  nav a[aria-current='page'] { background: var(--primary-soft); color: var(--primary-dark); font-weight: 600; }
+  main { max-width: 1280px; margin: 0 auto; padding: 24px; }
+  [role='alert'] { padding: 8px 12px; margin: 8px 24px; border-radius: var(--radius-s); background: #FCE9EA; color: #8A1F2B; }
+  header [role='alert'] { margin: 0; padding: 0; background: none; }
+
+  button, select, input, textarea { font: inherit; color: inherit; }
+  button { padding: 6px 12px; border: 1px solid var(--border); border-radius: var(--radius-s); background: var(--surface); cursor: pointer; box-shadow: var(--shadow-s); }
+  button:hover:not(:disabled) { background: var(--surface-alt); }
+  button[type='submit'] { background: var(--primary); border-color: var(--primary); color: #fff; }
+  button[type='submit']:hover:not(:disabled) { background: var(--primary-dark); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  select, input:not([type='checkbox'], [type='radio'], [type='file']), textarea { padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius-s); background: var(--surface); }
+  textarea { width: 100%; max-width: 640px; }
+  :focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+
+  table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-m); box-shadow: var(--shadow-s); }
+  th { text-align: left; background: var(--surface-alt); font-size: 12px; text-transform: uppercase; letter-spacing: .03em; color: var(--text-dim); }
+  th, td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tbody tr:hover { background: var(--surface-alt); }
+  pre { background: var(--surface-alt); border: 1px solid var(--border); border-radius: var(--radius-s); padding: 8px 12px; overflow-x: auto; }
+  details { margin: 8px 0; padding: 8px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-s); }
+  ul { padding-left: 20px; }
+
+  /* Login is the only page without the shell. */
+  body > form { display: grid; gap: 10px; width: min(360px, calc(100% - 32px)); margin: 15vh auto 0; padding: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-m); box-shadow: var(--shadow-s); }
+}
