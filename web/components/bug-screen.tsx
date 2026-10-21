@@ -178,7 +178,7 @@ function Board({ ws, fileId, rows, master, tcLabel, onMove }: { ws: string; file
   return (
     <div data-testid="board" style={{ display: 'flex', gap: 12, alignItems: 'flex-start', overflowX: 'auto' }}>
       {cols.map((col) => (
-        <div key={col.code} data-status={col.code} data-testid={`col-${col.code}`} style={{ minWidth: 220, borderTop: `3px solid ${col.color ?? '#999'}`, background: over === col.code ? '#eef' : undefined }}
+        <div key={col.code} data-status={col.code} data-testid={`col-${col.code}`} style={{ minWidth: 220, borderTop: `3px solid ${col.color ?? '#999'}`, background: over === col.code ? 'var(--rw-soft)' : undefined }}
           onDragOver={(e) => { e.preventDefault(); setOver(col.code); }} onDragLeave={() => setOver(null)}
           onDrop={(e) => {
             e.preventDefault(); setOver(null);
@@ -189,7 +189,7 @@ function Board({ ws, fileId, rows, master, tcLabel, onMove }: { ws: string; file
           <h3>{col.name} <span data-testid={`count-${col.code}`}>{col.items.length}</span></h3>
           {col.items.map((b) => (
             <div key={String(b.id)} className="dragging-card" draggable data-id={String(b.id)} onDragStart={(e) => e.dataTransfer.setData('text/plain', String(b.id))}
-              style={{ border: '1px solid #ccc', margin: '6px 0', padding: 6 }}>
+              style={{ border: '1px solid var(--rw-border)', borderRadius: 10, background: 'var(--rw-surface)', margin: '8px 0', padding: 10 }}>
               <Link href={hrefFor(ws, `bugs/${encodeURIComponent(fileId)}/${encodeURIComponent(String(b.id))}`)}>{b.code ? s(b.code) : 'pending'}</Link> {s(b.severity)}
               <div>{s(b.title)}</div>
               <div>{s(b.tester) || '-'} {tcLabel(b.test_case_id)}</div>

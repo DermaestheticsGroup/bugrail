@@ -29,14 +29,14 @@ function Card({ label, value, sub, pct, testid }: { label: string; value: React.
   return (
     <div data-testid={testid}>
       <strong>{label}</strong> <span data-testid={`${testid}-value`}>{value}</span> <small>{sub}</small>
-      <div style={{ background: '#E3E7ED', height: 4 }}><div style={{ width: `${Math.min(pct, 100)}%`, background: '#2F6FED', height: 4 }} /></div>
+      <div style={{ background: 'var(--rw-surface2)', borderRadius: 2, height: 4 }}><div style={{ width: `${Math.min(pct, 100)}%`, background: 'var(--rw-accent)', height: 4, borderRadius: 2 }} /></div>
     </div>
   );
 }
 
 function Bars({ rows, color }: { rows: { label: string; value: number }[]; color: string }) {
   const max = Math.max(1, ...rows.map((r) => r.value));
-  return <div>{rows.map((r) => <div key={r.label}><span>{r.label}</span> <span style={{ display: 'inline-block', width: `${Math.round(r.value / max * 100)}%`, minWidth: 2, height: 8, background: color }} /> {r.value}</div>)}</div>;
+  return <div>{rows.map((r) => <div key={r.label}><span>{r.label}</span> <span style={{ display: 'inline-block', width: `${Math.round(r.value / max * 100)}%`, minWidth: 2, height: 8, borderRadius: 4, background: color }} /> {r.value}</div>)}</div>;
 }
 
 function Donut({ title, labels, counts, colors, testid }: { title: string; labels: string[]; counts: number[]; colors: string[]; testid: string }) {
@@ -47,9 +47,9 @@ function Donut({ title, labels, counts, colors, testid }: { title: string; label
     <div data-testid={testid}>
       <h4>{title}</h4>
       <svg width="110" height="110" viewBox="0 0 110 110" role="img" aria-label={title}>
-        <circle cx="55" cy="55" r={R} fill="none" stroke="#E3E7ED" strokeWidth="14" />
+        <circle cx="55" cy="55" r={R} fill="none" stroke="var(--rw-surface2)" strokeWidth="14" />
         {total ? counts.map((n, i) => { const len = n / total * C; const el = <circle key={labels[i]} cx="55" cy="55" r={R} fill="none" stroke={colors[i]} strokeWidth="14" strokeDasharray={`${len} ${C - len}`} strokeDashoffset={-off} transform="rotate(-90 55 55)" />; off += len; return el; }) : null}
-        <text x="55" y="58" textAnchor="middle">{total}</text>
+        <text x="55" y="60" textAnchor="middle" fill="currentColor" fontWeight="600" fontSize="16">{total}</text>
       </svg>
       <ul>{labels.map((l, i) => <li key={l}><span style={{ color: colors[i] }}>●</span> {l}: {counts[i]} ({total ? Math.round(counts[i] / total * 1000) / 10 : 0}%)</li>)}</ul>
     </div>
