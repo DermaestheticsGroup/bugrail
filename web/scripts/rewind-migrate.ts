@@ -13,8 +13,8 @@ const now = Date.now();
 await db.batch(
   [
     ...SCHEMA,
-    ...JAMS.map((j, i) => ({ sql: "INSERT OR IGNORE INTO jams VALUES (?, ?, ?, ?)", args: [j.id, JSON.stringify(j), i, now] })),
-    ...COMMENTS.map((c, i) => ({ sql: "INSERT OR IGNORE INTO comments VALUES (?, ?, ?, ?)", args: [c.id, JSON.stringify(c), i, now] })),
+    ...JAMS.map((j, i) => ({ sql: "INSERT OR IGNORE INTO jams (id, data, position, updated_at) VALUES (?, ?, ?, ?)", args: [j.id, JSON.stringify(j), i, now] })),
+    ...COMMENTS.map((c, i) => ({ sql: "INSERT OR IGNORE INTO comments (id, data, position, updated_at) VALUES (?, ?, ?, ?)", args: [c.id, JSON.stringify(c), i, now] })),
   ],
   "write",
 );

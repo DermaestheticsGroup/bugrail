@@ -38,6 +38,7 @@
     "htmlparser2": "^12.0.0",
     "typescript": "^5"
   },
+  "//overrides": "Pinned so the @tursodatabase WASM packages resolve one @emnapi version in bun.lock; drop once the lockfile resolves them without a pin.",
   "overrides": {
     "@emnapi/core": "1.8.1",
     "@emnapi/runtime": "1.8.1",

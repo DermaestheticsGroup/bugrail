@@ -35,7 +35,7 @@ Rewind, the bug-recording app built from a claude.ai/design export, runs inside 
 - Code: `web/app/rewind/` (route and layout), `web/app/rewind/_app/` (the app), `web/lib/rewind/` (its databases), `web/app/api/rewind/` (APIs, signed-in users only).
 - Data: a local-first Turso database per browser (`rewind.db` in OPFS), separate from BugRail's. It syncs to Turso Cloud through `/api/rewind/sync` only when `REWIND_TURSO_DATABASE_URL` (and `REWIND_TURSO_AUTH_TOKEN`) are set. Run `bun run rewind:migrate` once to create the remote schema and seed the demo data.
 - Design source: `web/design/rewind/`. `bun run rewind:gen` regenerates `_app/view.tsx` and `_app/hover.css` from `template.html`; do not edit those two files by hand.
-- Browser check: `scripts/rewind-e2e.cjs` (same harness as the g6 scripts).
+- Browser check: `web/scripts/rewind-e2e.cjs` (same harness as the g6 scripts). Seed a DB with `bun scripts/e2e-seed.ts <db path>`, serve it on port 3200 with `next start`, then from `web/` run `CHROME=<chrome binary> [PLAYWRIGHT_CORE=<path>] node scripts/rewind-e2e.cjs <outdir> <alphaWsId>` (`<alphaWsId>` is the seeded Alpha workspace's id).
 
 ## Features
 

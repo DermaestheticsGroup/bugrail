@@ -75,7 +75,7 @@ del:e=>{e.stopPropagation();const nm=(s.folderNames||{})[f]||f;const snap={delFo
     const seg=(opts,cur,fn)=>opts.map(([k,l])=>({label:l,bg:cur===k?'var(--rw-surface)':'transparent',fg:cur===k?'var(--rw-ink)':'var(--rw-muted)',sh:cur===k?'0 1px 2px rgba(0,0,0,.12)':'none',onClick:()=>fn(k)}));
     const viewSeg=seg([['grid','Grid'],['board','Board'],['list','List']],s.view,k=>set({view:k}));
     const themeSeg=seg([['light','Light'],['dark','Dark']],s.dark?'dark':'light',k=>set({dark:k==='dark'}));
-    const jam=s.jams.find(j=>j.id===s.sel)||s.jams[0],t=s.t;
+    const jam=s.jams.find(j=>j.id===s.sel)||s.jams[0]||{id:'',sig:'',hue:0,title:''},t=s.t;
     let cx=KEYS[0][1],cy=KEYS[0][2];for(let i=0;i<KEYS.length-1;i++){const a=KEYS[i],b=KEYS[i+1];if(t>=a[0]&&t<=b[0]){const f=(t-a[0])/(b[0]-a[0]||1);cx=a[1]+(b[1]-a[1])*f;cy=a[2]+(b[2]-a[2])*f;}}
     const cur=EV.reduce((m,e,i)=>e.t<=t?i:m,-1);
     const evColor={err:'var(--rw-err)',warn:'#c27c00',net:'#5b6ee1',nav:'var(--rw-accent-ink)',click:'var(--rw-body)',input:'var(--rw-body)',log:'var(--rw-muted)'};
@@ -97,7 +97,7 @@ del:e=>{e.stopPropagation();const nm=(s.folderNames||{})[f]||f;const snap={delFo
     const statusOpts=COLS.map(([k,l])=>({label:l,val:k}));
     const onVideo=e=>{if(!s.cmode)return;const r=e.currentTarget.getBoundingClientRect();set({draft:{x:Math.round((e.clientX-r.left)/r.width*100),y:Math.round((e.clientY-r.top)/r.height*100),t:Math.floor(t)},draftTxt:'',playing:false});};
     const draft=s.draft?{left:Math.min(s.draft.x,68)+'%',top:Math.min(s.draft.y,70)+'%',pl:s.draft.x+'%',pt:s.draft.y+'%',time:fmt(s.draft.t)}:{left:'0',top:'0',pl:'0',pt:'0',time:''};
-    const postDraft=()=>{if(!s.draftTxt.trim()||!s.draft)return;const d=s.draft;this.setState(st2=>({comments:[...st2.comments,{t:d.t,x:d.x,y:d.y,who:'Dhiaz Fathra',txt:st2.draftTxt}].sort((a,b)=>a.t-b.t),draft:null,cmode:false,vtab:'comments'}));this.toast('Comment added at '+fmt(d.t));};
+    const postDraft=()=>{if(!s.draftTxt.trim()||!s.draft)return;const d=s.draft;this.setState(st2=>({comments:[...st2.comments,{id:'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),t:d.t,x:d.x,y:d.y,who:'Dhiaz Fathra',txt:st2.draftTxt}].sort((a,b)=>a.t-b.t),draft:null,cmode:false,vtab:'comments'}));this.toast('Comment added at '+fmt(d.t));};
     const delaySeg=seg([['off','Off'],['3','3s'],['6','6s']],s.delay,k=>set({delay:k}));
     const startRec=()=>{this._c=0;this._r=0;set({ext:null,extMenu:false,rec:'countdown',recCount:3,recPaused:false,recSec:0,micOpen:false});};
     const shot=()=>{set({ext:null,extMenu:false,editor:true,editorKind:'shot',title:'',desc:''});};

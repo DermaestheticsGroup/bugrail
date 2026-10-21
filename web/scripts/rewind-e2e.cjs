@@ -1,10 +1,12 @@
 // Rewind inside BugRail: the sign-in gate, links both ways, routes under /rewind, local-first persistence and offline use.
 // Ported from the Rewind repo's e2e/local-first.spec.ts.
-// PLAYWRIGHT_CORE=<path> node scripts/rewind-e2e.cjs <outdir> <alphaWsId> <vendorWsId>   (server on :3200 via `next start`, seeded by scripts/e2e-seed.ts)
+// PLAYWRIGHT_CORE=<path> node scripts/rewind-e2e.cjs <outdir> <alphaWsId>   (server on :3200 via `next start`, seeded by scripts/e2e-seed.ts)
 const { chromium } = require(process.env.PLAYWRIGHT_CORE || 'playwright-core');
 const [SC, ALPHA] = process.argv.slice(2);
+if (!SC || !ALPHA) { console.error('usage: CHROME=<chrome binary> [PLAYWRIGHT_CORE=<path>] node scripts/rewind-e2e.cjs <outdir> <alphaWsId>'); process.exit(2); }
 const B = 'http://localhost:3200';
-const CHROME = process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const CHROME = process.env.CHROME;
+if (!CHROME) { console.error('CHROME must point at a Chrome binary'); process.exit(2); }
 const results = [];
 const check = (name, ok, detail) => { results.push(ok); console.log((ok ? 'PASS ' : 'FAIL ') + name + (detail === undefined ? '' : '  ' + JSON.stringify(detail).slice(0, 240))); };
 const open = (name) => chromium.launchPersistentContext(`${SC}/${name}`, { executablePath: CHROME, headless: true, args: ['--no-first-run'] });
@@ -58,7 +60,7 @@ const boardColumn = (p) => p.getByText(/^Triaging\s*\d+$/);
     await p.locator('html[data-db=ready]').waitFor({ state: 'attached', timeout: 20000 });
     await p.getByText('Board', { exact: true }).click();
     await boardColumn(p).waitFor({ timeout: 10000 });
-    await p.waitForTimeout(500);
+    await p.locator('html:not([data-saving])').waitFor({ state: 'attached', timeout: 10000 });
     await p.reload();
     await boardColumn(p).waitFor({ timeout: 20000 });
   });
@@ -69,9 +71,9 @@ const boardColumn = (p) => p.getByText(/^Triaging\s*\d+$/);
     await p.getByText('Grid', { exact: true }).click();
     await p.getByText('Recording links').first().click();
     await p.waitForURL(/\/rewind\/links$/);
-    await p.waitForTimeout(500);
+    await p.locator('html:not([data-saving])').waitFor({ state: 'attached', timeout: 10000 });
     await p.reload();
-    await p.getByText("Dhiaz's Workspace").first().waitFor({ timeout: 15000 });
+    await p.getByText('Recording links').first().waitFor({ timeout: 15000 });
     await p.goto(B + '/rewind').catch(() => {}); // offline full load, served by the service worker
     await p.getByText('Group duplicates').waitFor({ timeout: 15000 });
     if (await boardColumn(p).count()) throw new Error('board view came back after switching to grid');

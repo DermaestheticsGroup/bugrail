@@ -57,7 +57,13 @@ async function warmRewind() {
   const c = await caches.open(PAGES);
   for (const r of REWIND_ROUTES) {
     if (await c.match(r)) continue;
-    try { const res = await fetch(r); if (res.ok) await c.put(r, res); } catch { rewindWarm = false; } // retried on the next Rewind load
+    try {
+      const res = await fetch(r);
+      // a login redirect or no-store page must not stand in for a Rewind route
+      const noStore = /no-store/i.test(res.headers.get("Cache-Control") || "");
+      if (res.ok && !res.redirected && !noStore) await c.put(r, res);
+      else rewindWarm = false;
+    } catch { rewindWarm = false; } // retried on the next Rewind load
   }
 }
 

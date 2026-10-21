@@ -66,8 +66,10 @@ class Rewind extends RewindLogic {
       await seedIfEmpty(db, initial);
       // edits made while the DB was opening are replayed as a diff, not lost
       await saveDiff(db, initial, this.snapshot());
+      if (this.dead) return db.close();
       this.db = db;
       await this.reload();
+      if (this.dead) return;
       document.documentElement.dataset.db = "ready";
       if (this.props.syncEnabled) this.syncT = setInterval(() => this.sync(), SYNC_MS);
     } catch (e) {
@@ -81,6 +83,8 @@ class Rewind extends RewindLogic {
     clearInterval(this.syncT);
     this.db?.close();
   }
+
+  private saveSeq?: number;
 
   async reload() {
     if (!this.db) return;
@@ -143,12 +147,16 @@ class Rewind extends RewindLogic {
       if (changed) {
         this.saved = next;
         const db = this.db;
+        // html[data-saving] is set while a local write is pending; the browser check polls it instead of sleeping
+        document.documentElement.dataset.saving = "1";
+        const mine = (this.saveSeq = (this.saveSeq ?? 0) + 1);
         this.saving = this.saving
           .then(async () => {
             const { saveDiff } = await import("@/lib/rewind/local-db");
             if ((await saveDiff(db, prev, next)) && this.props.syncEnabled && !this.props.offline) db.push().catch(() => {});
           })
-          .catch((e) => console.warn("rewind: local write failed", e));
+          .catch((e) => console.warn("rewind: local write failed", e))
+          .then(() => { if (this.saveSeq === mine) delete document.documentElement.dataset.saving; });
       }
     }
   }
