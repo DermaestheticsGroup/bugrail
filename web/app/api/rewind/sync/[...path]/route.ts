@@ -13,9 +13,8 @@ async function proxy(req: NextRequest, ctx: Ctx) {
   const remote = process.env.REWIND_TURSO_DATABASE_URL;
   if (!remote) return new Response("sync not configured", { status: 503 });
   const { path } = await ctx.params;
-  if (!ALLOWED.has(path[0]) || path.some((s) => s === "." || s === ".." || /[\/\\]/.test(s))) {
-    return new Response("invalid path", { status: 400 });
-  }
+  // exactly one plain segment from the allowlist: no sub-paths, and no "%", "." or separators, so no encoded-dot traversal
+  if (path.length !== 1 || !ALLOWED.has(path[0])) return new Response("invalid path", { status: 400 });
   if (process.env.REWIND_TURSO_AUTH_TOKEN && /^http:\/\//i.test(remote)) {
     return new Response("sync misconfigured: remote must be https", { status: 500 });
   }
