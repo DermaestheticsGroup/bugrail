@@ -16,6 +16,9 @@ async function proxy(req: NextRequest, ctx: Ctx) {
   if (!ALLOWED.has(path[0]) || path.some((s) => s === "." || s === ".." || /[\/\\]/.test(s))) {
     return new Response("invalid path", { status: 400 });
   }
+  if (process.env.REWIND_TURSO_AUTH_TOKEN && /^http:\/\//i.test(remote)) {
+    return new Response("sync misconfigured: remote must be https", { status: 500 });
+  }
   const base = remote.replace(/^(libsql|turso):\/\//, "https://");
   const headers = new Headers();
   for (const h of ["content-type", "accept"]) {

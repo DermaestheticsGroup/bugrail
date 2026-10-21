@@ -39,6 +39,8 @@ class Rewind extends RewindLogic {
   declare state: any;
   db: LocalDb | null = null;
   saved: Snapshot | null = null;
+  // last snapshot saveDiff wrote successfully; diffs start here so a failed write is retried by the next save
+  written: Snapshot | null = null;
   pending: string | null = null;
   saving: Promise<unknown> = Promise.resolve();
   syncT: ReturnType<typeof setInterval> | undefined;
@@ -90,6 +92,7 @@ class Rewind extends RewindLogic {
     if (!this.db) return;
     const snap = await (await import("@/lib/rewind/local-db")).loadSnapshot(this.db);
     this.saved = snap;
+    this.written = snap;
     const kv = Object.fromEntries(Object.entries(snap.kv).filter(([k, v]) => KV_KEYS.includes(k) && v != null));
     this.setState({ jams: snap.jams, comments: snap.comments, ...kv });
   }
@@ -153,7 +156,9 @@ class Rewind extends RewindLogic {
         this.saving = this.saving
           .then(async () => {
             const { saveDiff } = await import("@/lib/rewind/local-db");
-            if ((await saveDiff(db, prev, next)) && this.props.syncEnabled && !this.props.offline) db.push().catch(() => {});
+            const wrote = await saveDiff(db, this.written ?? prev, next);
+            this.written = next;
+            if (wrote && this.props.syncEnabled && !this.props.offline) db.push().catch(() => {});
           })
           .catch((e) => console.warn("rewind: local write failed", e))
           .then(() => { if (this.saveSeq === mine) delete document.documentElement.dataset.saving; });
