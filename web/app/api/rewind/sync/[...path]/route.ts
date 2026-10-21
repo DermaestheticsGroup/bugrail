@@ -3,8 +3,8 @@
 import type { NextRequest } from "next/server";
 import { requireUser } from "@/lib/server/session";
 
-// Turso sync endpoints the client may reach; anything else (e.g. the SQL pipeline) is not proxied. Unverified against the sync-wasm wire protocol: widen if sync 404s.
-const ALLOWED = new Set(["info", "export", "sync", "v2", "v3", "pull-updates", "push"]);
+// Turso sync endpoints the client may reach; anything else (e.g. the SQL pipeline) is not proxied. The SQL pipeline/cursor endpoints (v2, v3) are deliberately excluded: this route must never forward SQL.
+const ALLOWED = new Set(["info", "export", "sync", "pull-updates", "push"]);
 
 type Ctx = { params: Promise<{ path: string[] }> };
 
