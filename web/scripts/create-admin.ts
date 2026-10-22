@@ -3,7 +3,6 @@
 import { randomBytes } from 'node:crypto';
 import { statSync } from 'node:fs';
 import { connect } from '@tursodatabase/database';
-import { applyMigrations } from '../db/migrate';
 import { createUser } from '../lib/server/admin';
 import type { Db } from '../lib/db-types';
 
@@ -20,7 +19,11 @@ if (!statSync(path, { throwIfNoEntry: false })?.isFile()) {
 }
 const password = randomBytes(15).toString('base64url');
 const db = (await connect(path)) as unknown as Db;
-await applyMigrations(db, 'server');
+// must already be migrated (cutover migration, or the app's first start): never build a schema here
+if (!(await db.get("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'users'"))) {
+  console.error(`${path} has no users table: migrate it first`);
+  process.exit(2);
+}
 const r = await createUser(db, { email, role: 'admin', password });
 if (!r.ok) {
   console.error('failed:', r.error);
