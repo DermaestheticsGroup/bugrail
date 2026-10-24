@@ -25,5 +25,5 @@ check "me with session" 200 "$(code -u "$B" -b "$J" "$U/api/auth/me")"
 check "app shell with session" 200 "$(code -u "$B" -b "$J" "$U/")"
 NAME="verify-$(date +%s)"
 check "create workspace" 200 "$(code -u "$B" -b "$J" -H 'content-type: application/json' -d "{\"name\":\"$NAME\"}" "$U/api/admin/workspaces")"
-if turso db shell "$DB" "select name from workspaces where name = '$NAME'" | grep -q "$NAME"; then echo "PASS workspace row in Turso $DB"; else echo "FAIL workspace row missing in Turso $DB"; fail=1; fi
+if perl -e 'alarm 60; exec @ARGV' turso db shell "$DB" "select name from workspaces where name = '$NAME'" | grep -q "$NAME"; then echo "PASS workspace row in Turso $DB"; else echo "FAIL workspace row missing in Turso $DB"; fail=1; fi
 exit $fail
