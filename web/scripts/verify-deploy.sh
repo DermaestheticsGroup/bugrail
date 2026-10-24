@@ -9,7 +9,7 @@ fail=0
 check() { # <label> <expected code> <actual code>
   if [ "$2" = "$3" ]; then echo "PASS $1 ($3)"; else echo "FAIL $1 (want $2, got $3)"; fail=1; fi
 }
-login() { printf '{"email":"%s","password":"%s"}' "$BUGRAIL_ADMIN_EMAIL" "$1"; }
+login() { jq -cn --arg e "$BUGRAIL_ADMIN_EMAIL" --arg p "$1" '{email: $e, password: $p}'; }
 code() { curl -s -o /dev/null -w "%{http_code}" -H "x-vercel-protection-bypass: ${VERCEL_AUTOMATION_BYPASS_SECRET:-}" "$@"; }
 
 check "no basic auth -> 401" 401 "$(code "$U/")"

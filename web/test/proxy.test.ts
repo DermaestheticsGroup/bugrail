@@ -4,8 +4,8 @@ import { basicAuthOk } from '../proxy';
 const b = (s: string) => `Basic ${btoa(s)}`;
 
 test('basic auth is off unless both credentials are set', () => {
-  expect(basicAuthOk(null, undefined, undefined)).toBe(true);
-  expect(basicAuthOk(null, 'u', undefined)).toBe(true);
+  expect(basicAuthOk(null, '', '')).toBe(true);
+  expect(basicAuthOk(null, 'u', '')).toBe(true);
 });
 
 test('basic auth checks the header', () => {
