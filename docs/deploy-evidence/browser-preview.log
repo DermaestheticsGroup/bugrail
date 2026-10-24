@@ -1,0 +1,8 @@
+after login url /w/all/dashboard
+console errors 7 [
+  'The script resource is behind a redirect, which is disallowed.',
+  'Failed to load resource: net::ERR_BLOCKED_BY_RESPONSE.NotSameOriginAfterDefaultedToSameOriginByCoep',
+  'Failed to load resource: the server responded with a status of 404 ()',
+  'The script resource is behind a redirect, which is disallowed.',
+  'Failed to load resource: net::ERR_BLOCKED_BY_RESPONSE.NotSameOriginAfterDefaultedToSameOriginByCoep'
+]

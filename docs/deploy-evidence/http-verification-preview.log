@@ -1,0 +1,10 @@
+PASS no basic auth -> 401 (401)
+PASS wrong basic auth -> 401 (401)
+PASS page without session -> redirect /login (307)
+PASS login page (200)
+PASS login wrong password -> 401 (401)
+PASS login admin (200)
+PASS me with session (200)
+PASS app shell with session (200)
+PASS create workspace (200)
+PASS workspace row in Turso bugrail-preview
