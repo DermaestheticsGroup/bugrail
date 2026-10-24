@@ -24,7 +24,7 @@
     "@tursodatabase/database-wasm": "0.8.3",
     "@tursodatabase/sync-wasm": "0.8.3",
     "iron-session": "^9.0.1",
-    "next": "16.4.0",
+    "next": "16.4.3",
     "react": "^19",
     "react-dom": "^19",
     "server-only": "^0.0.1",
