@@ -4,7 +4,7 @@
 set -u
 U=$1 DB=$2
 # Credentials must not go out in cleartext; plain http only to loopback.
-case "$U" in https://*|http://localhost*|http://127.0.0.1*) ;; *) echo "refusing non-https URL: $U" >&2; exit 2 ;; esac
+case "$U" in https://*|http://localhost|http://localhost[:/]*|http://127.0.0.1|http://127.0.0.1[:/]*) ;; *) echo "refusing non-https URL: $U" >&2; exit 2 ;; esac
 B="$BASIC_AUTH_USER:$BASIC_AUTH_PASSWORD"
 J=$(mktemp)
 trap 'rm -f "$J"' EXIT
