@@ -28,7 +28,7 @@ export function connectRemote(url: string, authToken?: string): Db {
         await t.commit();
         return out;
       } catch (e) {
-        await t.rollback();
+        await t.rollback().catch(() => {});
         throw e;
       } finally {
         t.close();

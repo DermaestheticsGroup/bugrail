@@ -4,7 +4,11 @@ import { NextResponse, type NextRequest } from 'next/server';
 export function basicAuthOk(header: string | null, user = process.env.BASIC_AUTH_USER, pass = process.env.BASIC_AUTH_PASSWORD): boolean {
   if (!user || !pass) return true;
   if (!header?.startsWith('Basic ')) return false;
-  return atob(header.slice(6)) === `${user}:${pass}`;
+  try {
+    return new TextDecoder().decode(Uint8Array.from(atob(header.slice(6)), (c) => c.charCodeAt(0))) === `${user}:${pass}`;
+  } catch {
+    return false;
+  }
 }
 
 const PAGE_PUBLIC = /^\/(api|login)(\/|$)|^\/(_next|sw\.js|favicon\.ico)|\.[\w]+$/;

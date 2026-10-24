@@ -14,3 +14,9 @@ test('basic auth checks the header', () => {
   expect(basicAuthOk('Bearer abc', 'u', 'p')).toBe(false);
   expect(basicAuthOk(b('u:p'), 'u', 'p')).toBe(true);
 });
+
+test('basic auth rejects invalid base64 and decodes UTF-8 credentials', () => {
+  expect(basicAuthOk('Basic !!!', 'u', 'p')).toBe(false);
+  const utf8 = `Basic ${Buffer.from('u:pässwörd').toString('base64')}`;
+  expect(basicAuthOk(utf8, 'u', 'pässwörd')).toBe(true);
+});
