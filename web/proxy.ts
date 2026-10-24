@@ -1,11 +1,18 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
+// Constant time in the expected value's length, so response time does not leak how much matched.
+function sameString(a: string, b: string): boolean {
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < b.length; i++) diff |= (a.charCodeAt(i) | 0) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
 // Optional HTTP Basic Auth in front of the whole app (e.g. a Vercel preview); off unless both env vars are set.
 export function basicAuthOk(header: string | null, user = process.env.BASIC_AUTH_USER, pass = process.env.BASIC_AUTH_PASSWORD): boolean {
   if (!user || !pass) return true;
   if (!header?.startsWith('Basic ')) return false;
   try {
-    return new TextDecoder().decode(Uint8Array.from(atob(header.slice(6)), (c) => c.charCodeAt(0))) === `${user}:${pass}`;
+    return sameString(new TextDecoder().decode(Uint8Array.from(atob(header.slice(6)), (c) => c.charCodeAt(0))), `${user}:${pass}`);
   } catch {
     return false;
   }

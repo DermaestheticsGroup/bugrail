@@ -19,7 +19,7 @@ function tx(c: Exec): Tx {
 
 export function connectRemote(url: string, authToken?: string): Db {
   // The auth token must not travel in cleartext.
-  if (authToken && !/^(libsql|https|wss):/.test(url)) throw new Error('TURSO_DATABASE_URL must use libsql:, https: or wss: when an auth token is set');
+  if (authToken && (!/^(libsql|https|wss):/.test(url) || /[?&]tls=0(&|$)/.test(url))) throw new Error('TURSO_DATABASE_URL must use libsql:, https: or wss: when an auth token is set');
   const client = createClient({ url, authToken });
   return {
     ...tx(client),
