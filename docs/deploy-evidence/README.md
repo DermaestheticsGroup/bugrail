@@ -24,10 +24,10 @@ Console errors on preview come from Vercel Deployment Protection redirecting the
 
 ## Production (after squash merge of #18)
 
-1. `vercel deploy --prod` from merged `main` with `web/.vercelignore` so the local `.env` is never uploaded ([vercel-production-deploy.log](vercel-production-deploy.log)).
+1. `vercel deploy --prod` from merged `main` (7748bac) with `web/.vercelignore` ([vercel-production-deploy.log](vercel-production-deploy.log)). The deployment's source file list from the Vercel API shows `.env.example` and no `.env` ([vercel-production-source-files.log](vercel-production-source-files.log)).
 2. `scripts/verify-deploy.sh https://bugrail-two.vercel.app bugrail`: 10/10 PASS ([http-verification-production.log](http-verification-production.log)).
-3. Real Chrome login flow ([browser-production.log](browser-production.log)), video [production-flow.mp4](production-flow.mp4).
+3. Real Chrome login flow ([browser-production.log](browser-production.log)), video [production-flow.mp4](production-flow.mp4). The one console 404 is `/favicon.ico`: the app ships no favicon, so it is expected and harmless.
 
 | Login | Dashboard after login | /rewind |
 |---|---|---|
-| ![](production-1-login.png) | ![](production-2-after-login.png) | ![](production-3-rewind.png) |
+| ![Production login page behind Basic Auth](production-1-login.png) | ![Production dashboard after admin login](production-2-after-login.png) | ![Production Rewind page](production-3-rewind.png) |

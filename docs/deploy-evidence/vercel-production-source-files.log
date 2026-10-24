@@ -1,0 +1,20 @@
+# Vercel production deployment dpl_HnJ8cx5B4zcw2xjDgVe9HfykHN8m (bugrail-two.vercel.app), source root files from GET /v6/deployments/dpl_HnJ8cx5B4zcw2xjDgVe9HfykHN8m/files
+.env.example
+.node-version
+.vercelignore
+AGENTS.md
+app
+bun.lock
+bunfig.toml
+components
+db
+design
+lib
+next.config.ts
+package.json
+proxy.ts
+public
+scripts
+test
+tsconfig.json
+tsconfig.tsbuildinfo
